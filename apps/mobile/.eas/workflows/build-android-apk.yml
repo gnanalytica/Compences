@@ -1,0 +1,13 @@
+# A production-settings Android APK that can be installed by sending the file.
+# Like create-production-builds.yml it has no trigger, so it only runs when
+# started by hand — from the Expo dashboard, or:
+#   eas workflow:run .eas/workflows/build-android-apk.yml
+# Every build counts against the monthly quota; it should not fire on pushes.
+name: Build Android APK
+
+jobs:
+  build_android_apk:
+    type: build
+    params:
+      platform: android
+      profile: production-apk
