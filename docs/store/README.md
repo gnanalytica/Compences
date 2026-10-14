@@ -49,7 +49,11 @@ Not oversights — none of these can live in a repository.
 
 Android app links work: `assetlinks.json` is served from
 `apps/web/public/.well-known/`, and the intent filters cover `/join` and
-`/invite`. iOS has no equivalent yet, so on an iPhone those two links open the
+`/invite`. The fingerprint in that file is the SHA-256 of the certificate the
+EAS-managed keystore signs the APK with. Once the app is on Play with Play App
+Signing, Play re-signs it, so add Play's SHA-256 (Play Console → App
+integrity) as a second entry rather than replacing the first. iOS has no
+equivalent yet, so on an iPhone those two links open the
 website rather than the app — which works, but is not the same thing. Closing
 it needs:
 
