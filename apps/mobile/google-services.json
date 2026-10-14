@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "105029287610",
-    "project_id": "compences-app",
-    "storage_bucket": "compences-app.firebasestorage.app"
+    "project_number": "816576967396",
+    "project_id": "compences",
+    "storage_bucket": "compences.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:105029287610:android:718dd750c07086d333cc83",
+        "mobilesdk_app_id": "1:816576967396:android:6b3cddf57812bb40d5f2f1",
         "android_client_info": {
           "package_name": "com.compences.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDmejBRuEEIi6lsaJijOTNzet8HlgUEHcI"
+          "current_key": "AIzaSyAEpvmep-0CN-MajMdnjidvp82vED1uihw"
         }
       ],
       "services": {
