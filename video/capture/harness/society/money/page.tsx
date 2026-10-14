@@ -6,7 +6,7 @@
 // page's own — LedgerRow decides what a row says, so "Flat not recorded"
 // appears here for the same reason it appears in the app.
 import { PiggyBank } from 'lucide-react';
-import { formatDate, formatMoney, fundMovementLine } from '@samudaya/core';
+import { formatDate, formatMoney, fundMovementLine } from '@compences/core';
 import { StatTile, StatTiles } from '@/components/badges';
 import { PageBody, PageHeader } from '@/components/page-header';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';

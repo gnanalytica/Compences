@@ -30,7 +30,7 @@ import {
   unitLabel,
   upiNote,
   upiPayUri,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useAuth } from '../src/lib/auth';
 import { supabase } from '../src/lib/supabase';
 import { fetchEventBySlug, fetchEvents, fetchStats, lookOf } from '../src/lib/events';

@@ -1,6 +1,6 @@
 import { Alert, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ROLE_DESCRIPTION, ROLE_LABEL, can, normalizeRole } from '@samudaya/core';
+import { ROLE_DESCRIPTION, ROLE_LABEL, can, normalizeRole } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
 import { useCommunityData } from '../../src/lib/use-community-data';
@@ -194,6 +194,9 @@ export default function Me() {
         >
           <Caption>Delete account</Caption>
         </Pressable>
+        <View style={{ alignItems: 'center', paddingTop: spacing.md }}>
+          <Caption>Compences · A Gnanalytica product</Caption>
+        </View>
         {/* Clears the tab bar so the last row is never half-hidden behind it. */}
         <View style={{ height: spacing.xl }} />
       </ScrollView>

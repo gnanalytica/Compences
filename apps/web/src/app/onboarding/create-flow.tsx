@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Sparkles } from 'lucide-react';
-import { isFlatLabel, societySlug, splitFlat } from '@samudaya/core';
+import { isFlatLabel, societySlug, splitFlat } from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/field';

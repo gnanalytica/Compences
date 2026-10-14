@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
-import type { Enums } from '@samudaya/supabase';
+import type { Enums } from '@compences/supabase';
 import {
   EVENT_STATUS_LABEL,
   EXPENSE_STATUS_LABEL,
   TASK_STATUS_LABEL,
   formatMoney,
   fundKey,
-} from '@samudaya/core';
+} from '@compences/core';
 import { cn } from '@/lib/utils';
 import { Badge, type Tone } from './ui/badge';
 

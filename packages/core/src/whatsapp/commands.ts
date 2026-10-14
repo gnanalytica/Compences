@@ -130,7 +130,7 @@ export function parseCommand(raw: string | null | undefined): WhatsAppCommand {
 }
 
 export const HELP_TEXT = [
-  '*Samudaya* — here’s what I can do:',
+  '*Compences* — here’s what I can do:',
   '',
   '• *events* — what’s coming up',
   '• *fund* — how much is raised and spent',
@@ -145,7 +145,7 @@ export const HELP_TEXT = [
 ].join('\n');
 
 export const NOT_LINKED_TEXT = [
-  'This number isn’t linked to a Samudaya account yet.',
+  'This number isn’t linked to a Compences account yet.',
   '',
   'Open the app, go to *More → WhatsApp*, and send me the code it shows:',
   '`link ABC123`',

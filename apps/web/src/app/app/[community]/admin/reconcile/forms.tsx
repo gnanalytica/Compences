@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { formatMoney, MATCH_CONFIDENCE } from '@samudaya/core';
+import { formatMoney, MATCH_CONFIDENCE } from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/field';
 import { EMPTY_STATE, type ActionState } from '@/lib/action-state';

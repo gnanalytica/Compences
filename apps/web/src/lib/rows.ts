@@ -22,7 +22,7 @@ export function rowsOf<T>(
 ): T[] {
   if (result.error) {
     console.error(
-      `[samudaya] read failed: ${where}`,
+      `[compences] read failed: ${where}`,
       result.error.code,
       result.error.message,
       result.error.details ?? '',

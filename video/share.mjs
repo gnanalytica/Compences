@@ -58,14 +58,14 @@ const mb = (bytes) => `${(bytes / 1_000_000).toFixed(2)} MB`;
 const CUTS = [
   {
     name: 'phone',
-    source: 'samudaya-phone.mp4',
+    source: 'compences-phone.mp4',
     render: 'render:phone',
     cover: 'CoverPhone',
     size: [720, 1280],
   },
   {
     name: 'explain',
-    source: 'samudaya-explain.mp4',
+    source: 'compences-explain.mp4',
     render: 'render:explain',
     cover: 'CoverWide',
     size: [1280, 720],
@@ -114,15 +114,18 @@ for (const cut of CUTS) {
 for (const cut of CUTS) {
   await still(cut.cover, join(OUT, `cover-${cut.name}.png`), { play: false });
 }
-await still('CoverPhone', join(OUT, 'samudaya-thumbnail-portrait.jpg'), { play: true, jpeg: true });
+await still('CoverPhone', join(OUT, 'compences-thumbnail-portrait.jpg'), {
+  play: true,
+  jpeg: true,
+});
 // 1280×720, the size YouTube and most players ask a thumbnail to be.
-await still('CoverWide', join(OUT, 'samudaya-thumbnail.jpg'), {
+await still('CoverWide', join(OUT, 'compences-thumbnail.jpg'), {
   play: true,
   scale: 2 / 3,
   jpeg: true,
 });
 await still('CoverLink', LINK_PREVIEW, { play: true, jpeg: true });
-log(`thumbnails → out/samudaya-thumbnail.jpg, out/samudaya-thumbnail-portrait.jpg`);
+log(`thumbnails → out/compences-thumbnail.jpg, out/compences-thumbnail-portrait.jpg`);
 log(`link preview → apps/web/src/app/opengraph-image.jpg (${mb((await stat(LINK_PREVIEW)).size)})`);
 
 // ---------------------------------------------------------------------------
@@ -131,7 +134,7 @@ log(`link preview → apps/web/src/app/opengraph-image.jpg (${mb((await stat(LIN
 for (const cut of CUTS) {
   const source = join(OUT, cut.source);
   const cover = join(OUT, `cover-${cut.name}.png`);
-  const target = join(OUT, `samudaya-${cut.name}-whatsapp.mp4`);
+  const target = join(OUT, `compences-${cut.name}-whatsapp.mp4`);
   const [width, height] = cut.size;
 
   const start = HOLD - DISSOLVE;
@@ -237,8 +240,8 @@ for (const cut of CUTS) {
   const bytes = (await stat(target)).size;
   if (bytes >= 16_000_000) {
     throw new Error(
-      `out/samudaya-${cut.name}-whatsapp.mp4 is ${mb(bytes)}; WhatsApp sends that as a document`,
+      `out/compences-${cut.name}-whatsapp.mp4 is ${mb(bytes)}; WhatsApp sends that as a document`,
     );
   }
-  log(`${cut.name} → out/samudaya-${cut.name}-whatsapp.mp4 (${mb(bytes)})`);
+  log(`${cut.name} → out/compences-${cut.name}-whatsapp.mp4 (${mb(bytes)})`);
 }

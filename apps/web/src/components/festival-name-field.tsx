@@ -9,7 +9,7 @@ import {
   nextFestivalDate,
   searchFestivals,
   type CalendarFestival,
-} from '@samudaya/core';
+} from '@compences/core';
 import { Field, Input } from '@/components/ui/field';
 import { FestivalTile } from '@/components/festival';
 

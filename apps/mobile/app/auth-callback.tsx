@@ -6,7 +6,7 @@ import { Body, Button, Loading, Screen, Title } from '../src/components/ui';
 import { spacing } from '../src/lib/theme';
 
 /**
- * Where Google sign-in and magic links come back to (samudaya://auth-callback).
+ * Where Google sign-in and magic links come back to (compences://auth-callback).
  *
  * On Android the redirect reaches the app as an ordinary deep link, so the
  * router opens this screen. If the in-app browser has not already exchanged the

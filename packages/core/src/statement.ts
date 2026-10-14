@@ -194,7 +194,7 @@ export function parseMoney(raw: string): number | null {
  */
 export const MATCH_CONFIDENCE: Record<string, string> = {
   reference: 'same UTR',
-  // The narration carries the note Samudaya put on the payment, so the bank
+  // The narration carries the note Compences put on the payment, so the bank
   // line says which flat sent it. Offered whatever the amounts say.
   flat: 'names this flat',
   amount: 'same amount',

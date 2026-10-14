@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "1064603687876",
-    "project_id": "samudaya-gnanalytica",
-    "storage_bucket": "samudaya-gnanalytica.firebasestorage.app"
+    "project_number": "816576967396",
+    "project_id": "compences",
+    "storage_bucket": "compences.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1064603687876:android:9381f131c00d3638f42291",
+        "mobilesdk_app_id": "1:816576967396:android:6b3cddf57812bb40d5f2f1",
         "android_client_info": {
-          "package_name": "com.samudaya.app"
+          "package_name": "com.compences.app"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "1064603687876-3791lv0787cr8vaome1hbtianc0crhja.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDYu3vgSCXINRWkSGogOfdfFWIbDec3g08"
+          "current_key": "AIzaSyAEpvmep-0CN-MajMdnjidvp82vED1uihw"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1064603687876-3791lv0787cr8vaome1hbtianc0crhja.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

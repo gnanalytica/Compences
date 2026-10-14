@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, type CSSProperties, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { Sparkles as SparklesIcon } from 'lucide-react';
-import { wearsGarland, type Festival } from '@samudaya/core';
+import { wearsGarland, type Festival } from '@compences/core';
 import { FestivalTile, Rangoli, festivalVars } from '@/components/festival';
 import { Motif } from '@/components/motif';
 import { cn } from '@/lib/utils';

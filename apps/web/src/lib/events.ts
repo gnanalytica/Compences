@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import { festivalFor, normalizeStats } from '@samudaya/core';
+import { festivalFor, normalizeStats } from '@compences/core';
 import { getCatalogue } from './catalogue';
 import { getSupabase } from './supabase/server';
 import { rowsOf } from './rows';

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, RefreshControl, SectionList, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ROLE_LABEL, ROLES, can, normalizeRole, type Role } from '@samudaya/core';
+import { ROLE_LABEL, ROLES, can, normalizeRole, type Role } from '@compences/core';
 import { useAuth } from '../src/lib/auth';
 import { supabase } from '../src/lib/supabase';
 import { useCommunityData } from '../src/lib/use-community-data';

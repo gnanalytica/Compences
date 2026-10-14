@@ -17,7 +17,7 @@ import {
   type MotifLayer,
   type MotifMotion,
   type MotifPaint,
-} from '@samudaya/core';
+} from '@compences/core';
 
 /** Whether the phone is set to reduce motion, kept current as it changes. */
 export function useReducedMotion() {

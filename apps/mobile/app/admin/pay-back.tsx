@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { can, coverOverspendSchema, formatMoney, societyProofPath } from '@samudaya/core';
+import { can, coverOverspendSchema, formatMoney, societyProofPath } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
 import { fetchSocietyBalance } from '../../src/lib/events';

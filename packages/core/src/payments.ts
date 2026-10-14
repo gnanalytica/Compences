@@ -105,7 +105,7 @@ export type UpiPaymentLink = {
 };
 
 /**
- * The marker that makes a Samudaya payment findable in a bank statement.
+ * The marker that makes a Compences payment findable in a bank statement.
  *
  * Three letters, because the note is typed by hand by everybody whose phone
  * does not open a UPI app from a link, and because it has to survive a bank
@@ -266,7 +266,7 @@ export function parseUpiResponse(raw: string | null | undefined): UpiAppResult {
 /**
  * For staff reviewing a report: how it reached us. A capture from the UPI app is
  * still the payer's phone talking, but an echoed transaction reference means it
- * answered the payment Samudaya started rather than something pasted in.
+ * answered the payment Compences started rather than something pasted in.
  */
 export function upiCaptureNote(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null;

@@ -10,7 +10,7 @@ import {
   withReactionToggled,
   type CommentReaction,
   type ReactionSummary,
-} from '@samudaya/core';
+} from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/field';
 import { EMPTY_STATE, type ActionState } from '@/lib/action-state';

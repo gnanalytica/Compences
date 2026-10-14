@@ -13,9 +13,9 @@ Play Console → **App content** → **Data safety**.
 | Does your app collect or share any of the required user data types?   | **Yes**                                                                    |
 | Is all of the user data collected by your app encrypted in transit?   | **Yes** — HTTPS/TLS throughout; Supabase, Vercel and Expo are all TLS-only |
 | Do you provide a way for users to request that their data be deleted? | **Yes**                                                                    |
-| Account deletion URL                                                  | `https://samudaya.gnanalytica.com/delete-account`                          |
+| Account deletion URL                                                  | `https://compences.com/delete-account`                                     |
 | Does your app allow users to request account deletion in the app?     | **Yes** — Settings on the web, Me → Delete account on the phone            |
-| Privacy policy URL                                                    | `https://samudaya.gnanalytica.com/privacy`                                 |
+| Privacy policy URL                                                    | `https://compences.com/privacy`                                            |
 | Independent security review                                           | **No** (do not tick it; there has not been one)                            |
 | Play Families Policy                                                  | **Not applicable** — the app is for adults, 18+                            |
 

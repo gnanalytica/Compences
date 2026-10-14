@@ -14,7 +14,7 @@ import {
   uuid,
   volunteerSchema,
   votePollSchema,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCapability, requireCommunity } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { EMPTY_STATE, fieldErrors, friendlyDbError, type ActionState } from '@/lib/action-state';
@@ -330,7 +330,7 @@ export async function voteOnSuggestion(formData: FormData): Promise<void> {
         );
 
   if (error) {
-    console.error('[samudaya] vote was not recorded', error.code, error.message);
+    console.error('[compences] vote was not recorded', error.code, error.message);
   }
 
   // Society-wide suggestions carry no event, and live on their own page.

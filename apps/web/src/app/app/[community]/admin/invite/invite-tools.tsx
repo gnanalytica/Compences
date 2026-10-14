@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { MessageCircle } from 'lucide-react';
-import { residentInviteMessage, whatsappShareUrl } from '@samudaya/core';
+import { residentInviteMessage, whatsappShareUrl } from '@compences/core';
 import { buttonClass } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 
@@ -30,7 +30,7 @@ export function JoinQr({ link, societyName }: { link: string; societyName: strin
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
-      alt={`QR code to join ${societyName} on Samudaya`}
+      alt={`QR code to join ${societyName} on Compences`}
       width={240}
       height={240}
       className="border-border-base rounded-lg border bg-white p-2"

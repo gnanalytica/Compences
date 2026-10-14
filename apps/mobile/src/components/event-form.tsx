@@ -7,7 +7,7 @@ import {
   formatMoney,
   type FundRule,
   FUND_RULE_LABEL,
-} from '@samudaya/core';
+} from '@compences/core';
 import { spacing } from '../lib/theme';
 import { Body, Button, Caption, Input } from './ui';
 import { DateField } from './date-field';
@@ -42,7 +42,7 @@ export type EventDetails = {
  * What happens to money left over, in the words a resident would use. The
  * stored value is the same enum the website writes.
  */
-/** Kept as a name for existing imports; the words live in @samudaya/core. */
+/** Kept as a name for existing imports; the words live in @compences/core. */
 export const FUND_RULE_PLAIN = FUND_RULE_LABEL;
 
 /** A new event's starting values; the organiser defaults to the society. */

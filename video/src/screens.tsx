@@ -1194,7 +1194,7 @@ export function ReconcileScreen() {
           {matched > 0.5 ? <Tick on={matched} size={14} /> : null}
           {matched > 0.5 ? 'Matched and confirmed' : 'Confirm'}
         </div>
-        {line('SAMUDAYA LEDGER', 'Asha Menon · A 402 · same UTR', 2001, 1)}
+        {line('COMPENCES LEDGER', 'Asha Menon · A 402 · same UTR', 2001, 1)}
       </div>
       <div style={{ marginTop: 14, opacity: ramp(frame, sec(1.75), sec(2.15)) }}>
         {SETTLED.map((row, index) => (

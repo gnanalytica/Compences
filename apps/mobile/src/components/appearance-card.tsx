@@ -1,4 +1,4 @@
-import { APPEARANCE_CHOICES } from '@samudaya/core';
+import { APPEARANCE_CHOICES } from '@compences/core';
 import { useAppearance } from '../lib/appearance';
 import { spacing } from '../lib/theme';
 import { Card, Heading } from './ui';

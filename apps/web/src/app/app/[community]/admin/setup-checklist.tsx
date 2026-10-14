@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { CheckCircle2, Circle } from 'lucide-react';
-import { setupProgress, setupSteps, type SetupStepId } from '@samudaya/core';
+import { setupProgress, setupSteps, type SetupStepId } from '@compences/core';
 import type { Community } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';

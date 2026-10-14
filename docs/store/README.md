@@ -1,4 +1,4 @@
-# Shipping Samudaya to the two stores
+# Shipping Compences to the two stores
 
 Four documents, in the order they depend on each other:
 
@@ -53,10 +53,10 @@ Android app links work: `assetlinks.json` is served from
 website rather than the app — which works, but is not the same thing. Closing
 it needs:
 
-- `ios.associatedDomains: ["applinks:samudaya.gnanalytica.com"]` in
+- `ios.associatedDomains: ["applinks:compences.com"]` in
   `apps/mobile/app.json`;
 - an `apple-app-site-association` file served from
-  `apps/web/public/.well-known/`, naming `<TeamID>.com.samudaya.app` with the
+  `apps/web/public/.well-known/`, naming `<TeamID>.com.compences.app` with the
   `/join/*` and `/invite/*` paths;
 - the Associated Domains capability on the App ID.
 

@@ -3,7 +3,7 @@
 import { useId, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import type { CatalogueKind } from '@samudaya/core';
+import type { CatalogueKind } from '@compences/core';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Button } from '@/components/ui/button';
 import { quickAddCatalogueItem } from '@/app/app/[community]/admin/catalogue/actions';

@@ -11,7 +11,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { COPY, can } from '@samudaya/core';
+import { COPY, can } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getTodoCount } from '@/lib/todo';
 import { PageBody, PageHeader } from '@/components/page-header';

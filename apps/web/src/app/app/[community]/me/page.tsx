@@ -7,7 +7,7 @@ import {
   formatMoney,
   normalizeRole,
   unitLabel,
-} from '@samudaya/core';
+} from '@compences/core';
 import { getMemberships, requireCommunity } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { PageBody, PageHeader } from '@/components/page-header';

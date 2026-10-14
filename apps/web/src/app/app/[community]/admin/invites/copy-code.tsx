@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Check, Copy } from 'lucide-react';
-import { formatInviteCode } from '@samudaya/core';
+import { formatInviteCode } from '@compences/core';
 
 /**
  * Shows a freshly minted code with a one-tap copy. The code is also listed in

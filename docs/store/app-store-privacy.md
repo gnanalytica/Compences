@@ -59,7 +59,7 @@ PIN never reaches it.
 
 Generated, not hand-written. `ios.privacyManifests` in `apps/mobile/app.json`
 is the source; `npx expo prebuild --platform ios` writes
-`ios/Samudaya/PrivacyInfo.xcprivacy` from it.
+`ios/Compences/PrivacyInfo.xcprivacy` from it.
 
 It declares the same collected types as the label above, plus the
 **required-reason APIs** used by the libraries in the binary. Apple does not
@@ -85,9 +85,9 @@ TestFlight or App Store upload naming any reason it still wants.
 ## The other App Store requirements this app has to meet
 
 - **Account deletion (5.1.1(v))** — in-app at Me → Delete account, and at
-  `https://samudaya.gnanalytica.com/delete-account`.
+  `https://compences.com/delete-account`.
 - **Sign in with Apple (4.8)** — required when an app offers a third-party
-  social login as the _only_ other option. Samudaya offers Google **and** a
+  social login as the _only_ other option. Compences offers Google **and** a
   plain email link, which is a first-party, equivalent option, so 4.8 is met
   without adding Apple sign-in. If Google ever becomes the only route, this
   changes.

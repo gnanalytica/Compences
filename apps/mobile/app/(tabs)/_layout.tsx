@@ -1,5 +1,5 @@
 import { Redirect, Tabs, useRouter } from 'expo-router';
-import { COPY, can } from '@samudaya/core';
+import { COPY, can } from '@compences/core';
 import { Pressable, Text, View, type ColorValue } from 'react-native';
 import {
   CalendarDays,

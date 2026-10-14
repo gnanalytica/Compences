@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { auditTrail, hasAuditTrail, relativeTime } from '@samudaya/core';
+import { auditTrail, hasAuditTrail, relativeTime } from '@compences/core';
 import { Caption } from './ui';
 import { useTheme } from '../lib/use-theme';
 
@@ -7,7 +7,7 @@ import { useTheme } from '../lib/use-theme';
  * Who approved this, when, and whether anybody has changed it since.
  *
  * The same four facts the web shows beside a payment or a bill, decided by the
- * same rule in `@samudaya/core`: an edit only counts once the approval has
+ * same rule in `@compences/core`: an edit only counts once the approval has
  * happened. A phone flagging an edit the laptop does not would be a
  * disagreement about the society's own records.
  *

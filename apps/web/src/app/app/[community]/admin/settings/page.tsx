@@ -1,5 +1,5 @@
 import { ArrowRight, Building2, Library } from 'lucide-react';
-import { COPY, joinLink } from '@samudaya/core';
+import { COPY, joinLink } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { siteUrl } from '@/lib/site-url';

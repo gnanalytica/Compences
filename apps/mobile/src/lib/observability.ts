@@ -40,7 +40,7 @@ export function initErrorReporting() {
         delete event.request.cookies;
         delete event.request.data;
         delete event.request.query_string;
-        // samudaya://invite/CODE carries a working invite code in the path.
+        // compences://invite/CODE carries a working invite code in the path.
         if (typeof event.request.url === 'string') {
           event.request.url = event.request.url.replace(/\/invite\/[^/]+/, '/invite/[code]');
         }

@@ -104,7 +104,7 @@ export function friendlyDbError(error: { code?: string; message?: string } | nul
   // us, and log loudly enough to reach the runtime error dashboard — an error
   // we swallow into form state is otherwise invisible there.
   if (error.code && SCHEMA_MISMATCH.includes(error.code)) {
-    console.error('[samudaya] database is behind the app', error.code, error.message);
+    console.error('[compences] database is behind the app', error.code, error.message);
     return 'This isn’t available yet. The problem is on our side, and we’ve been alerted.';
   }
 

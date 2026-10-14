@@ -1,5 +1,5 @@
 import { UserPlus } from 'lucide-react';
-import { can, relativeTime, unitLabel } from '@samudaya/core';
+import { can, relativeTime, unitLabel } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { PageBody, PageHeader } from '@/components/page-header';

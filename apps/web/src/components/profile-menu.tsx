@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Bell, ChevronDown, Eye, LogOut, Settings } from 'lucide-react';
-import type { ViewMode } from '@samudaya/core';
+import type { ViewMode } from '@compences/core';
 import { switchView } from '@/app/app/[community]/view-actions';
 import { AppearanceSwitch } from '@/components/appearance-switch';
 import { cn } from '@/lib/utils';

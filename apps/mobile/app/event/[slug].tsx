@@ -20,7 +20,7 @@ import {
   inTheFund,
   movedOnSummary,
   practiceDatesLine,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
 import { budgetVsSpent, fetchEventDetail, lookOf } from '../../src/lib/events';

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Check, Hourglass, ReceiptIndianRupee, RotateCcw, Users } from 'lucide-react';
-import { formatMoney, fundBarSegments } from '@samudaya/core';
+import { formatMoney, fundBarSegments } from '@compences/core';
 import { FundBar } from '@/components/badges';
 import { Motif } from '@/components/motif';
 import { buttonClass } from '@/components/ui/button';

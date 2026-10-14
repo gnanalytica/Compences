@@ -11,7 +11,7 @@ import {
   requestUnitChangeMessage,
   residentPhoneSchema,
   uuid,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCommunity, requireUser } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { EMPTY_STATE, fieldErrors, friendlyDbError, type ActionState } from '@/lib/action-state';

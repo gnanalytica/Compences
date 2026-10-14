@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { notificationWebPath, type NotificationData } from '@samudaya/core';
+import { notificationWebPath, type NotificationData } from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 

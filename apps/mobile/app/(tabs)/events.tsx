@@ -9,7 +9,7 @@ import {
   formatMoney,
   fundBarSegments,
   inTheFund,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { fetchEvents, fetchStats, lookOf } from '../../src/lib/events';
 import { useCommunityData } from '../../src/lib/use-community-data';

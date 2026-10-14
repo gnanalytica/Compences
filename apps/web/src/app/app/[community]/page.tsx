@@ -26,7 +26,7 @@ import {
   normalizeRole,
   todayIn,
   type Festival,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getTodoItems } from '@/lib/todo';
 import { getSocietyBalance, getIdeas, getSeason, getStatsFor } from '@/lib/events';

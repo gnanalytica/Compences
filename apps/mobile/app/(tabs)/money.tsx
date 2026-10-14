@@ -25,7 +25,7 @@ import {
   ledgerTotals,
   relativeTime,
   whereTheBalanceIs,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
 import { useCommunityData } from '../../src/lib/use-community-data';
@@ -56,7 +56,7 @@ import { useTheme } from '../../src/lib/use-theme';
  * nothing: a resident with only the phone installed could see the money for
  * whichever event they happened to open and never the whole picture. Same two
  * reads, same 500-row bound, and the same filters through the same functions in
- * @samudaya/core, so the two surfaces cannot drift into disagreeing about what
+ * @compences/core, so the two surfaces cannot drift into disagreeing about what
  * "money in" means.
  *
  * Money in names the payer, their flat and how they paid; money out names the
@@ -247,7 +247,7 @@ function SocietyMoney() {
       const failure = ledger.error ?? totals.error;
       if (failure) {
         console.error(
-          '[samudaya] read failed: the society ledger',
+          '[compences] read failed: the society ledger',
           failure.code,
           failure.message,
           failure.details ?? '',

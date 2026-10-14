@@ -1,4 +1,4 @@
-import { budgetBar, budgetTotal, formatMoney, type BudgetBar } from '@samudaya/core';
+import { budgetBar, budgetTotal, formatMoney, type BudgetBar } from '@compences/core';
 import { cn } from '@/lib/utils';
 
 /**

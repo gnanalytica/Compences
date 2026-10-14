@@ -10,7 +10,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { formatMoney } from '@samudaya/core';
+import { formatMoney } from '@compences/core';
 import { cardShadow, fonts, radius, spacing } from '../lib/theme';
 import { useTheme } from '../lib/use-theme';
 import { useReducedMotion } from './motif';

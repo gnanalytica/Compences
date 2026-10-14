@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
-import { APPEARANCE_CHOICES, parseAppearance } from '@samudaya/core';
+import { APPEARANCE_CHOICES, parseAppearance } from '@compences/core';
 import {
   APPEARANCE_KEY,
   APPEARANCE_SCRIPT,
@@ -57,7 +57,7 @@ describe('the choice', () => {
 
 describe('the web head script', () => {
   it('keeps the key browsers already have it under', () => {
-    expect(APPEARANCE_KEY).toBe('samudaya-theme');
+    expect(APPEARANCE_KEY).toBe('compences-theme');
   });
 
   it('marks <html> with a saved Light or Dark', () => {
@@ -166,7 +166,7 @@ describe('the phone', () => {
   const lib = read('mobile', 'src', 'lib', 'appearance.ts');
 
   it('keeps the choice in AsyncStorage and applies it app-wide', () => {
-    expect(lib).toContain("const STORAGE_KEY = 'samudaya.theme'");
+    expect(lib).toContain("const STORAGE_KEY = 'compences.theme'");
     expect(lib).toContain("from '@react-native-async-storage/async-storage'");
     // React Native 0.86 takes 'unspecified', not null, to follow the device.
     expect(lib).toContain(

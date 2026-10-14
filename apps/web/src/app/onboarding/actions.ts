@@ -14,7 +14,7 @@ import {
   redeemMessage,
   residentPhoneSchema,
   uuid,
-} from '@samudaya/core';
+} from '@compences/core';
 import { getSupabase } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import { fieldErrors, friendlyDbError, type ActionState } from '@/lib/action-state';

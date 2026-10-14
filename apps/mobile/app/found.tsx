@@ -7,7 +7,7 @@ import {
   isFlatLabel,
   societySlug,
   splitFlat,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useAuth } from '../src/lib/auth';
 import { supabase } from '../src/lib/supabase';
 import { Body, Button, Caption, Card, Input, Screen, Title } from '../src/components/ui';

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { CATALOGUE_KINDS, catalogueItemSchema, uuid, type CatalogueKind } from '@samudaya/core';
+import { CATALOGUE_KINDS, catalogueItemSchema, uuid, type CatalogueKind } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { EMPTY_STATE, fieldErrors, friendlyDbError, type ActionState } from '@/lib/action-state';

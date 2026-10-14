@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { CAMPAIGN_EMOJI, can, formatMoney, eventSlug } from '@samudaya/core';
+import { CAMPAIGN_EMOJI, can, formatMoney, eventSlug } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
 import {

@@ -6,7 +6,7 @@ import {
   formatMoney,
   myPaymentTotals,
   receiptRef,
-} from '@samudaya/core';
+} from '@compences/core';
 import { getSupabase } from '@/lib/supabase/server';
 import { Card, CardHeader } from '@/components/ui/card';
 import { ButtonLink } from '@/components/ui/button';

@@ -1,4 +1,4 @@
-# The Samudaya demo video
+# The Compences demo video
 
 Four cuts, from two sources:
 
@@ -135,7 +135,7 @@ once. An earlier version lit each word as a reading cursor reached it and
 coloured key terms marigold; people can read, and being shown where to look
 was not what anybody asked for. It was taken out.
 
-### The close: Samudaya's mark flows into Gnanalytica's
+### The close: Compences's mark flows into Gnanalytica's
 
 Gnanalytica's logo is an infinity: a navy loop with a red arrow and three bars
 rising out of its right lobe. It lives in `brand/gnanalytica-logo.png`, exactly
@@ -145,14 +145,14 @@ into the original. Alpha is each pixel's coverage of its ink, read on the
 channel where that ink is furthest from white; a generic colour-to-alpha leaves
 the navy at 95% and the festive ground shows through it.
 
-**Samudaya had no logo.** The mobile app's icon is still Expo's template, and
+**Compences had no logo.** The mobile app's icon is still Expo's template, and
 the landing page sets the name in plain type. So the mark in `logo.tsx` is
 built from the product's own motif — a kolam, one line drawn around dots. The
 simplest kolam is a single line looped around two dots; half of that loop, stood
-on end, is an S. If Samudaya gets a real logo, `logo.tsx` is the one place to
+on end, is an S. If Compences gets a real logo, `logo.tsx` is the one place to
 change.
 
-The sting is that one line doing three things. It draws as Samudaya's S on the
+The sting is that one line doing three things. It draws as Compences's S on the
 festive ground; it turns flat and closes, and the two dots it was drawn around
 become the lobes of an infinity; then it _is_ Gnanalytica's loop. The ground
 goes to white on the way, because the navy was designed for white and all but
@@ -164,7 +164,7 @@ fitted to seventeen centreline points measured off the logo: 4.2 px RMS and
 8.6 px at worst, on a stroke 33 px wide, so the line never leaves the stroke it
 is about to become.
 
-It ends on `samudaya.gnanalytica.com`. The card it replaced said `samudaya.app`,
+It ends on `compences.com`. The card it replaced said `compences.app`,
 which is the app's bundle identifier and not a site anybody can visit; the
 claims test now fails if the video shows an address the product does not live
 at.
@@ -181,12 +181,12 @@ which for both cuts was the empty ground before the title fades up.
 screen on a phone, and the name, in the video's own colours. `npm run share`
 renders it and makes, in `out/`:
 
-- **`samudaya-phone-whatsapp.mp4`** and **`samudaya-explain-whatsapp.mp4`** —
+- **`compences-phone-whatsapp.mp4`** and **`compences-explain-whatsapp.mp4`** —
   each opens on its cover for a moment, dissolves into the cut, and is encoded
   at 720p to about 13 MB, H.264 Main and AAC. WhatsApp draws its own play
   button and length over the thumbnail, so these covers carry neither.
-- **`samudaya-thumbnail.jpg`** (1280×720) and
-  **`samudaya-thumbnail-portrait.jpg`** — the covers with a play button and the
+- **`compences-thumbnail.jpg`** (1280×720) and
+  **`compences-thumbnail-portrait.jpg`** — the covers with a play button and the
   length, for anywhere that does not draw its own.
 - **`apps/web/src/app/opengraph-image.jpg`** — the same at 1200×630, which Next
   serves as the site's link preview. It is committed; WhatsApp drops a preview
@@ -222,7 +222,7 @@ beside it, which is.
   Chaturthi's colours from `packages/core/src/festivals.ts`. Retune them
   together.
 
-  That festival dressing is the app's, not the video's. Samudaya re-points its
+  That festival dressing is the app's, not the video's. Compences re-points its
   whole palette per festival — `festivalVars` makes `--accent` marigold on a
   Ganesh page — and draws a kolam and a toran on Home, the events list and
   every event page. The first cut of this video used plain headers in the
@@ -247,7 +247,7 @@ beside it, which is.
   total on Home is the total on Money, the event the ledger credits is the event
   the Events page lists, and the figures the WhatsApp bot quotes are the ones on
   the screen before it.
-- **The two drawn scenes** are `src/surfaces.tsx`. Samudaya has four surfaces
+- **The two drawn scenes** are `src/surfaces.tsx`. Compences has four surfaces
   and a screen recorder can only point at two: filming WhatsApp would mean
   photographing somebody else's app, and an MCP server has no pixels at all. So
   those are animated, in the app's palette, from the app's own source — every

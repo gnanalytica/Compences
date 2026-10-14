@@ -15,7 +15,7 @@ import {
   todayIn,
   unitLabel,
   upiCaptureNote,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import {
   budgetVsSpent,

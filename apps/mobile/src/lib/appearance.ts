@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { parseAppearance, type AppearanceChoice } from '@samudaya/core';
+import { parseAppearance, type AppearanceChoice } from '@compences/core';
 
 /**
  * System, Light or Dark, chosen on the Me tab and kept on the phone.
@@ -11,7 +11,7 @@ import { parseAppearance, type AppearanceChoice } from '@samudaya/core';
  * choice exists.
  */
 
-const STORAGE_KEY = 'samudaya.theme';
+const STORAGE_KEY = 'compences.theme';
 
 let chosen: AppearanceChoice = 'system';
 const listeners = new Set<() => void>();

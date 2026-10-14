@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { can, type MemberRole } from '@samudaya/core';
+import { can, type MemberRole } from '@compences/core';
 import { cn } from '@/lib/utils';
 import { ScrollActiveIntoView } from './scroll-active-into-view';
 

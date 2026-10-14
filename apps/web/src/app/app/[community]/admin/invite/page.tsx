@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { COPY, can, joinLink } from '@samudaya/core';
+import { COPY, can, joinLink } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { siteUrl } from '@/lib/site-url';
 import { PageBody, PageHeader } from '@/components/page-header';

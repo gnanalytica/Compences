@@ -61,8 +61,8 @@ describe('flats CSV', () => {
 
 describe('joining', () => {
   it('builds a join link and an invite message', () => {
-    const link = joinLink('https://samudaya.gnanalytica.com/', 'WHITE CLIFF');
-    expect(link).toBe('https://samudaya.gnanalytica.com/join/WHITE%20CLIFF');
+    const link = joinLink('https://compences.com/', 'WHITE CLIFF');
+    expect(link).toBe('https://compences.com/join/WHITE%20CLIFF');
     const message = residentInviteMessage({ societyName: 'Whitecliff', code: 'WC2026', link });
     expect(message).toContain('WC2026');
     expect(message).toContain(link);

@@ -1,4 +1,4 @@
-# Samudaya — product specification
+# Compences — product specification
 
 Derived from the clickable HTML prototype. **The prototype is the source of
 truth for behaviour**; this document is the working translation of it into a
@@ -143,7 +143,7 @@ from any of the shapes Indian banks export — and each line is matched against 
 reported payment: by UTR, then by the flat the line names, then by amount within
 a fortnight. Confirming the match confirms the money.
 
-Every payment Samudaya starts carries a note — `SMDA1104 GANESH` — and that note
+Every payment Compences starts carries a note — `SMDA1104 GANESH` — and that note
 rides to the statement, so a credit usually says which flat sent it. One
 contiguous token, first, because a narration preserves a run of letters and
 digits, mangles punctuation, and truncates from the right.
@@ -218,7 +218,7 @@ ledger change, and those are the committee's.
 `society_ledger` is every confirmed contribution and every approved bill, across
 every event, on one screen any member can read — Money on the web, Money on the
 phone, reached from Me. Both read the same two views and narrow them with the
-same filters from `@samudaya/core`, so the two cannot drift into disagreeing
+same filters from `@compences/core`, so the two cannot drift into disagreeing
 about what "money in" means.
 
 Money the committee moves is in it too, as two rows per movement (`kind =
@@ -258,7 +258,7 @@ who approved this bill, when, and whether anybody has touched it since — and t
 is shown next to the record, on the web and on the phone.
 
 One rule decides what that line says, and both apps read it from
-`@samudaya/core`: **an edit is only mentioned when it happened after the
+`@compences/core`: **an edit is only mentioned when it happened after the
 approval.** Every row has been modified at the moment it was made, and a column
 that says so on every line is one people stop reading — taking the edit that
 mattered with it.

@@ -1,5 +1,5 @@
 {
-  "extends": "@samudaya/config/tsconfig.base.json",
+  "extends": "@compences/config/tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
     "lib": ["ES2022", "DOM"]

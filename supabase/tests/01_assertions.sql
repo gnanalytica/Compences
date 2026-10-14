@@ -1,5 +1,5 @@
 -- ============================================================================
--- Samudaya · tiny assertion helpers for the SQL test suite
+-- Compences · tiny assertion helpers for the SQL test suite
 -- ============================================================================
 create schema if not exists test;
 

@@ -16,7 +16,7 @@ import {
   relativeTime,
   todayIn,
   whereTheBalanceIs,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getFundMovements, getSocietyBalance } from '@/lib/events';
 import { getSupabase } from '@/lib/supabase/server';

@@ -1,4 +1,4 @@
-import { todayIn } from '@samudaya/core';
+import { todayIn } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { activeItems, getCatalogue } from '@/lib/catalogue';
 import { getSupabase } from '@/lib/supabase/server';

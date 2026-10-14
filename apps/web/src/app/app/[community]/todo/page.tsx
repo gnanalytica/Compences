@@ -8,7 +8,7 @@ import {
   formatMoney,
   relativeTime,
   type TodoKind,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getTodoItems, type TodoItem } from '@/lib/todo';
 import { getSocietyBalance } from '@/lib/events';

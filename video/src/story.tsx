@@ -58,7 +58,7 @@ export type Shot = {
   screen?: ReactNode;
   bookend?: { headline: string; sub: string; opening?: boolean };
   statement?: { lines: string[]; sub?: string };
-  /** The close: Samudaya's mark flowing into Gnanalytica's. See logo.tsx. */
+  /** The close: Compences's mark flowing into Gnanalytica's. See logo.tsx. */
   sting?: boolean;
   /** `zoom` runs from its first value to its second; `origin` is what it pushes towards. */
   zoom?: [number, number];
@@ -77,7 +77,7 @@ export const SHOTS: Shot[] = [
   {
     id: 'open',
     bookend: {
-      headline: 'Samudaya',
+      headline: 'Compences',
       // The landing page's own line, rather than one written for the video.
       sub: 'Plan together. Participate together. Spend transparently.',
       opening: true,
@@ -215,9 +215,9 @@ export const SHOTS: Shot[] = [
     origin: 0.3,
   },
   {
-    // This used to be a card that said samudaya.app — the app's bundle
+    // This used to be a card that said compences.app — the app's bundle
     // identifier, not a site anybody can visit. The sting ends on the real
-    // address, samudaya.gnanalytica.com.
+    // address, compences.com.
     id: 'close',
     sting: true,
   },

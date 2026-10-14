@@ -35,10 +35,10 @@ const run = promisify(execFile);
 const ffmpeg = createRequire(import.meta.url)('ffmpeg-static');
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SOURCE = join(HERE, 'out', 'samudaya-explain.mp4');
+const SOURCE = join(HERE, 'out', 'compences-explain.mp4');
 const PUBLIC = join(HERE, '..', 'apps', 'web', 'public');
-const VIDEO = join(PUBLIC, 'samudaya-demo.mp4');
-const POSTER = join(PUBLIC, 'samudaya-demo-poster.jpg');
+const VIDEO = join(PUBLIC, 'compences-demo.mp4');
+const POSTER = join(PUBLIC, 'compences-demo-poster.jpg');
 
 /**
  * Home, with the fund counted up and the panel beside it filled in.
@@ -145,7 +145,7 @@ await run(ffmpeg, [
 ]);
 await rm(`${passLog}-0.log`, { force: true });
 await rm(`${passLog}-0.log.mbtree`, { force: true });
-log(`video  → apps/web/public/samudaya-demo.mp4 (${mb((await stat(VIDEO)).size)})`);
+log(`video  → apps/web/public/compences-demo.mp4 (${mb((await stat(VIDEO)).size)})`);
 
 await run(ffmpeg, [
   '-loglevel',
@@ -163,4 +163,4 @@ await run(ffmpeg, [
   '-y',
   POSTER,
 ]);
-log(`poster → apps/web/public/samudaya-demo-poster.jpg (${mb((await stat(POSTER)).size)})`);
+log(`poster → apps/web/public/compences-demo-poster.jpg (${mb((await stat(POSTER)).size)})`);

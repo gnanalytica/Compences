@@ -1,4 +1,4 @@
-# What Samudaya actually collects
+# What Compences actually collects
 
 The inventory both store forms are filled in from. It is written from the
 schema in `supabase/migrations/` and the code that reads and writes it, not
@@ -62,7 +62,7 @@ Checked, rather than assumed:
   `AdvertisingData`.
 - **Analytics or behavioural tracking.** No analytics SDK of any kind — no
   Firebase Analytics, PostHog, Mixpanel, Amplitude, or Google Tag Manager.
-- **Payment instruments.** Samudaya _records_ that a UPI payment happened and
+- **Payment instruments.** Compences _records_ that a UPI payment happened and
   its reference; it never touches a card number, a UPI PIN or a bank login,
   because it has no payment gateway integration of any kind.
 - **Health, fitness, browsing history, search history, calendar, SMS, files

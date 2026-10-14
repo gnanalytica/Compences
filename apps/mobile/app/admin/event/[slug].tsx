@@ -32,7 +32,7 @@ import {
   surplusKindFor,
   type SurplusAnswer,
   updateActivitySchema,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useAuth } from '../../../src/lib/auth';
 import { EventBalanceCard } from '../../../src/components/event-ui';
 import { supabase } from '../../../src/lib/supabase';

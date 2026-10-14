@@ -96,7 +96,7 @@ describe('motion', () => {
 
 describe('the tokens', () => {
   it('are the ones the phone reads, so the two apps cannot drift apart', async () => {
-    const { TOKENS } = await import('@samudaya/core');
+    const { TOKENS } = await import('@compences/core');
     const css = read('app', 'globals.css');
     const name = (key: string) =>
       key === 'wash'

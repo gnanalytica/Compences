@@ -2,7 +2,7 @@ import { authenticate, isFailure, allows, type ApiPrincipal } from '@/lib/api/au
 import { findTool, toolsFor } from '@/lib/api/mcp-tools';
 
 /**
- * Model Context Protocol endpoint — lets an AI agent use Samudaya as a set of
+ * Model Context Protocol endpoint — lets an AI agent use Compences as a set of
  * tools.
  *
  * Implements the Streamable HTTP transport in its stateless form: one JSON-RPC
@@ -55,7 +55,7 @@ async function handleOne(principal: ApiPrincipal, message: JsonRpcRequest): Prom
         // Echo the client's version when we speak it, so older clients keep working.
         protocolVersion: SUPPORTED_VERSIONS.has(asked) ? asked : PROTOCOL_VERSION,
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: 'samudaya', version: '1.0.0' },
+        serverInfo: { name: 'compences', version: '1.0.0' },
         instructions:
           'Tools for one residential community. Reads are safe to call freely. ' +
           'Writes (post_announcement, create_service_request, create_visitor_pass, ' +

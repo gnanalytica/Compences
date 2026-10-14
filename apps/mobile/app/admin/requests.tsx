@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { ROLE_LABEL, can, formatDate, unitLabel, type Role } from '@samudaya/core';
+import { ROLE_LABEL, can, formatDate, unitLabel, type Role } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
 import { useCommunityData } from '../../src/lib/use-community-data';

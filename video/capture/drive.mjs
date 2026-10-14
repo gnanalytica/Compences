@@ -32,7 +32,7 @@ export function cursorScript(mode = 'pointer') {
 }
 
 const SCRIPT = `(() => {
-  const ID = '__samudaya_cursor';
+  const ID = '__compences_cursor';
   const TOUCH = __TOUCH__;
   const install = () => {
     if (document.getElementById(ID)) return;

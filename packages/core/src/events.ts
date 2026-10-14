@@ -1,4 +1,4 @@
-import type { Enums } from '@samudaya/supabase';
+import type { Enums } from '@compences/supabase';
 
 /**
  * Event vocabulary and the arithmetic every surface repeats. Kept here so the

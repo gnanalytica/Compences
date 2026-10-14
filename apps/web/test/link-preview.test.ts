@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 /**
  * What a shared link unfurls into.
  *
- * Samudaya's links travel on WhatsApp, and WhatsApp builds a preview from the
+ * Compences's links travel on WhatsApp, and WhatsApp builds a preview from the
  * page's og:image — the video's cover with its play button, made by
  * `npm run share` in video/. WhatsApp quietly drops a preview whose image is
  * over about 300 KB, so a re-render that grew the file would leave every

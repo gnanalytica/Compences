@@ -1,5 +1,5 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
-import { TODO_ORDER, can, type TodoKind } from '@samudaya/core';
+import { TODO_ORDER, can, type TodoKind } from '@compences/core';
 import { useAuth } from './auth';
 import { supabase } from './supabase';
 

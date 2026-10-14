@@ -8,7 +8,7 @@
  * staff (Supervisor, Facility Manager — operators who never contribute, vote,
  * suggest or register) and residents, several flats with two accounts.
  *
- * Every demo account uses an `@demo.samudaya.test` address (a reserved,
+ * Every demo account uses an `@demo.compences.test` address (a reserved,
  * undeliverable domain) and `user_metadata.demo = true`, so `--clean` can find
  * and remove exactly what this script added while keeping the community and
  * its real members.
@@ -33,7 +33,7 @@ if (!url || !serviceKey) {
 const args = process.argv.slice(2);
 const CLEAN = args.includes('--clean');
 const SLUG = args.find((arg) => !arg.startsWith('--')) ?? 'shraddha-whitecliff';
-const DEMO_DOMAIN = 'demo.samudaya.test';
+const DEMO_DOMAIN = 'demo.compences.test';
 
 const db = createClient<Database>(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -645,7 +645,7 @@ async function seedSociety() {
         // Deliberately not a real UPI handle: a test payment from the demo
         // fails in the UPI app instead of reaching a stranger. The committee
         // sets the society's real UPI ID in the app.
-        upi_vpa: 'whitecliff.demo@samudayademo',
+        upi_vpa: 'whitecliff.demo@compencesdemo',
         upi_payee_name: 'Whitecliff Residents Association',
         address: 'Seegehalli Village Road, Seegehalli, Whitefield',
         pincode: '560067',

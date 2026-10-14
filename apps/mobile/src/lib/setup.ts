@@ -1,5 +1,5 @@
-import type { Tables } from '@samudaya/supabase';
-import { setupSteps, type SetupFacts } from '@samudaya/core';
+import type { Tables } from '@compences/supabase';
+import { setupSteps, type SetupFacts } from '@compences/core';
 import { supabase } from './supabase';
 
 /** What the committee has done so far, for the setup checklist. */

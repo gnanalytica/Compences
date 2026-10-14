@@ -1,5 +1,5 @@
 {
-  "name": "@samudaya/supabase",
+  "name": "@compences/supabase",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -23,7 +23,7 @@
     "@supabase/supabase-js": "^2.116.0"
   },
   "devDependencies": {
-    "@samudaya/config": "workspace:*",
+    "@compences/config": "workspace:*",
     "typescript": "^5.9.3"
   }
 }

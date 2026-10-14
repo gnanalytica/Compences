@@ -1,4 +1,4 @@
-import { ROLE_DESCRIPTION, ROLE_LABEL, normalizeRole, unitLabel } from '@samudaya/core';
+import { ROLE_DESCRIPTION, ROLE_LABEL, normalizeRole, unitLabel } from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { PageBody, PageHeader } from '@/components/page-header';

@@ -31,7 +31,7 @@ export type Chapter = {
 };
 
 /**
- * How a festival runs on Samudaya, in four chapters — the four the explainer
+ * How a festival runs on Compences, in four chapters — the four the explainer
  * video is cut into — each with its step playing on a phone beside it.
  *
  * A tab list rather than four stacked sections, so the phone stays where the

@@ -11,7 +11,7 @@ import {
   setMemberUnitMessage,
   unitLabel,
   type Role,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useAuth } from '../../../src/lib/auth';
 import { supabase } from '../../../src/lib/supabase';
 import { useCommunityData } from '../../../src/lib/use-community-data';

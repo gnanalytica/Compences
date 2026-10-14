@@ -81,7 +81,7 @@ export function McpScene({ hold }: { hold: number }) {
               }}
             >
               <div style={{ color: 'rgba(255,255,255,0.5)' }}>{'{'}</div>
-              <div>{'  "samudaya": {'}</div>
+              <div>{'  "compences": {'}</div>
               <div>{'    "type": "http",'}</div>
               <div>{'    "url": "…/api/mcp",'}</div>
               <div>{'    "headers": {'}</div>

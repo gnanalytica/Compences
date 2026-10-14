@@ -1,4 +1,4 @@
-import { can } from '@samudaya/core';
+import { can } from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getIdeas } from '@/lib/events';
 import { PageBody, PageHeader } from '@/components/page-header';

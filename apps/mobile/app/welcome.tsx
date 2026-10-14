@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { ROLE_LABEL, normalizeRole, type Role } from '@samudaya/core';
+import { ROLE_LABEL, normalizeRole, type Role } from '@compences/core';
 import { useAuth } from '../src/lib/auth';
 import { supabase } from '../src/lib/supabase';
 import { Badge, Body, Button, Caption, Card, Heading, Screen, Title } from '../src/components/ui';

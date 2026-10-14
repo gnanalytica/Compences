@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FESTIVALS } from '@samudaya/core';
+import { FESTIVALS } from '@compences/core';
 import { contrast, legible, WHITE } from '@/lib/contrast';
 
 /** The ink globals.css puts on the accent in dark mode (`--accent-ink`). */

@@ -1,6 +1,6 @@
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { COPY, can } from '@samudaya/core';
+import { COPY, can } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { Caption, Card, EmptyState, Screen, Title } from '../../src/components/ui';
 import { LinkRow } from '../../src/components/admin-ui';

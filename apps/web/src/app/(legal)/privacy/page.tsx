@@ -10,7 +10,7 @@ import { LEGAL } from '@/lib/legal';
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'How Samudaya collects, uses, shares and protects personal data, and the rights you have under India’s Digital Personal Data Protection Act, 2023.',
+    'How Compences collects, uses, shares and protects personal data, and the rights you have under India’s Digital Personal Data Protection Act, 2023.',
 };
 
 const SECTIONS = [
@@ -60,6 +60,10 @@ export default function PrivacyPage() {
           {LEGAL.product} is operated by <Strong>{LEGAL.operator}</Strong> (“we”, “us”). For the
           personal data needed to run your account and the service, we are the Data Fiduciary under
           the DPDP Act.
+        </p>
+        <p>
+          {LEGAL.product} was previously called {LEGAL.formerName}. Only the name changed: the same
+          team runs the service, and the way we handle your data is the same as before.
         </p>
         <p>
           Each community on {LEGAL.product} is run by its own admins — usually the society’s

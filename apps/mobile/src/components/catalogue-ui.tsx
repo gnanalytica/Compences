@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { CATALOGUE_KIND_LABEL, can, type CatalogueKind } from '@samudaya/core';
+import { CATALOGUE_KIND_LABEL, can, type CatalogueKind } from '@compences/core';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { useCommunityData } from '../lib/use-community-data';

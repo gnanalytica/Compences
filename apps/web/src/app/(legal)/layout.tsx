@@ -12,7 +12,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           <span className="bg-accent text-accent-ink grid size-8 place-items-center rounded-lg text-sm font-bold">
             स
           </span>
-          <span className="text-lg font-semibold tracking-tight">Samudaya</span>
+          <span className="text-lg font-semibold tracking-tight">Compences</span>
         </Link>
         <ButtonLink href="/login" variant="secondary" size="sm">
           Sign in
@@ -25,7 +25,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
 
       <footer className="text-ink-subtle mx-auto max-w-5xl px-6 py-10 text-sm">
         <div className="border-border-base flex flex-wrap items-center justify-between gap-4 border-t pt-6">
-          <span>Samudaya · operated by {LEGAL.operator}</span>
+          <span>Compences · operated by {LEGAL.operator}</span>
           <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
             <Link href="/" className="underline underline-offset-4">
               Home

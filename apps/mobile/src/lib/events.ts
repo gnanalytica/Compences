@@ -1,4 +1,4 @@
-import { DEFAULT_FESTIVAL, festivalFor, normalizeStats } from '@samudaya/core';
+import { DEFAULT_FESTIVAL, festivalFor, normalizeStats } from '@compences/core';
 import { today as localToday } from '../components/date-field';
 import { supabase } from './supabase';
 import { useCommunityData } from './use-community-data';

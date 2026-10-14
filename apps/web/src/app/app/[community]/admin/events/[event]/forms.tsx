@@ -10,7 +10,7 @@ import {
   formatMoney,
   todayIn,
   type SurplusAnswer,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';

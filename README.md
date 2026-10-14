@@ -1,4 +1,4 @@
-# Samudaya
+# Compences
 
 **समुदाय** — _plan together, participate together, spend transparently._
 
@@ -135,7 +135,7 @@ pnpm install
 pnpm dev
 ```
 
-The web app is on `http://localhost:3000`; `pnpm --filter @samudaya/mobile start`
+The web app is on `http://localhost:3000`; `pnpm --filter @compences/mobile start`
 opens the Expo dev server.
 
 ### 5. First run
@@ -203,13 +203,13 @@ stop             opt out
 
 ## Letting an AI assistant use it
 
-Samudaya speaks the **Model Context Protocol**. Create a key under
+Compences speaks the **Model Context Protocol**. Create a key under
 **Admin → API & AI access**, pick its scopes, then:
 
 ```json
 {
   "mcpServers": {
-    "samudaya": {
+    "compences": {
       "type": "http",
       "url": "https://<your-host>/api/mcp",
       "headers": { "Authorization": "Bearer sam_live_…" }
@@ -242,7 +242,7 @@ pnpm dlx eas-cli build --platform ios      # or android
 ```
 
 Set `extra.eas.projectId` in `app.json` to your own EAS project first. The
-bundle identifier and package name are `com.samudaya.app`; change them to
+bundle identifier and package name are `com.compences.app`; change them to
 something you own before submitting to either store.
 
 ---
@@ -267,7 +267,7 @@ After a schema change, regenerate the types:
 
 ```bash
 pnpm db:test                                   # rebuilds the test database
-node scripts/gen-db-types.mjs "postgresql://postgres@127.0.0.1:55432/samudaya_test"
+node scripts/gen-db-types.mjs "postgresql://postgres@127.0.0.1:55432/compences_test"
 ```
 
 ---

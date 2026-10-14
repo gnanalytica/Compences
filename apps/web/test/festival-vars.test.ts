@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { FESTIVALS } from '@samudaya/core';
+import { FESTIVALS } from '@compences/core';
 import { festivalVars } from '@/components/festival';
 
 /**

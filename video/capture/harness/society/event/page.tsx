@@ -12,7 +12,7 @@
 // StatTiles, AuditTrail, Card — with the numbers the real page would have
 // fetched handed to it directly.
 import { CalendarDays, Check, FileText, Users } from 'lucide-react';
-import { festivalFor, formatDate, formatMoney, fundBarSegments, inTheFund } from '@samudaya/core';
+import { festivalFor, formatDate, formatMoney, fundBarSegments, inTheFund } from '@compences/core';
 import { FundBar, FundKey, ReadinessBar, StatTile, StatTiles } from '@/components/badges';
 import { AuditTrail } from '@/components/audit-trail';
 import { PageBody } from '@/components/page-header';

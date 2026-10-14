@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { normalizeJoinCode } from '@samudaya/core';
+import { normalizeJoinCode } from '@compences/core';
 import { getSupabase } from '@/lib/supabase/server';
 
 /**

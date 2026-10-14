@@ -3,16 +3,16 @@ import { Petals, Rangoli, Toran, festive } from './festive';
 import { displayFamily, fontFamily, sec } from './theme';
 
 /**
- * The close: Samudaya's mark flows into Gnanalytica's.
+ * The close: Compences's mark flows into Gnanalytica's.
  *
  * Gnanalytica's logo is an infinity — a navy loop with a red arrow and three
  * bars rising out of its right-hand lobe (`brand/gnanalytica-logo.png`, as
- * supplied). Samudaya had no logo at all, so its mark here is built from the
+ * supplied). Compences had no logo at all, so its mark here is built from the
  * product's own motif: a kolam, a single line drawn around dots. The simplest
  * kolam is one line looped around two dots, and half of that loop, stood on
  * end, is an S.
  *
- * So the sting is one line doing three things. It is drawn as Samudaya's S,
+ * So the sting is one line doing three things. It is drawn as Compences's S,
  * around two dots, on the festive ground. It turns flat and closes, and the
  * two dots it was drawn around become the two lobes of an infinity. Then it is
  * Gnanalytica's loop — the ground has gone to white, because the navy was
@@ -67,7 +67,7 @@ type Layout = {
   /** Where the loop's crossing lands, and how big the finished mark is. */
   at: { x: number; y: number };
   scale: number;
-  /** Where the S stands while it is still Samudaya's, and its wordmark. */
+  /** Where the S stands while it is still Compences's, and its wordmark. */
   sAt: { x: number; y: number };
   word: { x: number; y: number; align: 'center' | 'left'; size: number };
   /** The type under Gnanalytica's mark. */
@@ -176,7 +176,7 @@ export function LogoSting({ layout }: { layout: 'portrait' | 'landscape' }) {
         }}
       />
 
-      {/* Samudaya's wordmark, while the line is still an S. */}
+      {/* Compences's wordmark, while the line is still an S. */}
       <div
         style={{
           position: 'absolute',
@@ -198,7 +198,7 @@ export function LogoSting({ layout }: { layout: 'portrait' | 'landscape' }) {
             lineHeight: 1,
           }}
         >
-          Samudaya
+          Compences
         </div>
         <div
           style={{ fontSize: L.word.size * 0.36, marginTop: 22, color: 'rgba(255,255,255,0.82)' }}
@@ -247,7 +247,7 @@ export function LogoSting({ layout }: { layout: 'portrait' | 'landscape' }) {
               transform={`translate(${dot.x} ${dot.y}) scale(${0.4 + 0.6 * dots}) translate(${-dot.x} ${-dot.y})`}
             />
           ))}
-          {/* Samudaya's marigold, flowing once round Gnanalytica's loop. */}
+          {/* Compences's marigold, flowing once round Gnanalytica's loop. */}
           <path
             d={PATH}
             pathLength={1000}
@@ -301,7 +301,7 @@ export function LogoSting({ layout }: { layout: 'portrait' | 'landscape' }) {
           opacity: end,
         }}
       >
-        Samudaya is built by
+        Compences is built by
       </div>
       <div
         style={{
@@ -333,7 +333,7 @@ export function LogoSting({ layout }: { layout: 'portrait' | 'landscape' }) {
           opacity: span([T.endIn[0] + 0.3, T.endIn[1] + 0.3]),
         }}
       >
-        samudaya.gnanalytica.com
+        compences.com
       </div>
     </AbsoluteFill>
   );

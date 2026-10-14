@@ -1,6 +1,6 @@
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
-import { COPY, EVENT_STATUS_LABEL, can, formatDate } from '@samudaya/core';
+import { COPY, EVENT_STATUS_LABEL, can, formatDate } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { fetchEvents } from '../../src/lib/events';
 import { useTodoItems } from '../../src/lib/todo';

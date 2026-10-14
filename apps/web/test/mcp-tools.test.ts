@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { API_SCOPES } from '@samudaya/core';
+import { API_SCOPES } from '@compences/core';
 import { MCP_TOOLS, findTool, toolsFor } from '@/lib/api/mcp-tools';
 import type { ApiPrincipal } from '@/lib/api/auth';
 

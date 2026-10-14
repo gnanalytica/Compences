@@ -25,7 +25,7 @@ import {
   spendBalanceSchema,
   updateActivitySchema,
   uuid,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getCatalogue, resolveCatalogueChoice } from '@/lib/catalogue';
 import { getSupabase } from '@/lib/supabase/server';

@@ -7,7 +7,7 @@
  * This talks to Postgres directly, so it runs in CI and against the throwaway
  * database that scripts/db-test.sh builds.
  *
- *   node scripts/gen-db-types.mjs "postgresql://postgres@127.0.0.1:55432/samudaya_test"
+ *   node scripts/gen-db-types.mjs "postgresql://postgres@127.0.0.1:55432/compences_test"
  */
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

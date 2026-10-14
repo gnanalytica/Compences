@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import type { Festival } from '@samudaya/core';
+import type { Festival } from '@compences/core';
 import { Motif } from './motif';
 import { fonts, lookColours, spacing } from '../lib/theme';
 import { useTheme } from '../lib/use-theme';
