@@ -62,6 +62,10 @@ export default function PrivacyPage() {
           the DPDP Act.
         </p>
         <p>
+          {LEGAL.product} was previously called {LEGAL.formerName}. Only the name changed: the same
+          team runs the service, and the way we handle your data is the same as before.
+        </p>
+        <p>
           Each community on {LEGAL.product} is run by its own admins — usually the society’s
           committee. They decide which events, funds, notices and records their community keeps, and
           who may join. We store and process that community information so the service can work for

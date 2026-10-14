@@ -9,7 +9,11 @@
 export const LEGAL = {
   operator: 'Gnanalytica',
   product: 'Compences',
+  /** The line that says whose product this is; shown wherever the name is. */
+  byline: 'A Gnanalytica product',
+  /** What the service was called before it became Compences. */
+  formerName: 'Samudaya',
   contactEmail: 'sandeep@gnanalytica.com',
-  effectiveDate: '13 September 2026',
+  effectiveDate: '14 October 2026',
   courts: 'Bengaluru, Karnataka',
 } as const;

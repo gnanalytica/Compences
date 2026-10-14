@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LEGAL } from '@/lib/legal';
 import { LoginForm } from './login-form';
 
 export const metadata = { title: 'Sign in' };
@@ -33,6 +34,9 @@ export default async function LoginPage(props: { searchParams: Promise<{ next?: 
           Privacy Policy
         </Link>
         .
+      </p>
+      <p className="text-ink-subtle mt-3 text-xs">
+        {LEGAL.product} · {LEGAL.byline}
       </p>
     </main>
   );

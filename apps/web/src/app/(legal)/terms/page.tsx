@@ -54,6 +54,10 @@ export default function TermsPage() {
           website, mobile apps, WhatsApp bot or API, you accept them. If you do not agree, do not
           use {LEGAL.product}.
         </p>
+        <p>
+          {LEGAL.product} was previously called {LEGAL.formerName}. Only the name changed: these
+          terms continue to apply to accounts and communities created under the old name.
+        </p>
       </LegalSection>
 
       <LegalSection id="the-service" title="What Compences does">

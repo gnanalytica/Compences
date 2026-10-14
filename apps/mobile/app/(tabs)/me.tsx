@@ -194,6 +194,9 @@ export default function Me() {
         >
           <Caption>Delete account</Caption>
         </Pressable>
+        <View style={{ alignItems: 'center', paddingTop: spacing.md }}>
+          <Caption>Compences · A Gnanalytica product</Caption>
+        </View>
         {/* Clears the tab bar so the last row is never half-hidden behind it. */}
         <View style={{ height: spacing.xl }} />
       </ScrollView>

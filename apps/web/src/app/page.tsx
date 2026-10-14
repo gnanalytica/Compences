@@ -15,6 +15,7 @@ import { ButtonLink } from '@/components/ui/button';
 import { festivalVars } from '@/components/festival';
 import { Motif } from '@/components/motif';
 import { getCurrentUser } from '@/lib/auth';
+import { LEGAL } from '@/lib/legal';
 import { season } from '@/lib/season';
 import { cn } from '@/lib/utils';
 import { DemoVideo } from './demo-video';
@@ -457,7 +458,10 @@ export default async function LandingPage(props: PageProps<'/'>) {
         <footer className="bg-[var(--festival-wash)]">
           <SeasonTrim id="garland-foot" />
           <div className="text-ink-muted mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 pt-6 pb-10 text-sm">
-            <span className="font-display text-ink font-semibold">Compences</span>
+            <span>
+              <span className="font-display text-ink font-semibold">Compences</span>
+              <span className="text-ink-subtle"> · {LEGAL.byline}</span>
+            </span>
             <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
               <Link href="/privacy" className="underline underline-offset-4">
                 Privacy Policy
