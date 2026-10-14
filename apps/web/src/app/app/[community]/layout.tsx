@@ -75,6 +75,7 @@ export default async function CommunityLayout(props: LayoutProps<'/app/[communit
         <header
           id="app-header"
           className="border-border-base/70 bg-surface/85 sticky top-0 z-30 flex items-center justify-between gap-3 border-b px-4 py-3 backdrop-blur-xl md:hidden"
+          style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
         >
           {/* The society name used to link to Home, which the bottom bar
               already reaches. It opens the rest of the app instead. */}

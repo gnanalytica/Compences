@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../src/lib/auth';
 import { useSeason } from '../../src/lib/events';
 import { useTodoItems } from '../../src/lib/todo';
+import { NavDrawerButton } from '../../src/components/nav-drawer';
 import { NotificationBell } from '../../src/components/notification-bell';
 import { Loading, Screen } from '../../src/components/ui';
 import { fonts, lookColours } from '../../src/lib/theme';
@@ -119,6 +120,9 @@ export default function TabsLayout() {
         headerShadowVisible: false,
         headerTintColor: colors.ink,
         headerTitleStyle: { fontFamily: fonts.serif, fontSize: 18 },
+        // The society name opens the full navigation, as on the web.
+        headerLeft: () => <NavDrawerButton />,
+        headerTitleAlign: 'center',
         // Visible, so the Contribute button can rise above the bar's edge.
         tabBarStyle: {
           backgroundColor: colors.surfaceRaised,
@@ -126,6 +130,9 @@ export default function TabsLayout() {
           overflow: 'visible',
         },
         tabBarLabelStyle: { fontSize: 10.5, fontWeight: '500' },
+        // A bar has a fixed height; scaling its labels with the system font
+        // size is what pushed them out of it.
+        tabBarAllowFontScaling: false,
         // Ink, not colour, for the tab that is open: the colour is the
         // festival's, and it is on the Contribute button.
         tabBarActiveTintColor: colors.ink,
