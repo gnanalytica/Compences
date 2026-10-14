@@ -114,7 +114,10 @@ for (const cut of CUTS) {
 for (const cut of CUTS) {
   await still(cut.cover, join(OUT, `cover-${cut.name}.png`), { play: false });
 }
-await still('CoverPhone', join(OUT, 'compences-thumbnail-portrait.jpg'), { play: true, jpeg: true });
+await still('CoverPhone', join(OUT, 'compences-thumbnail-portrait.jpg'), {
+  play: true,
+  jpeg: true,
+});
 // 1280×720, the size YouTube and most players ask a thumbnail to be.
 await still('CoverWide', join(OUT, 'compences-thumbnail.jpg'), {
   play: true,

@@ -133,7 +133,7 @@ without them.
 | Feature graphic              | Play only, 1024×500                                                | —                                                                                      |
 | App icon                     | Already in `assets/`, 512×512 for Play                             | —                                                                                      |
 | Support URL                  | Both                                                               | A page or an email that is answered                                                    |
-| Marketing URL                | Optional                                                           | `https://compences.com`                                                     |
+| Marketing URL                | Optional                                                           | `https://compences.com`                                                                |
 | Category                     | Play: Lifestyle or House & Home. App Store: Lifestyle              | —                                                                                      |
 | Content rating questionnaire | Play                                                               | Answer honestly: user-generated content, no ads                                        |
 | Age rating                   | Both, 18+                                                          | The Terms require 18+                                                                  |

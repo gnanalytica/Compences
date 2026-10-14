@@ -29,7 +29,8 @@ import { supabase } from './supabase';
 WebBrowser.maybeCompleteAuthSession();
 
 /** The path the OAuth and magic-link redirects come back to; see app/auth-callback.tsx. */
-export const authRedirectUri = () => makeRedirectUri({ scheme: 'compences', path: 'auth-callback' });
+export const authRedirectUri = () =>
+  makeRedirectUri({ scheme: 'compences', path: 'auth-callback' });
 
 const exchanges = new Map<string, Promise<{ error?: string }>>();
 

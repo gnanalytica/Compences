@@ -357,8 +357,8 @@ export function ContributeForm({
               <span className="hidden sm:inline">
                 Copy the UPI ID and the note, and pay from your phone.
               </span>{' '}
-              Put the note in the payment&rsquo;s remark. You pay {upi.payeeName} directly; Compences
-              never handles the money.
+              Put the note in the payment&rsquo;s remark. You pay {upi.payeeName} directly;
+              Compences never handles the money.
             </p>
           </section>
 
