@@ -15,7 +15,7 @@ import {
   setupProgress,
   setupSteps,
   type Festival,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import {
   fetchEvents,

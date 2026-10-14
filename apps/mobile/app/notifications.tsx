@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { relativeTime } from '@samudaya/core';
+import { relativeTime } from '@compences/core';
 import {
   NOTIFICATIONS_KEY,
   UNREAD_KEY,

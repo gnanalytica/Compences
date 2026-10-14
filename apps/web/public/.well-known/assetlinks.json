@@ -3,7 +3,7 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.samudaya.app",
+      "package_name": "com.compences.app",
       "sha256_cert_fingerprints": [
         "DD:34:92:CE:E0:CD:D1:17:08:01:C7:D4:A5:86:CC:C8:3D:7A:00:AB:F8:78:CB:A4:33:81:D9:2B:2C:BD:E5:38"
       ]

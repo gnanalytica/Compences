@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { setMemberUnitMessage, updateMemberRoleSchema, uuid } from '@samudaya/core';
+import { setMemberUnitMessage, updateMemberRoleSchema, uuid } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { EMPTY_STATE, friendlyDbError, type ActionState } from '@/lib/action-state';

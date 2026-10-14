@@ -3,7 +3,7 @@
 import { useActionState, useRef, useState, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Check, ChevronDown, Plus, X } from 'lucide-react';
-import { COPY, DEFAULT_FUND_RULE, formatMoney, FUND_RULES, FUND_RULE_LABEL } from '@samudaya/core';
+import { COPY, DEFAULT_FUND_RULE, formatMoney, FUND_RULES, FUND_RULE_LABEL } from '@compences/core';
 import {
   approximateDateNote,
   FestivalNameField,

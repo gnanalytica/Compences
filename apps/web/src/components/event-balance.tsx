@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { formatMoney, type EventMoney } from '@samudaya/core';
+import { formatMoney, type EventMoney } from '@compences/core';
 import { cn } from '@/lib/utils';
 import { Card, CardBody } from './ui/card';
 import { SpendBar, SpendKey, StatTile, StatTiles } from './badges';

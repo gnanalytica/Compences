@@ -62,7 +62,7 @@ describe('store listings', () => {
   });
 
   it('never promises payment processing, which the app does not do', () => {
-    // The one claim that would be both a rejection and a lie: Samudaya records
+    // The one claim that would be both a rejection and a lie: Compences records
     // a UPI payment somebody made elsewhere. It has no gateway of any kind.
     for (const { name, body } of all) {
       const lower = body.toLowerCase();

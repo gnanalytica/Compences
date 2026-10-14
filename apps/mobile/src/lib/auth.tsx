@@ -4,7 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { makeRedirectUri } from 'expo-auth-session';
 import type { Session, User } from '@supabase/supabase-js';
-import type { Tables } from '@samudaya/supabase';
+import type { Tables } from '@compences/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   canSwitchView,
@@ -12,7 +12,7 @@ import {
   roleForView,
   type MemberRole,
   type ViewMode,
-} from '@samudaya/core';
+} from '@compences/core';
 import { supabase } from './supabase';
 
 /**
@@ -29,7 +29,7 @@ import { supabase } from './supabase';
 WebBrowser.maybeCompleteAuthSession();
 
 /** The path the OAuth and magic-link redirects come back to; see app/auth-callback.tsx. */
-export const authRedirectUri = () => makeRedirectUri({ scheme: 'samudaya', path: 'auth-callback' });
+export const authRedirectUri = () => makeRedirectUri({ scheme: 'compences', path: 'auth-callback' });
 
 const exchanges = new Map<string, Promise<{ error?: string }>>();
 
@@ -86,7 +86,7 @@ type AuthValue = {
 
 const AuthContext = createContext<AuthValue | null>(null);
 
-const VIEW_MODE_STORAGE_KEY = 'samudaya:view-mode';
+const VIEW_MODE_STORAGE_KEY = 'compences:view-mode';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);

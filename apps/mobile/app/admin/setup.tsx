@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { can, setupProgress, setupSteps, type SetupStepId } from '@samudaya/core';
+import { can, setupProgress, setupSteps, type SetupStepId } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
 import { fetchSetupFacts } from '../../src/lib/setup';

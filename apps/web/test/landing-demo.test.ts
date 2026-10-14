@@ -83,8 +83,8 @@ describe('the demo video on the landing page', () => {
   });
 
   it('shows a poster, so the hero is never a black rectangle', () => {
-    expect(player()).toContain('poster="/samudaya-demo-poster.jpg"');
-    expect(existsSync(asset('samudaya-demo-poster.jpg'))).toBe(true);
+    expect(player()).toContain('poster="/compences-demo-poster.jpg"');
+    expect(existsSync(asset('compences-demo-poster.jpg'))).toBe(true);
   });
 
   it('is reachable by somebody who has not signed in', () => {
@@ -102,8 +102,8 @@ describe('the demo video on the landing page', () => {
     expect(pattern).not.toBeNull();
     const matches = (path: string) =>
       new RegExp(`^/((?!${pattern![1].replace(/\\\\/g, '\\')}).*)$`).test(path);
-    expect(matches('/samudaya-demo.mp4')).toBe(false);
-    expect(matches('/samudaya-demo-poster.jpg')).toBe(false);
+    expect(matches('/compences-demo.mp4')).toBe(false);
+    expect(matches('/compences-demo-poster.jpg')).toBe(false);
     // Pages still go through it, or nobody is signed in anywhere.
     expect(matches('/app/shanti-nivas/money')).toBe(true);
   });
@@ -117,7 +117,7 @@ describe('the demo video on the landing page', () => {
     // passed two minutes, and two megabytes across two minutes is about thirty
     // kilobits a second of video: the captions would have smeared. So the rate
     // is what is capped now, deliberately, and the size loosely behind it.
-    const file = asset('samudaya-demo.mp4');
+    const file = asset('compences-demo.mp4');
     expect(existsSync(file)).toBe(true);
     const seconds = mp4Seconds(file);
     expect(seconds).toBeGreaterThan(5);
@@ -126,7 +126,7 @@ describe('the demo video on the landing page', () => {
     // Twice what the paced cut needs. Past this, the length itself changed and
     // somebody should decide whether a video that long belongs on the front page.
     expect(statSync(file).size).toBeLessThan(12 * 1024 * 1024);
-    expect(statSync(asset('samudaya-demo-poster.jpg')).size).toBeLessThan(200 * 1024);
+    expect(statSync(asset('compences-demo-poster.jpg')).size).toBeLessThan(200 * 1024);
   });
 });
 
@@ -137,7 +137,7 @@ describe('what the landing page says', () => {
     const claim = /Under (a|two|three) minutes?/.exec(copy());
     expect(claim, 'the caption should say how long the video is').not.toBeNull();
     const limit = { a: 60, two: 120, three: 180 }[claim![1] as 'a' | 'two' | 'three'];
-    const seconds = mp4Seconds(asset('samudaya-demo.mp4'));
+    const seconds = mp4Seconds(asset('compences-demo.mp4'));
     expect(seconds, `the video runs ${seconds.toFixed(0)} seconds`).toBeLessThan(limit);
   });
 

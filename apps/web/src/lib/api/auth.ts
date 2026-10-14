@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@samudaya/supabase';
-import { readSupabaseEnv } from '@samudaya/supabase';
-import { createAdminSupabase } from '@samudaya/supabase/server';
+import type { Database } from '@compences/supabase';
+import { readSupabaseEnv } from '@compences/supabase';
+import { createAdminSupabase } from '@compences/supabase/server';
 import {
   hasScope,
   keyPrefixOf,
@@ -10,7 +10,7 @@ import {
   parseBearerToken,
   sha256Hex,
   type MemberRole,
-} from '@samudaya/core';
+} from '@compences/core';
 import { getSupabase } from '@/lib/supabase/server';
 
 /**

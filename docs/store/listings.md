@@ -17,7 +17,7 @@ one-star review that is nobody's fault but ours.
 ### play.title — max 30
 
 ```text
-Samudaya: Society Events
+Compences: Society Events
 ```
 
 ### play.short — max 80
@@ -29,7 +29,7 @@ Plan your society's events together, and see every rupee raised and spent.
 ### play.full — max 4000
 
 ```text
-Samudaya is for the people who actually run a residential society's festivals — the ones with the spreadsheet, the WhatsApp group with 214 unread messages, and a shoebox of bills nobody wants to be responsible for.
+Compences is for the people who actually run a residential society's festivals — the ones with the spreadsheet, the WhatsApp group with 214 unread messages, and a shoebox of bills nobody wants to be responsible for.
 
 It is built around the event, not the building. Ganesh Chaturthi, Sports Day, a Diwali cultural evening: each one gets its own checklist, its own fund, its own activities, and its own ledger that every resident can read.
 
@@ -55,11 +55,11 @@ WHO SEES WHAT
 Access is enforced in the database, not just in the app. Nothing crosses between societies. What you contributed is between you and the committee. Your ballot in a poll is yours alone; who voted in favour is public to the society, because a petition with fourteen named supporters is the point of one.
 
 ABOUT PAYMENTS
-Samudaya records payments; it does not process them. You pay from your own UPI app as you always have, then report the transaction ID and the amount that actually left your account. We never see your card number, your UPI PIN or your bank login.
+Compences records payments; it does not process them. You pay from your own UPI app as you always have, then report the transaction ID and the amount that actually left your account. We never see your card number, your UPI PIN or your bank login.
 
 Free to use. No advertising, no analytics, no selling anything to anybody.
 
-Your data is stored in India. You can delete your account, and everything personal attached to it, from inside the app at any time — see samudaya.gnanalytica.com/delete-account.
+Your data is stored in India. You can delete your account, and everything personal attached to it, from inside the app at any time — see compences.com/delete-account.
 ```
 
 ---
@@ -69,7 +69,7 @@ Your data is stored in India. You can delete your account, and everything person
 ### appstore.name — max 30
 
 ```text
-Samudaya: Society Events
+Compences: Society Events
 ```
 
 ### appstore.subtitle — max 30
@@ -81,7 +81,7 @@ Plan events. Show the money.
 ### appstore.promo — max 170
 
 ```text
-Every society festival has a fund and a shoebox of bills. Samudaya gives it a checklist, a ledger every resident can read, and books that actually reconcile.
+Every society festival has a fund and a shoebox of bills. Compences gives it a checklist, a ledger every resident can read, and books that actually reconcile.
 ```
 
 ### appstore.keywords — max 100
@@ -93,7 +93,7 @@ society,apartment,rwa,committee,event,festival,ganesh,diwali,fund,ledger,upi,exp
 ### appstore.description — max 4000
 
 ```text
-Samudaya is for the people who actually run a residential society's festivals — the ones with the spreadsheet, the WhatsApp group with 214 unread messages, and a shoebox of bills nobody wants to be responsible for.
+Compences is for the people who actually run a residential society's festivals — the ones with the spreadsheet, the WhatsApp group with 214 unread messages, and a shoebox of bills nobody wants to be responsible for.
 
 It is built around the event, not the building. Ganesh Chaturthi, Sports Day, a Diwali cultural evening: each one gets its own checklist, its own fund, its own activities, and its own ledger that every resident can read.
 
@@ -115,7 +115,7 @@ Access is enforced in the database itself, not just in the app. Nothing crosses 
 
 ABOUT PAYMENTS
 
-Samudaya records payments; it does not process them. You pay from your own UPI app exactly as you do now, then report the transaction ID and the amount that actually left your account. We never see your card number, your UPI PIN or your bank login.
+Compences records payments; it does not process them. You pay from your own UPI app exactly as you do now, then report the transaction ID and the amount that actually left your account. We never see your card number, your UPI PIN or your bank login.
 
 Free to use. No advertising, no analytics, and nothing sold to anybody. Your data is stored in India, and you can delete your account and everything personal attached to it from inside the app at any time.
 ```
@@ -133,7 +133,7 @@ without them.
 | Feature graphic              | Play only, 1024×500                                                | —                                                                                      |
 | App icon                     | Already in `assets/`, 512×512 for Play                             | —                                                                                      |
 | Support URL                  | Both                                                               | A page or an email that is answered                                                    |
-| Marketing URL                | Optional                                                           | `https://samudaya.gnanalytica.com`                                                     |
+| Marketing URL                | Optional                                                           | `https://compences.com`                                                     |
 | Category                     | Play: Lifestyle or House & Home. App Store: Lifestyle              | —                                                                                      |
 | Content rating questionnaire | Play                                                               | Answer honestly: user-generated content, no ads                                        |
 | Age rating                   | Both, 18+                                                          | The Terms require 18+                                                                  |

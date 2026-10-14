@@ -1,4 +1,4 @@
-import { carriedFromLine, type CarriedInRow } from '@samudaya/core';
+import { carriedFromLine, type CarriedInRow } from '@compences/core';
 import { cn } from '@/lib/utils';
 import { StoredFileLink } from '@/components/bill-link';
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Linking, ScrollView, Share, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
-import { can, joinLink, residentInviteMessage, whatsappShareUrl } from '@samudaya/core';
+import { can, joinLink, residentInviteMessage, whatsappShareUrl } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { SITE_URL } from '../../src/lib/site';
 import {
@@ -42,7 +42,7 @@ export default function ShareCode() {
   const link = joinLink(SITE_URL, code);
   const message = forStaff
     ? [
-        `Join ${activeCommunity.name} on Samudaya as staff.`,
+        `Join ${activeCommunity.name} on Compences as staff.`,
         '',
         `1. Open ${link}`,
         '2. Sign in with Google',

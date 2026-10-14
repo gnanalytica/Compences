@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { motifLayers, motifViewBox, type MotifId, type MotifPaint } from '@samudaya/core';
+import { motifLayers, motifViewBox, type MotifId, type MotifPaint } from '@compences/core';
 import { cn } from '@/lib/utils';
 
 /** How each paint in a motif's data is drawn here. */

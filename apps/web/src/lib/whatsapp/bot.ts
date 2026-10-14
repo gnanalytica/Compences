@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@samudaya/supabase';
+import type { Database } from '@compences/supabase';
 import {
   HELP_TEXT,
   NOT_LINKED_TEXT,
@@ -16,7 +16,7 @@ import {
   type InboundMessage,
   type WhatsAppCommand,
   todayIn,
-} from '@samudaya/core';
+} from '@compences/core';
 
 /**
  * Turns an inbound WhatsApp message into a reply.

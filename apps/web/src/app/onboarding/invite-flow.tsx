@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { CalendarClock, DoorOpen, Home, ShieldCheck } from 'lucide-react';
-import { ROLE_LABEL, formatDate, formatInviteCode, type Role } from '@samudaya/core';
+import { ROLE_LABEL, formatDate, formatInviteCode, type Role } from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/field';

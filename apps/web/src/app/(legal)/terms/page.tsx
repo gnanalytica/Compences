@@ -9,12 +9,12 @@ import { LEGAL } from '@/lib/legal';
 export const metadata: Metadata = {
   title: 'Terms & Conditions',
   description:
-    'The terms for using Samudaya to plan community events, run funds and keep a public ledger — on the web, mobile, WhatsApp and the API.',
+    'The terms for using Compences to plan community events, run funds and keep a public ledger — on the web, mobile, WhatsApp and the API.',
 };
 
 const SECTIONS = [
   { id: 'agreement', title: 'About these terms' },
-  { id: 'the-service', title: 'What Samudaya does' },
+  { id: 'the-service', title: 'What Compences does' },
   { id: 'eligibility', title: 'Eligibility and accounts' },
   { id: 'communities', title: 'Communities and admins' },
   { id: 'money', title: 'Funds, contributions and expenses' },
@@ -56,7 +56,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection id="the-service" title="What Samudaya does">
+      <LegalSection id="the-service" title="What Compences does">
         <p>
           {LEGAL.product} gives residential communities a shared place to plan events — with
           members, announcements, checklists, activities, volunteer roles, polls, event funds and a

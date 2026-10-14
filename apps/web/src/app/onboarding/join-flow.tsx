@@ -3,7 +3,7 @@
 import { useActionState, useMemo, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { ShieldCheck } from 'lucide-react';
-import { COPY } from '@samudaya/core';
+import { COPY } from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import { Field, Input, Select } from '@/components/ui/field';

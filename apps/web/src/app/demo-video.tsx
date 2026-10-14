@@ -35,15 +35,15 @@ export function DemoVideo() {
     <video
       ref={ref}
       className="bg-surface-sunken block aspect-video w-full"
-      src="/samudaya-demo.mp4"
-      poster="/samudaya-demo-poster.jpg"
+      src="/compences-demo.mp4"
+      poster="/compences-demo-poster.jpg"
       controls
       muted
       loop
       playsInline
       preload="metadata"
     >
-      Samudaya, following one contribution the whole way: a resident pays ₹2,001 towards Ganesh
+      Compences, following one contribution the whole way: a resident pays ₹2,001 towards Ganesh
       Chaturthi, someone else confirms it, and it goes on the ledger every resident can see, with a
       name and flat. Then the money out: a bill the person who filed it can&rsquo;t approve,
       spending against the budget, the bank statement reconciled, and the ₹1,100 left over kept for

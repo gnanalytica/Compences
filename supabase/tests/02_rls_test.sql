@@ -1,5 +1,5 @@
 -- ============================================================================
--- Samudaya · RLS and business-rule test suite
+-- Compences · RLS and business-rule test suite
 -- ----------------------------------------------------------------------------
 -- Two societies, several members each. The suite exists to prove the promises
 -- the product makes:

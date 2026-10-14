@@ -4,8 +4,8 @@ import {
   chunk,
   type ExpoPushMessage,
   type NotificationData,
-} from '@samudaya/core';
-import { createAdminSupabase } from '@samudaya/supabase/server';
+} from '@compences/core';
+import { createAdminSupabase } from '@compences/supabase/server';
 
 /**
  * Sends push notifications for notification rows the database has written.

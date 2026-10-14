@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { router, type Href } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { notificationAppRoute, type NotificationData } from '@samudaya/core';
+import { notificationAppRoute, type NotificationData } from '@compences/core';
 import { useAuth } from './auth';
 import { supabase } from './supabase';
 import { TODO_KEY } from './todo';

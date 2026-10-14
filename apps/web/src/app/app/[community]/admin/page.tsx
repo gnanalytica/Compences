@@ -17,7 +17,7 @@ import {
   formatMoney,
   fundBarSegments,
   inTheFund,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { listEvents, getStatsFor } from '@/lib/events';

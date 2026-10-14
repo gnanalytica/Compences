@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { parseViewMode } from '@samudaya/core';
+import { parseViewMode } from '@compences/core';
 import { VIEW_COOKIE, requireCommunity } from '@/lib/auth';
 
 /**

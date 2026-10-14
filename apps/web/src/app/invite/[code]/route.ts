@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { normalizeInviteCode } from '@samudaya/core';
+import { normalizeInviteCode } from '@compences/core';
 import { getSupabase } from '@/lib/supabase/server';
 
 /**

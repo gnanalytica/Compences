@@ -1,4 +1,4 @@
-import type { Festival } from '@samudaya/core';
+import type { Festival } from '@compences/core';
 
 /**
  * Just enough colour science to keep a festival's colours readable.

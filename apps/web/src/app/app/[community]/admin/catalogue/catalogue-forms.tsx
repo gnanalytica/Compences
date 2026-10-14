@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
-import type { CatalogueKind } from '@samudaya/core';
+import type { CatalogueKind } from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { EMPTY_STATE, type ActionState } from '@/lib/action-state';

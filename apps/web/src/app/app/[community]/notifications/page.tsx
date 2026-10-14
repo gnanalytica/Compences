@@ -1,5 +1,5 @@
 import { Bell } from 'lucide-react';
-import { relativeTime } from '@samudaya/core';
+import { relativeTime } from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { PageBody, PageHeader } from '@/components/page-header';

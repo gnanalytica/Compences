@@ -3,7 +3,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as WebBrowser from 'expo-web-browser';
-import { UPLOAD_MIME_TYPES } from '@samudaya/core';
+import { UPLOAD_MIME_TYPES } from '@compences/core';
 import { supabase } from './supabase';
 
 /**

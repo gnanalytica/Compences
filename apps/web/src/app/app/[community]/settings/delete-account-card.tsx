@@ -7,7 +7,7 @@ import {
   DELETE_ACCOUNT_EFFECTS,
   DELETE_ACCOUNT_KEPT,
   isDeleteConfirmed,
-} from '@samudaya/core';
+} from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/field';

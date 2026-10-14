@@ -19,7 +19,7 @@
 }
 
 /*
- * Samudaya design tokens.
+ * Compences design tokens.
  *
  * Semantic names (surface, ink, brand) rather than raw colours, so the whole
  * palette can be retuned in one place and dark mode is a token swap instead of
@@ -69,7 +69,7 @@
 }
 
 /*
- * Samudaya's look: ivory paper, warm ink and a little gold, with the colour
+ * Compences's look: ivory paper, warm ink and a little gold, with the colour
  * left to the festival. Cards are white on ivory rather than grey on white,
  * the one strong colour on a page is whatever the society is celebrating, and
  * the primary button is ink — a festival colour on every button would leave
@@ -134,7 +134,7 @@
   --font-serif: var(--font-fraunces), ui-serif, Georgia, 'Noto Serif', serif;
   /* The front page's display face: the app's serif, with Baloo 2
      (app/_landing/font.ts) behind it for the Devanagari the serif does not
-     draw — "समुदाय" beside "Samudaya". Inline, so the variables are read where
+     draw — "समुदाय" beside "Compences". Inline, so the variables are read where
      they are used; Baloo is only defined on the landing page's root. */
   --font-display:
     var(--font-fraunces), var(--font-baloo, ui-serif), ui-serif, Georgia, 'Noto Serif', serif;

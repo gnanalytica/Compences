@@ -1,4 +1,4 @@
-import type { Enums } from '@samudaya/supabase';
+import type { Enums } from '@compences/supabase';
 
 /**
  * The database enum still carries the retired 'admin' label (Postgres cannot

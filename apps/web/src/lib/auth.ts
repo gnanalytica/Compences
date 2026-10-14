@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import type { User } from '@supabase/supabase-js';
-import type { Tables } from '@samudaya/supabase';
+import type { Tables } from '@compences/supabase';
 import {
   can,
   canSwitchView,
@@ -11,7 +11,7 @@ import {
   type Capability,
   type MemberRole,
   type ViewMode,
-} from '@samudaya/core';
+} from '@compences/core';
 import { getSupabase } from './supabase/server';
 
 /**
@@ -106,7 +106,7 @@ export type CommunityContext = {
 };
 
 /** Remembers a committee member's chosen view across visits and societies. */
-export const VIEW_COOKIE = 'samudaya_view';
+export const VIEW_COOKIE = 'compences_view';
 
 const getViewMode = cache(async (): Promise<ViewMode> => {
   const store = await cookies();

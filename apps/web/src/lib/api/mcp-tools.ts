@@ -4,7 +4,7 @@ import * as resources from './resources';
 import type { Outcome } from './resources';
 
 /**
- * Samudaya exposed as MCP tools.
+ * Compences exposed as MCP tools.
  *
  * Each tool declares the API scope it needs, so an AI agent holding a
  * read-only key sees only the read-only tools — `tools/list` filters on the

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { COPY, TODO_KIND, formatDate, formatMoney, type TodoKind } from '@samudaya/core';
+import { COPY, TODO_KIND, formatDate, formatMoney, type TodoKind } from '@compences/core';
 import { supabase } from '../lib/supabase';
 import { groupTodo, invalidateAfterDecision, type TodoItem } from '../lib/todo';
 import { spacing } from '../lib/theme';

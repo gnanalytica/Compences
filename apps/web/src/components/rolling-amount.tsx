@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { formatMoney } from '@samudaya/core';
+import { formatMoney } from '@compences/core';
 import { cn } from '@/lib/utils';
 
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];

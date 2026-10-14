@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createApiKeySchema, generateApiKey } from '@samudaya/core';
+import { createApiKeySchema, generateApiKey } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getSupabase, createAdminSupabase } from '@/lib/supabase/server';
 import { fieldErrors, friendlyDbError, type ActionState } from '@/lib/action-state';

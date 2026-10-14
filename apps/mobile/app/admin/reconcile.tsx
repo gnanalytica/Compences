@@ -10,7 +10,7 @@ import {
   formatMoney,
   parseStatement,
   relativeTime,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
 import { useCommunityData } from '../../src/lib/use-community-data';
@@ -105,7 +105,7 @@ export default function Reconcile() {
       const failure = accounts.error ?? lines.error ?? summary.error;
       if (failure) {
         console.error(
-          '[samudaya] read failed: reconciliation',
+          '[compences] read failed: reconciliation',
           failure.code,
           failure.message,
           failure.details ?? '',
@@ -463,7 +463,7 @@ function OpenLine({
           </Body>
           <Caption>{line.narration ?? 'No narration'}</Caption>
           {line.reference ? <Caption>UTR {line.reference}</Caption> : null}
-          {/* The payer kept the note Samudaya put on the payment, so the line
+          {/* The payer kept the note Compences put on the payment, so the line
               says which flat sent it — the question this screen is for. */}
           {flatTagIn(line.narration) ? <Body>Names flat {flatTagIn(line.narration)}</Body> : null}
         </View>

@@ -13,7 +13,7 @@
  *     [--ground-floor] [--flats-csv flats.csv] [--upi society@okaxis --payee "Whitecliff RWA"] \
  *     [--dry-run]
  *
- * Committee members must have signed in to Samudaya with Google once, so their
+ * Committee members must have signed in to Compences with Google once, so their
  * account exists; the script lists anyone who has not. The first committee
  * email is recorded as the society's creator. Flats come from --towers/--floors
  * or from a CSV with tower and flat columns (see parseFlatsCsv). A default
@@ -133,7 +133,7 @@ async function main() {
   const missing = committeeEmails.filter((email) => !byEmail.has(email));
   if (missing.length) {
     fail(
-      `These people need to sign in to Samudaya with Google once before the society is created:\n  ${missing.join('\n  ')}`,
+      `These people need to sign in to Compences with Google once before the society is created:\n  ${missing.join('\n  ')}`,
     );
   }
 
@@ -201,7 +201,7 @@ async function main() {
     if (inserted.error) fail(`Society created, but adding flats failed: ${inserted.error.message}`);
   }
 
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://samudaya.gnanalytica.com';
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://compences.com';
   const link = joinLink(site, code);
   console.log(`\n✓ Created “${name}”.`);
   console.log(`  Committee sign in at ${site}/login and finish the setup checklist.`);

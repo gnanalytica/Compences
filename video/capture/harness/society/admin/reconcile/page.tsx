@@ -9,10 +9,10 @@
 //
 // The narrations below are the shapes real banks post, because that is what
 // the parser in packages/core/src/statement.ts was written against: a UTR
-// buried in free text, and the note Samudaya put on the payment carrying the
+// buried in free text, and the note Compences put on the payment carrying the
 // flat through to the statement.
 import { Scale } from 'lucide-react';
-import { formatDate, formatMoney } from '@samudaya/core';
+import { formatDate, formatMoney } from '@compences/core';
 import { StatTile, StatTiles } from '@/components/badges';
 import { PageBody, PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';

@@ -2,7 +2,7 @@
 
 import { useActionState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
-import { AUDIENCE_LABEL } from '@samudaya/core';
+import { AUDIENCE_LABEL } from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';

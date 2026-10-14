@@ -8,7 +8,7 @@ import {
   ROLE_LABEL,
   formatInviteCode,
   unitLabel,
-} from '@samudaya/core';
+} from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';

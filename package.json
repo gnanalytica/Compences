@@ -1,8 +1,8 @@
 {
-  "name": "samudaya",
+  "name": "compences",
   "version": "0.1.0",
   "private": true,
-  "description": "Samudaya \u2014 community & residential society management platform (web, mobile, WhatsApp, AI).",
+  "description": "Compences \u2014 community & residential society management platform (web, mobile, WhatsApp, AI).",
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=22"

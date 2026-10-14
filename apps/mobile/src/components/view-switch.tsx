@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { VIEW_MODE_LABEL, VIEW_MODE_PREVIEW_NOTE } from '@samudaya/core';
+import { VIEW_MODE_LABEL, VIEW_MODE_PREVIEW_NOTE } from '@compences/core';
 import { useAuth } from '../lib/auth';
 import { spacing } from '../lib/theme';
 import { Body, Button, Caption, Card, Heading } from './ui';

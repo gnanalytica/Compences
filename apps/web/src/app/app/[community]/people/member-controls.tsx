@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { ROLE_LABEL, ASSIGNABLE_ROLES, type Role } from '@samudaya/core';
+import { ROLE_LABEL, ASSIGNABLE_ROLES, type Role } from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/field';
 import { EMPTY_STATE, type ActionState } from '@/lib/action-state';

@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { CATALOGUE_KINDS, type CatalogueKind } from '@samudaya/core';
+import { CATALOGUE_KINDS, type CatalogueKind } from '@compences/core';
 import { getSupabase } from './supabase/server';
 
 /**

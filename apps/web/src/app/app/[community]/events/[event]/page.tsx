@@ -27,7 +27,7 @@ import {
   movedOnSummary,
   practiceDatesLine,
   receiptRef,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import {
   budgetVsSpent,

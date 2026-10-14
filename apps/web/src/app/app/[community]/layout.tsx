@@ -10,7 +10,7 @@ import { getSupabase } from '@/lib/supabase/server';
 import { getTodoCount } from '@/lib/todo';
 import { getSeason } from '@/lib/events';
 import { festivalVars } from '@/components/festival';
-import { todayIn } from '@samudaya/core';
+import { todayIn } from '@compences/core';
 
 export default async function CommunityLayout(props: LayoutProps<'/app/[community]'>) {
   const { community: slug } = await props.params;

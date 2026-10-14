@@ -11,7 +11,7 @@ import {
   ledgerTitle,
   relativeTime,
   type LedgerEntry,
-} from '@samudaya/core';
+} from '@compences/core';
 import { StoredFileLink } from '@/components/bill-link';
 
 /** What the Money page reads off one row of society_ledger. */

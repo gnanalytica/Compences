@@ -2,7 +2,7 @@
 // Generated set for the demo video. Copied into apps/web/src/app/zz-demo/ by
 // video/capture/capture.mjs and deleted again when the capture finishes.
 import Link from 'next/link';
-import { festivalFor, formatDate, formatMoney, fundedPercent, inTheFund } from '@samudaya/core';
+import { festivalFor, formatDate, formatMoney, fundedPercent, inTheFund } from '@compences/core';
 import { PageBody, PageHeader } from '@/components/page-header';
 import { festivalVars } from '@/components/festival';
 import { Badge } from '@/components/ui/badge';

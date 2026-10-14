@@ -8,7 +8,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { formatMoney, fundKey, type EventMoney } from '@samudaya/core';
+import { formatMoney, fundKey, type EventMoney } from '@compences/core';
 import { Body, Caption, Card } from './ui';
 import { useReducedMotion } from './motif';
 import { fonts, radius, spacing } from '../lib/theme';

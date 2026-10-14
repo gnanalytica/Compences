@@ -1,5 +1,5 @@
 import { Landmark, Scale } from 'lucide-react';
-import { can, flatTagIn, formatDate, formatMoney, relativeTime } from '@samudaya/core';
+import { can, flatTagIn, formatDate, formatMoney, relativeTime } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { rowsOf } from '@/lib/rows';
@@ -184,7 +184,7 @@ export default async function ReconcilePage(props: PageProps<'/app/[community]/a
                         {line.reference ? (
                           <p className="text-ink mt-0.5 font-mono text-xs">UTR {line.reference}</p>
                         ) : null}
-                        {/* The payer kept the note Samudaya put on the payment,
+                        {/* The payer kept the note Compences put on the payment,
                             so the line says which flat sent it — which is the
                             question this screen exists to answer. */}
                         {flatTagIn(line.narration) ? (

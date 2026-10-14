@@ -13,9 +13,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PGBIN="${PGBIN:-/usr/lib/postgresql/16/bin}"
-PGROOT="${PGROOT:-/var/tmp/samudaya-pg}"
+PGROOT="${PGROOT:-/var/tmp/compences-pg}"
 PGPORT="${PGPORT:-55432}"
-DB="${DB:-samudaya_test}"
+DB="${DB:-compences_test}"
 OWN_SERVER=0
 
 log() { printf '\033[36m%s\033[0m\n' "$*"; }

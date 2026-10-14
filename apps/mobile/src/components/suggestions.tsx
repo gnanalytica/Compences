@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { can } from '@samudaya/core';
+import { can } from '@compences/core';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import type { Tally } from '../lib/events';

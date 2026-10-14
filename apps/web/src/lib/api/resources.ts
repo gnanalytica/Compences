@@ -9,7 +9,7 @@ import {
   normalizeStats,
   suggestActivitySchema,
   updateTaskSchema,
-} from '@samudaya/core';
+} from '@compences/core';
 import type { ApiPrincipal } from './auth';
 
 /**

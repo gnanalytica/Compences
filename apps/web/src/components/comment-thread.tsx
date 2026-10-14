@@ -1,5 +1,5 @@
 import { MessageSquare } from 'lucide-react';
-import { relativeTime, startsTurn, summarizeReactions } from '@samudaya/core';
+import { relativeTime, startsTurn, summarizeReactions } from '@compences/core';
 import { getSupabase } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 import { CommentForm, CommentReactions, DeleteCommentButton } from './comment-forms';

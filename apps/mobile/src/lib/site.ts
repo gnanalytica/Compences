@@ -3,5 +3,5 @@
  * EXPO_PUBLIC_SITE_URL overrides it for staging builds.
  */
 export const SITE_URL = (
-  process.env.EXPO_PUBLIC_SITE_URL ?? 'https://samudaya.gnanalytica.com'
+  process.env.EXPO_PUBLIC_SITE_URL ?? 'https://compences.com'
 ).replace(/\/$/, '');

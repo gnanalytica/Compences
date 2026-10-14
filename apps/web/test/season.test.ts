@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FESTIVAL_CALENDAR, nextFestivalDate } from '@samudaya/core';
+import { FESTIVAL_CALENDAR, nextFestivalDate } from '@compences/core';
 import { season } from '@/lib/season';
 import { contrast, WHITE } from '@/lib/contrast';
 

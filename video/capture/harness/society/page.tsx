@@ -6,7 +6,7 @@
 // first thing anybody sees and the shot the video opens the app on.
 import Link from 'next/link';
 import { CalendarDays, Wallet } from 'lucide-react';
-import { festivalFor, formatDate, formatMoney } from '@samudaya/core';
+import { festivalFor, formatDate, formatMoney } from '@compences/core';
 import { StatTile, StatTiles } from '@/components/badges';
 import { PageBody } from '@/components/page-header';
 import { FestivalHeader, festivalVars } from '@/components/festival';

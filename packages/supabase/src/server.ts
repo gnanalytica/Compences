@@ -5,7 +5,7 @@ import { readServiceRoleKey, readSupabaseEnv } from './env';
 
 /**
  * The subset of Next's cookie store this package needs. Declared structurally
- * so `@samudaya/supabase` does not have to depend on `next`.
+ * so `@compences/supabase` does not have to depend on `next`.
  */
 export type CookieStore = {
   getAll: () => { name: string; value: string }[];

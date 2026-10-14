@@ -6,7 +6,7 @@ import {
   parseStatementDate,
   referenceIn,
   splitCsvLine,
-} from '@samudaya/core';
+} from '@compences/core';
 
 /**
  * Real statement shapes, because a parser tested only against the CSV its

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Plus } from 'lucide-react';
-import { can, type MemberRole } from '@samudaya/core';
+import { can, type MemberRole } from '@compences/core';
 import { cn } from '@/lib/utils';
 import { bottomNavItems, contributeButton, visibleNav, type NavItem } from './nav-items';
 

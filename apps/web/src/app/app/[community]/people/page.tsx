@@ -1,5 +1,5 @@
 import { Send, Users } from 'lucide-react';
-import { ROLE_LABEL, can, normalizeRole, relativeTime } from '@samudaya/core';
+import { ROLE_LABEL, can, normalizeRole, relativeTime } from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { PageBody, PageHeader } from '@/components/page-header';

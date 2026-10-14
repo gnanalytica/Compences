@@ -35,7 +35,7 @@ export function SocietyDetailsForm({
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="slug" value={slug} />
-      <Field label="Society name" htmlFor="soc-name" hint="To change it, ask the Samudaya team.">
+      <Field label="Society name" htmlFor="soc-name" hint="To change it, ask the Compences team.">
         {(control) => <Input {...control} value={name} readOnly disabled />}
       </Field>
       <Field label="Address" htmlFor="soc-address" error={state.fieldErrors?.address} required>

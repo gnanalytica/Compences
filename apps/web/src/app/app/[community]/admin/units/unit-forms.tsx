@@ -2,7 +2,7 @@
 
 import { useActionState, useMemo, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { flatGeneratorSchema, generateFlats, parseFlatsCsv } from '@samudaya/core';
+import { flatGeneratorSchema, generateFlats, parseFlatsCsv } from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { EMPTY_STATE, type ActionState } from '@/lib/action-state';

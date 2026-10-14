@@ -11,7 +11,7 @@ import {
   Vote,
   type LucideIcon,
 } from 'lucide-react';
-import { COPY, type MemberRole } from '@samudaya/core';
+import { COPY, type MemberRole } from '@compences/core';
 import { Card, CardBody } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';

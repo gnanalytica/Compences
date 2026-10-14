@@ -2,7 +2,7 @@
 
 import { useId, useSyncExternalStore } from 'react';
 import { SunMoon } from 'lucide-react';
-import { APPEARANCE_CHOICES, parseAppearance, type AppearanceChoice } from '@samudaya/core';
+import { APPEARANCE_CHOICES, parseAppearance, type AppearanceChoice } from '@compences/core';
 import { APPEARANCE_KEY, CHOSEN_THEME_COLOR_ID, THEME_COLOR } from '@/lib/appearance';
 import { cn } from '@/lib/utils';
 

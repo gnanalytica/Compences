@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { heroGradient, type Festival } from '@samudaya/core';
+import { heroGradient, type Festival } from '@compences/core';
 import { cn } from '@/lib/utils';
 import { Motif } from './motif';
 

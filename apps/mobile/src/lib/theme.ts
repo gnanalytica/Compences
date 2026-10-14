@@ -1,4 +1,4 @@
-import { TOKENS, heroGradient, oklchToHex, type Festival, type Tokens } from '@samudaya/core';
+import { TOKENS, heroGradient, oklchToHex, type Festival, type Tokens } from '@compences/core';
 
 /**
  * The web app's tokens (core/design.ts), converted to the hex React Native can

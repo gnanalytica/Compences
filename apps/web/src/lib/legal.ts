@@ -8,7 +8,7 @@
  */
 export const LEGAL = {
   operator: 'Gnanalytica',
-  product: 'Samudaya',
+  product: 'Compences',
   contactEmail: 'sandeep@gnanalytica.com',
   effectiveDate: '13 September 2026',
   courts: 'Bengaluru, Karnataka',

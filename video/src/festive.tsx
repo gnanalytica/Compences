@@ -4,7 +4,7 @@ import { sec } from './theme';
 /**
  * The app's own festive dressing, redrawn for the video.
  *
- * Samudaya is not a generic SaaS product with a green accent; it re-points its
+ * Compences is not a generic SaaS product with a green accent; it re-points its
  * whole palette per festival and draws a kolam and a toran on every event
  * page. The first cut of this video used plain headers and rendered the entire
  * app in its default green, which is the product with its clothes off.

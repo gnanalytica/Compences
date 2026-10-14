@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Check, Copy, TriangleAlert } from 'lucide-react';
-import { API_SCOPES } from '@samudaya/core';
+import { API_SCOPES } from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';

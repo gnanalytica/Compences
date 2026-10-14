@@ -10,7 +10,7 @@ import {
   formatMoney,
   fundBarSegments,
   inTheFund,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getStatsFor, listEvents } from '@/lib/events';
 import { PageBody, PageHeader } from '@/components/page-header';

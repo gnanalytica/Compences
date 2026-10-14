@@ -13,7 +13,7 @@ export default async function LoginPage(props: { searchParams: Promise<{ next?: 
         <span className="bg-accent text-accent-ink grid size-8 place-items-center rounded-lg text-sm font-bold">
           स
         </span>
-        <span className="font-serif text-lg font-medium tracking-tight">Samudaya</span>
+        <span className="font-serif text-lg font-medium tracking-tight">Compences</span>
       </Link>
 
       <h1 className="font-serif text-3xl font-medium tracking-tight">Sign in</h1>

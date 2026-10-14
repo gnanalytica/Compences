@@ -1,4 +1,4 @@
-import { ROLE_LABEL, type Role } from '@samudaya/core';
+import { ROLE_LABEL, type Role } from '@compences/core';
 
 /** The roles worth filtering by. 'admin' is a legacy spelling of committee. */
 export const ROLE_FILTERS = ['resident', 'staff', 'committee'] as const;

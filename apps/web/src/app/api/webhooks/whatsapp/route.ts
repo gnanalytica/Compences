@@ -1,6 +1,6 @@
-import { extractInboundMessages, verifyWebhookSignature } from '@samudaya/core';
-import type { Json } from '@samudaya/supabase';
-import { createAdminSupabase } from '@samudaya/supabase/server';
+import { extractInboundMessages, verifyWebhookSignature } from '@compences/core';
+import type { Json } from '@compences/supabase';
+import { createAdminSupabase } from '@compences/supabase/server';
 import { readWhatsAppConfig, sendText } from '@/lib/whatsapp/client';
 import { replyTo, resolveSender } from '@/lib/whatsapp/bot';
 

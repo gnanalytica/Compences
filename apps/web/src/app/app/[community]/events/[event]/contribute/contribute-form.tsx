@@ -11,7 +11,7 @@ import {
   unitLabel,
   upiNote,
   upiPayUri,
-} from '@samudaya/core';
+} from '@compences/core';
 import { Button, ButtonLink, buttonClass } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Card, CardBody } from '@/components/ui/card';
@@ -357,7 +357,7 @@ export function ContributeForm({
               <span className="hidden sm:inline">
                 Copy the UPI ID and the note, and pay from your phone.
               </span>{' '}
-              Put the note in the payment&rsquo;s remark. You pay {upi.payeeName} directly; Samudaya
+              Put the note in the payment&rsquo;s remark. You pay {upi.payeeName} directly; Compences
               never handles the money.
             </p>
           </section>

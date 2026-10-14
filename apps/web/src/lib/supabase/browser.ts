@@ -1,7 +1,7 @@
 'use client';
 
 import { createBrowserClient } from '@supabase/ssr';
-import type { Database } from '@samudaya/supabase/types';
+import type { Database } from '@compences/supabase/types';
 
 let cached: ReturnType<typeof createBrowserClient<Database>> | undefined;
 

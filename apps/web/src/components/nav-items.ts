@@ -13,7 +13,7 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
-import { COPY, can, type Capability, type MemberRole } from '@samudaya/core';
+import { COPY, can, type Capability, type MemberRole } from '@compences/core';
 
 export type NavItem = {
   href: string;

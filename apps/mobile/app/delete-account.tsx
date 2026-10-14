@@ -8,7 +8,7 @@ import {
   deleteAccountMessage,
   isAccountDeleted,
   isDeleteConfirmed,
-} from '@samudaya/core';
+} from '@compences/core';
 import { useAuth } from '../src/lib/auth';
 import { supabase } from '../src/lib/supabase';
 import { reportHandled } from '../src/lib/observability';

@@ -1,5 +1,5 @@
 import { Eye } from 'lucide-react';
-import { VIEW_MODE_LABEL, VIEW_MODE_PREVIEW_NOTE, type ViewMode } from '@samudaya/core';
+import { VIEW_MODE_LABEL, VIEW_MODE_PREVIEW_NOTE, type ViewMode } from '@compences/core';
 import { switchView } from '@/app/app/[community]/view-actions';
 import { cn } from '@/lib/utils';
 

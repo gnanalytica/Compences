@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Building2, Clock, KeyRound, RefreshCw, Ticket, XCircle } from 'lucide-react';
-import { relativeTime } from '@samudaya/core';
+import { relativeTime } from '@compences/core';
 import { getMemberships, getProfile, requireUser } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { Card, CardBody } from '@/components/ui/card';
@@ -67,7 +67,7 @@ export default async function OnboardingPage(props: PageProps<'/onboarding'>) {
         <span className="bg-accent text-accent-ink grid size-8 place-items-center rounded-lg text-sm font-bold">
           स
         </span>
-        <span className="text-lg font-semibold tracking-tight">Samudaya</span>
+        <span className="text-lg font-semibold tracking-tight">Compences</span>
       </Link>
 
       {pending ? (
@@ -139,7 +139,7 @@ export default async function OnboardingPage(props: PageProps<'/onboarding'>) {
               </p>
               <CreateFlow />
               <p className="text-ink-muted mt-5 text-center text-sm">
-                Already on Samudaya?{' '}
+                Already on Compences?{' '}
                 <Link href="/onboarding?mode=join" className="text-accent hover:underline">
                   Join with your society code
                 </Link>
@@ -175,7 +175,7 @@ export default async function OnboardingPage(props: PageProps<'/onboarding'>) {
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-semibold tracking-tight">Welcome to Samudaya</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">Welcome to Compences</h1>
               <p className="text-ink-muted mt-1.5 mb-6 text-sm">
                 Your society’s events, and every rupee behind them, in one place.
               </p>

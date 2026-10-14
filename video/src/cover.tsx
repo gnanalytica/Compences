@@ -44,7 +44,7 @@ function duration() {
  */
 const HEADLINE = ['Festival funds,', 'fully accounted for.'];
 const SUB = 'Who paid · who approved · where it went';
-const SITE = 'samudaya.gnanalytica.com';
+const SITE = 'compences.com';
 
 const marigold: CSSProperties = {
   backgroundImage: 'linear-gradient(90deg, oklch(0.88 0.14 88), oklch(0.76 0.17 58))',
@@ -155,7 +155,7 @@ function Brand({ u, stacked = false }: { u: number; stacked?: boolean }) {
           transform: `translateY(${(stacked ? -6 : 8) * u}px)`,
         }}
       >
-        Samudaya
+        Compences
       </span>
     </div>
   );

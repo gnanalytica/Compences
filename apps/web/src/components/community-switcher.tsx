@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Building2, ChevronsUpDown, Plus } from 'lucide-react';
-import { ROLE_LABEL, normalizeRole, type MemberRole } from '@samudaya/core';
+import { ROLE_LABEL, normalizeRole, type MemberRole } from '@compences/core';
 import type { MembershipWithCommunity } from '@/lib/auth';
 
 /**

@@ -15,15 +15,15 @@ export const metadata: Metadata = {
    * a shared privacy policy would unfurl as the front page's pitch. Without
    * them each page falls back to its own title and description.
    */
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://samudaya.gnanalytica.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://compences.com'),
   title: {
-    default: 'Samudaya',
-    template: '%s · Samudaya',
+    default: 'Compences',
+    template: '%s · Compences',
   },
   description:
     'Plan society events together: activities, budgets, contributions and every bill, open to residents on the web and on their phone.',
-  applicationName: 'Samudaya',
-  openGraph: { type: 'website', siteName: 'Samudaya', locale: 'en_IN' },
+  applicationName: 'Compences',
+  openGraph: { type: 'website', siteName: 'Compences', locale: 'en_IN' },
   twitter: { card: 'summary_large_image' },
 };
 

@@ -261,7 +261,7 @@ export function residentInviteMessage({
   link: string;
 }): string {
   return [
-    `Namaste! ${societyName} now plans its events on Samudaya and shows where every rupee goes.`,
+    `Namaste! ${societyName} now plans its events on Compences and shows where every rupee goes.`,
     '',
     `1. Open ${link}`,
     '2. Sign in with Google',

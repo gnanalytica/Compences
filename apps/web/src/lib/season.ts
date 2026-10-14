@@ -7,7 +7,7 @@ import {
   paletteFor,
   searchFestivals,
   todayIn,
-} from '@samudaya/core';
+} from '@compences/core';
 import { legible } from '@/lib/contrast';
 
 /**

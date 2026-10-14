@@ -6,7 +6,7 @@
  * Instead APPEARANCE_SCRIPT reads it in <head> and marks <html> before the
  * first paint, and globals.css does the rest. No mark means System.
  */
-export const APPEARANCE_KEY = 'samudaya-theme';
+export const APPEARANCE_KEY = 'compences-theme';
 
 /**
  * The browser's own toolbar, matched to the app header in each appearance: the

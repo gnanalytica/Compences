@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { createServerSupabase, createAdminSupabase } from '@samudaya/supabase/server';
+import { createServerSupabase, createAdminSupabase } from '@compences/supabase/server';
 
 /**
  * Request-scoped Supabase client for Server Components, Server Actions and

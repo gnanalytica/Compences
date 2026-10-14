@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatDate, joinMessage, normalizeJoinCode, unitLabel } from '@samudaya/core';
+import { formatDate, joinMessage, normalizeJoinCode, unitLabel } from '@compences/core';
 import { useAuth } from '../src/lib/auth';
 import { supabase } from '../src/lib/supabase';
 import {
@@ -36,7 +36,7 @@ type Unit = { id: string; block: string | null; number: string };
  * One way in: the society code the committee shares, plus a few details.
  *
  * Nothing is sent until the details are complete, so staff never see a
- * half-filled request. A join link (samudaya://join/CODE, or ?code=CODE) fills
+ * half-filled request. A join link (compences://join/CODE, or ?code=CODE) fills
  * in the code and looks up the flats straight away. The request then waits for staff or the committee;
  * until they admit it the app shows only this pending screen.
  */
@@ -353,7 +353,7 @@ export default function Join() {
           {step === 'code' && !editing ? (
             <View style={{ gap: spacing.sm }}>
               <Caption>
-                Society not on Samudaya yet? Start it and become its first committee member.
+                Society not on Compences yet? Start it and become its first committee member.
               </Caption>
               <Button
                 label="Start a new society"

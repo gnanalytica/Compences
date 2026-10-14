@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowDown, ArrowLeft, ArrowUp, CheckCircle2 } from 'lucide-react';
-import { CATALOGUE_KINDS, CATALOGUE_KIND_LABEL, can } from '@samudaya/core';
+import { CATALOGUE_KINDS, CATALOGUE_KIND_LABEL, can } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getCatalogue } from '@/lib/catalogue';
 import { PageBody, PageHeader } from '@/components/page-header';

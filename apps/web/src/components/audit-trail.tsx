@@ -1,4 +1,4 @@
-import { auditTrail, hasAuditTrail, relativeTime } from '@samudaya/core';
+import { auditTrail, hasAuditTrail, relativeTime } from '@compences/core';
 
 /**
  * Who approved this, when, and whether anybody has changed it since.
@@ -7,7 +7,7 @@ import { auditTrail, hasAuditTrail, relativeTime } from '@samudaya/core';
  * happens — next to the record itself, rather than in a log somebody has to go
  * and find.
  *
- * The rule about which edits are worth mentioning lives in `@samudaya/core`, so
+ * The rule about which edits are worth mentioning lives in `@compences/core`, so
  * the phone flags the same ones. What is left here is only how to draw them.
  */
 export function AuditTrail({

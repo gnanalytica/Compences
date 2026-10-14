@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { TODO_ORDER, can, type MemberRole, type TodoKind } from '@samudaya/core';
+import { TODO_ORDER, can, type MemberRole, type TodoKind } from '@compences/core';
 import { getSupabase } from './supabase/server';
 
 export type TodoItem = {

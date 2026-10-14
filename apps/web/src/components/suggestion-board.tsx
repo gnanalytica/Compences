@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Lightbulb, ThumbsDown, ThumbsUp, Users } from 'lucide-react';
-import { relativeTime } from '@samudaya/core';
+import { relativeTime } from '@compences/core';
 import type { SuggestionRow } from '@/lib/events';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

@@ -3,7 +3,7 @@
  *
  * The logo arrives as one flat PNG on white — `brand/gnanalytica-logo.png`,
  * exactly as supplied, and the only source of truth here. The sting needs it
- * as two separate pieces: the navy loop, which is what the Samudaya mark flows
+ * as two separate pieces: the navy loop, which is what the Compences mark flows
  * into, and the red rise, which grows out of it afterwards. It also needs both
  * on transparent ground, because the sting begins on the festive dark and a
  * white rectangle would show.

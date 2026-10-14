@@ -107,8 +107,8 @@ describe('what the drawn scenes claim', () => {
   });
 
   it('sends viewers to the address the product actually lives at', () => {
-    // The first closing card said samudaya.app. That is the app's bundle
-    // identifier (com.samudaya.app), not a site — a video that tells a society
+    // The first closing card said compences.app. That is the app's bundle
+    // identifier (com.compences.app), not a site — a video that tells a society
     // to go somewhere that is not ours is worse than one that says nothing.
     const site = /'(https:\/\/[^']+)'/.exec(mobileSite());
     expect(site, 'apps/mobile/src/lib/site.ts has no default site URL').not.toBeNull();
@@ -119,8 +119,8 @@ describe('what the drawn scenes claim', () => {
       ['story.tsx', story()],
       ['screens.tsx', screens()],
     ] as const) {
-      expect(source, `${name} shows samudaya.app as if it were a site`).not.toMatch(
-        /['">]samudaya\.app\b/,
+      expect(source, `${name} shows compences.app as if it were a site`).not.toMatch(
+        /['">]compences\.app\b/,
       );
     }
   });

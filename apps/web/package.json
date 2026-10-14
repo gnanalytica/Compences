@@ -1,5 +1,5 @@
 {
-  "name": "@samudaya/web",
+  "name": "@compences/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@remotion/player": "4.0.527",
-    "@samudaya/core": "workspace:*",
-    "@samudaya/supabase": "workspace:*",
+    "@compences/core": "workspace:*",
+    "@compences/supabase": "workspace:*",
     "@sentry/nextjs": "10.75.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
@@ -29,7 +29,7 @@
     "zod": "^4.6.2"
   },
   "devDependencies": {
-    "@samudaya/config": "workspace:*",
+    "@compences/config": "workspace:*",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22.20.2",
     "@types/qrcode": "^1.5.6",

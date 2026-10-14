@@ -1,5 +1,5 @@
 -- ============================================================================
--- Samudaya · local test harness
+-- Compences · local test harness
 -- ----------------------------------------------------------------------------
 -- Recreates just enough of a Supabase database (auth schema, roles, the
 -- `extensions` schema, auth.uid()) to run the migrations and exercise RLS on a

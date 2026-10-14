@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { can } from '@samudaya/core';
+import { can } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
 import {
@@ -137,7 +137,7 @@ function Form({
               placeholder="560067"
             />
             <Input label="City" value={city} onChangeText={setCity} placeholder="Bengaluru" />
-            <Body muted>Only the Samudaya team can change the society code.</Body>
+            <Body muted>Only the Compences team can change the society code.</Body>
           </Card>
           <ErrorText message={error} />
           <Button label="Save" onPress={() => void save()} loading={busy} />

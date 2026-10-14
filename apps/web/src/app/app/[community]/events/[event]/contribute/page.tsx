@@ -8,7 +8,7 @@ import {
   fundBarSegments,
   inTheFund,
   unitLabel,
-} from '@samudaya/core';
+} from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase/server';
 import { getEventStats, requireEvent } from '@/lib/events';

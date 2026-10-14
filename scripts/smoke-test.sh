@@ -13,7 +13,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PORT="${PORT:-3111}"
 BASE="http://127.0.0.1:$PORT"
-LOG="${TMPDIR:-/tmp}/samudaya-smoke.log"
+LOG="${TMPDIR:-/tmp}/compences-smoke.log"
 
 pass=0
 fail=0
@@ -75,7 +75,7 @@ done
 
 echo "▸ health"
 check "GET /api/health is 200" 200 "$(status "$BASE/api/health")"
-contains "health reports the service name" '"samudaya"' "$(curl -s "$BASE/api/health")"
+contains "health reports the service name" '"compences"' "$(curl -s "$BASE/api/health")"
 
 echo "▸ public pages"
 check "GET / renders the landing page" 200 "$(status "$BASE/")"

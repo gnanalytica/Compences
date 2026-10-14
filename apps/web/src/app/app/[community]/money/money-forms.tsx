@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { formatMoney } from '@samudaya/core';
+import { formatMoney } from '@compences/core';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { FileUpload } from '@/components/file-upload';

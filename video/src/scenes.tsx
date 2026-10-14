@@ -166,7 +166,7 @@ export const SCENES: Record<string, SceneSpec> = {
     id: 'open',
     hold: sec(3.5),
     node: (hold) => (
-      <Bookend headline="Samudaya" sub="Your society's festivals, in the open." hold={hold} />
+      <Bookend headline="Compences" sub="Your society's festivals, in the open." hold={hold} />
     ),
   },
 
@@ -454,7 +454,7 @@ export const SCENES: Record<string, SceneSpec> = {
     id: 'close',
     hold: sec(4.5),
     node: (hold) => (
-      <Bookend headline="Samudaya" sub="Nothing hidden. Nothing to chase." hold={hold} />
+      <Bookend headline="Compences" sub="Nothing hidden. Nothing to chase." hold={hold} />
     ),
   },
 };

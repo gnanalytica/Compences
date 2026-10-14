@@ -10,7 +10,7 @@ import {
   Vote,
   Wallet,
 } from 'lucide-react';
-import { todayIn } from '@samudaya/core';
+import { todayIn } from '@compences/core';
 import { ButtonLink } from '@/components/ui/button';
 import { festivalVars } from '@/components/festival';
 import { Motif } from '@/components/motif';
@@ -206,7 +206,7 @@ export default async function LandingPage(props: PageProps<'/'>) {
               <span className="from-accent to-ribbon text-accent-ink font-display grid size-9 place-items-center rounded-xl bg-linear-to-br text-lg font-bold shadow-sm">
                 स
               </span>
-              <span className="font-display text-xl font-semibold tracking-tight">Samudaya</span>
+              <span className="font-display text-xl font-semibold tracking-tight">Compences</span>
             </Link>
             <nav aria-label="On this page" className="hidden items-center gap-6 text-sm lg:flex">
               <a href="#try" className="text-ink-muted hover:text-ink">
@@ -371,7 +371,7 @@ export default async function LandingPage(props: PageProps<'/'>) {
                 <Kicker>Dressed for the occasion</Kicker>
                 <SectionTitle id="festivals">Every festival, in its own colours</SectionTitle>
                 <p className="text-ink-muted mt-3 max-w-2xl text-pretty">
-                  Start an event and pick from the festivals coming up. Samudaya fills in the name
+                  Start an event and pick from the festivals coming up. Compences fills in the name
                   and a date, and the event takes that festival&rsquo;s colours. If the date moves
                   each year, it reminds you to check before you publish.
                 </p>
@@ -457,7 +457,7 @@ export default async function LandingPage(props: PageProps<'/'>) {
         <footer className="bg-[var(--festival-wash)]">
           <SeasonTrim id="garland-foot" />
           <div className="text-ink-muted mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 pt-6 pb-10 text-sm">
-            <span className="font-display text-ink font-semibold">Samudaya</span>
+            <span className="font-display text-ink font-semibold">Compences</span>
             <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
               <Link href="/privacy" className="underline underline-offset-4">
                 Privacy Policy

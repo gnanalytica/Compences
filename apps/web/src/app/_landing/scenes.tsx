@@ -7,7 +7,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
-import { formatMoney } from '@samudaya/core';
+import { formatMoney } from '@compences/core';
 import { cn } from '@/lib/utils';
 
 /**

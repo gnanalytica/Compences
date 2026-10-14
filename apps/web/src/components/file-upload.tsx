@@ -2,7 +2,7 @@
 
 import { useId, useState } from 'react';
 import { CheckCircle2, Loader2, Paperclip, X } from 'lucide-react';
-import { safeFileName, UPLOAD_MIME_TYPES } from '@samudaya/core';
+import { safeFileName, UPLOAD_MIME_TYPES } from '@compences/core';
 import { getBrowserSupabase } from '@/lib/supabase/browser';
 
 type Status =

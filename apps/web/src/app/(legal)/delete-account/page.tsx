@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { DELETE_ACCOUNT_EFFECTS, DELETE_ACCOUNT_KEPT } from '@samudaya/core';
+import { DELETE_ACCOUNT_EFFECTS, DELETE_ACCOUNT_KEPT } from '@compences/core';
 import { ContactLink, LegalDocument, LegalList, LegalSection, Strong } from '@/components/legal';
 import { LEGAL } from '@/lib/legal';
 
@@ -13,7 +13,7 @@ import { LEGAL } from '@/lib/legal';
 export const metadata: Metadata = {
   title: 'Delete your account',
   description:
-    'How to delete your Samudaya account and the data attached to it, in the app or by email.',
+    'How to delete your Compences account and the data attached to it, in the app or by email.',
 };
 
 const SECTIONS = [

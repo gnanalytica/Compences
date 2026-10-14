@@ -10,7 +10,7 @@ import { LEGAL } from '@/lib/legal';
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'How Samudaya collects, uses, shares and protects personal data, and the rights you have under India’s Digital Personal Data Protection Act, 2023.',
+    'How Compences collects, uses, shares and protects personal data, and the rights you have under India’s Digital Personal Data Protection Act, 2023.',
 };
 
 const SECTIONS = [
