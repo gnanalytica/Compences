@@ -127,7 +127,7 @@ export function MobileNavSheet({
           context you are in, not to the page. */}
       {open
         ? createPortal(
-            <div className="fixed inset-0 z-50 md:hidden">
+            <div className="fixed inset-x-0 top-0 z-50 h-dvh md:hidden">
               {/* The scrim is a button so a tap anywhere outside closes the sheet,
               which is the gesture everybody tries first. */}
               <button
@@ -142,9 +142,12 @@ export function MobileNavSheet({
                 role="dialog"
                 aria-modal="true"
                 aria-label="Navigation"
-                className="border-border-base bg-surface-raised absolute inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col border-r shadow-xl outline-none"
+                className="border-border-base bg-surface-raised absolute inset-y-0 left-0 flex h-full w-[min(20rem,88vw)] flex-col border-r shadow-xl outline-none"
               >
-                <div className="border-border-base flex items-center justify-between gap-2 border-b px-3 py-2">
+                <div
+                  className="border-border-base flex items-center justify-between gap-2 border-b px-3 py-2"
+                  style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
+                >
                   <p className="text-ink-subtle truncate px-1 text-xs font-medium tracking-wide uppercase">
                     {societyName}
                   </p>
@@ -158,7 +161,7 @@ export function MobileNavSheet({
                   </button>
                 </div>
                 <div
-                  className="flex-1 space-y-4 overflow-y-auto px-3 py-3"
+                  className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-3 py-3"
                   style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}
                 >
                   {children}
