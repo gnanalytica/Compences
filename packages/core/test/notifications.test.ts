@@ -40,7 +40,7 @@ describe('notification targets', () => {
 describe('push messages', () => {
   it('builds one message per valid Expo token with the notification id', () => {
     const messages = buildPushMessages(
-      { id: 'n1', title: 'Payment confirmed: ₹2,001', body: null, data: { screen: 'event' } },
+      { id: 'n1', title: 'Receipt confirmed: ₹2,001', body: null, data: { screen: 'event' } },
       ['ExpoPushToken[abc]', 'not-a-token', 'ExponentPushToken[def]'],
     );
     expect(messages).toHaveLength(2);

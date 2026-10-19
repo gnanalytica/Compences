@@ -6,6 +6,10 @@ describe('shared copy', () => {
     expect(new Set(TODO_ORDER)).toEqual(new Set(Object.keys(TODO_KIND)));
   });
 
+  it('calls money in a receipt, keeping the kind identifier', () => {
+    expect(TODO_KIND.payment_to_confirm.section).toBe('Receipts to confirm');
+  });
+
   it('has four event tabs', () => {
     expect(EVENT_TABS.map((tab) => tab.id)).toEqual(['about', 'money', 'activities', 'vote']);
   });
