@@ -69,7 +69,6 @@ export const FUND_RULES: FundRule[] = [
   'donate',
 ];
 
-export type BudgetLineSeed = { name: string; amount: number };
 /**
  * The emoji a campaign carries into the WhatsApp bot's messages. The apps show
  * none: a campaign wears its colours and a line drawing instead.
@@ -78,16 +77,6 @@ export const CAMPAIGN_EMOJI = '🤝';
 
 export type ActivitySeed = { name: string; emoji: string };
 export type VolunteerRoleSeed = { name: string; emoji: string; target: number };
-
-/** The budget lines the creation wizard starts from. Editable, not fixed. */
-export const DEFAULT_BUDGET_LINES: BudgetLineSeed[] = [
-  { name: 'Decoration', amount: 30000 },
-  { name: 'Food', amount: 40000 },
-  { name: 'Sound', amount: 15000 },
-  { name: 'Pooja materials', amount: 10000 },
-  { name: 'Cultural program', amount: 20000 },
-  { name: 'Miscellaneous', amount: 15000 },
-];
 
 /**
  * Requirements toggled in the wizard, and the checklist each one seeds. This
@@ -397,4 +386,35 @@ export function surplus(raised: number, spent: number): number {
 
 export function volunteersStillNeeded(target: number, signedUp: number): number {
   return Math.max(0, target - signedUp);
+}
+
+/**
+ * A budget line is Type + Vendor + Amount, and a bill is paid out of one. What
+ * it has left comes from public.budget_line_balances: its plan minus the
+ * approved bills against it. Bills still waiting are `pending`, shown beside
+ * it but not taken off until a committee member approves them.
+ */
+export type BudgetLineBalance = {
+  id: string;
+  category: string;
+  vendor: string | null;
+  planned: number;
+  approved: number;
+  pending: number;
+  remaining: number;
+};
+
+/** "Food · Tesla", or just "Food" for a line with no vendor. */
+export function budgetLineLabel(line: { category: string; vendor?: string | null }): string {
+  const vendor = line.vendor?.trim();
+  return vendor ? `${line.category.trim()} · ${vendor}` : line.category.trim();
+}
+
+/**
+ * How far a bill would take a line past what it has left, or 0. The form warns
+ * about it and the committee sees it when approving; neither blocks, because
+ * real spending sometimes goes over and the ledger should say so.
+ */
+export function overLineBy(remaining: number, amount: number): number {
+  return Math.max(0, amount - remaining);
 }

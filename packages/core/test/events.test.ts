@@ -254,3 +254,19 @@ describe('eventMoney', () => {
     );
   });
 });
+
+describe('budget lines', () => {
+  it('labels a line with its vendor, or without one', async () => {
+    const { budgetLineLabel } = await import('../src/events');
+    expect(budgetLineLabel({ category: 'Food', vendor: 'Tesla' })).toBe('Food · Tesla');
+    expect(budgetLineLabel({ category: ' Food ', vendor: null })).toBe('Food');
+    expect(budgetLineLabel({ category: 'Food', vendor: '  ' })).toBe('Food');
+  });
+
+  it('says how far a bill goes past what a line has left', async () => {
+    const { overLineBy } = await import('../src/events');
+    expect(overLineBy(400000, 200000)).toBe(0);
+    expect(overLineBy(400000, 400000)).toBe(0);
+    expect(overLineBy(100000, 250000)).toBe(150000);
+  });
+});
