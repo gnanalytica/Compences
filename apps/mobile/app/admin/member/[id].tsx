@@ -256,8 +256,8 @@ function MemberEditor({
             <Heading>Flat</Heading>
             <Body muted>
               {seated
-                ? `Listed at ${seated}. Past payments stay with the old flat if you move them.`
-                : 'Not listed at any flat. Their payments show no flat.'}
+                ? `Listed at ${seated}. Past receipts stay with the old flat if you move them.`
+                : 'Not listed at any flat. Their receipts show no flat.'}
             </Body>
             <Input
               label="Find a flat"
@@ -299,7 +299,7 @@ function MemberEditor({
                 onPress={() =>
                   Alert.alert(
                     `Take ${name} out of ${seated}?`,
-                    'Past payments stay with this flat.',
+                    'Past receipts stay with this flat.',
                     [
                       { text: 'Cancel', style: 'cancel' },
                       { text: 'Take out', onPress: () => void saveFlat(null) },

@@ -17,6 +17,7 @@ import {
   SURPLUS_ANSWERS,
   SURPLUS_ANSWER_DETAIL,
   SURPLUS_ANSWER_LABEL,
+  budgetLineLabel,
   can,
   createActivitySchema,
   eventMoney,
@@ -51,13 +52,13 @@ import {
   Title,
 } from '../../../src/components/ui';
 import { Chip, ChipRow, ErrorText } from '../../../src/components/admin-ui';
-import { CataloguePicker } from '../../../src/components/catalogue-ui';
+import { SuggestInput } from '../../../src/components/catalogue-ui';
 import { DateField } from '../../../src/components/date-field';
 import {
   ActivityTypeChips,
+  budgetLineRows,
   DetailsFields,
   validateDetails,
-  type Choice,
   type EventDetails,
 } from '../../../src/components/event-form';
 import { spacing } from '../../../src/lib/theme';
@@ -75,7 +76,7 @@ async function loadEvent(communityId: string, slug: string) {
   const [budget, activities, openBills, stats, eventType, openEvents, society] = await Promise.all([
     supabase
       .from('budget_lines')
-      .select('id, category, category_id, amount, position')
+      .select('id, category, category_id, vendor, vendor_id, amount, position')
       .eq('event_id', event.id)
       .order('position'),
     // Who registered, and who registered them, as the web's organiser page lists them.
@@ -443,11 +444,12 @@ async function syncFundTarget(eventId: string) {
 }
 
 function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) {
-  const { activeCommunity } = useAuth();
+  const { activeCommunity, user } = useAuth();
   const invalidate = useInvalidate(onChange);
   const currency = activeCommunity?.currency ?? 'INR';
   const { event } = data;
-  const [category, setCategory] = useState<Choice>({ id: null, label: null });
+  const [category, setCategory] = useState('');
+  const [vendor, setVendor] = useState('');
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -456,8 +458,8 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
 
   const add = async () => {
     const value = Number.parseFloat(amount.replace(/[^0-9.]/g, ''));
-    if (!category.label) {
-      setError('Pick a category.');
+    if (!category.trim()) {
+      setError('Enter the type, like Food or Sound.');
       return;
     }
     if (!Number.isFinite(value) || value <= 0) {
@@ -467,14 +469,14 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
     if (!activeCommunity) return;
     setBusy('add');
     setError(null);
-    const { error: insertError } = await supabase.from('budget_lines').insert({
-      event_id: event.id,
-      community_id: activeCommunity.id,
-      category: category.label,
-      category_id: category.id,
-      amount: value,
-      position: data.budget.length,
-    });
+    const rows = await budgetLineRows(
+      [{ key: 'new', category, vendor, amount }],
+      event.id,
+      activeCommunity.id,
+      user?.id ?? null,
+      data.budget.length,
+    );
+    const { error: insertError } = await supabase.from('budget_lines').insert(rows);
     if (insertError) {
       setBusy(null);
       setError(insertError.message);
@@ -482,7 +484,8 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
     }
     await syncFundTarget(event.id);
     setBusy(null);
-    setCategory({ id: null, label: null });
+    setCategory('');
+    setVendor('');
     setAmount('');
     await invalidate();
   };
@@ -509,7 +512,7 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
             style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}
           >
             <View style={{ flex: 1 }}>
-              <Body>{line.category}</Body>
+              <Body>{budgetLineLabel(line)}</Body>
               <Caption>{formatMoney(Number(line.amount), currency)}</Caption>
             </View>
             {!locked ? (
@@ -529,19 +532,26 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
       )}
       {!locked ? (
         <View style={{ gap: spacing.sm }}>
-          <CataloguePicker
+          <SuggestInput
             kind="budget_category"
-            label="Add a line"
-            valueId={category.id}
-            valueLabel={category.label}
-            onChange={setCategory}
+            label="Type"
+            value={category}
+            onChangeText={setCategory}
+            placeholder="Food"
+          />
+          <SuggestInput
+            kind="vendor"
+            label="Vendor"
+            value={vendor}
+            onChangeText={setVendor}
+            placeholder="Tesla"
           />
           <Input
             label={`Amount (${currency})`}
             value={amount}
             onChangeText={setAmount}
             keyboardType="decimal-pad"
-            placeholder="25000"
+            placeholder="600000"
           />
           <ErrorText message={error} />
           <Button
@@ -550,7 +560,7 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
             onPress={() => void add()}
             loading={busy === 'add'}
           />
-          <Caption>The fund target updates to the sum of the lines.</Caption>
+          <Caption>The overall budget is the sum of the lines.</Caption>
         </View>
       ) : null}
     </Card>

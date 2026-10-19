@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  LEDGER_FILTERS,
   SOCIETY_BALANCE_LEDGER,
   UNPUBLISHED_EVENT,
   can,
@@ -59,13 +58,19 @@ import { useTheme } from '../../src/lib/use-theme';
  * @compences/core, so the two surfaces cannot drift into disagreeing about what
  * "money in" means.
  *
- * Money in names the payer, their flat and how they paid; money out names the
+ * A receipt names the payer, their flat and how they paid; a payment names the
  * vendor — the line society_ledger draws. Payments nobody has confirmed are not
  * here. Nothing on this screen is a way to contact anybody; RLS decides what
  * comes back, so a resident gets the resident's ledger without this screen
  * deciding anything — including which rows offer their evidence, since the view
  * hands a payment screenshot only to the payer and to staff.
  */
+const DIRECTIONS = [
+  { id: 'all', label: 'Both' },
+  { id: 'in', label: 'Receipts' },
+  { id: 'out', label: 'Payments' },
+] as const;
+
 const MONEY_VIEWS = [
   { id: 'society', label: 'Society' },
   { id: 'mine', label: 'My contributions' },
@@ -191,8 +196,11 @@ function SocietyMoney() {
   const router = useRouter();
   const { colors } = useTheme();
   const { activeCommunity, role } = useAuth();
-  const [direction, setDirection] = useState<string>('all');
+  // Receipts are money in, Payments money out; both by default.
+  const [direction, setDirection] = useState<'all' | 'in' | 'out'>('all');
   const [eventSlug, setEventSlug] = useState('');
+  const [eventType, setEventType] = useState('');
+  const [vendor, setVendor] = useState('');
 
   const currency = activeCommunity?.currency ?? 'INR';
 
@@ -235,7 +243,7 @@ function SocietyMoney() {
           .eq('community_id', communityId),
         supabase
           .from('events')
-          .select('id, name, emoji, slug, status')
+          .select('id, name, emoji, slug, status, event_type:catalogue_items!event_type_id(label)')
           .eq('community_id', communityId)
           .limit(500),
       ]);
@@ -293,7 +301,20 @@ function SocietyMoney() {
 
   const rows = data?.rows ?? [];
   const totals = data?.totals ?? null;
-  const visible = filterLedger(rows, ledgerFilterFrom(direction), eventSlug);
+  // Which type each event is, so the type filter can read it off a ledger row.
+  const typeOfEvent = new Map(
+    (data?.eventNames ?? []).map((row) => [row.id, row.event_type?.label ?? null]),
+  );
+  const eventTypes = [...new Set([...typeOfEvent.values()].filter(Boolean) as string[])].sort();
+  // Only money out has a vendor: a receipt names a payer, not a vendor.
+  const isPayment = (row: (typeof rows)[number]) => row.direction === 'out' && !isTransfer(row);
+  const vendors = [
+    ...new Set(rows.filter(isPayment).flatMap((row) => (row.counterpart ? [row.counterpart] : []))),
+  ].sort((a, b) => a.localeCompare(b));
+  const visible = filterLedger(rows, ledgerFilterFrom(direction), eventSlug)
+    .filter((row) => !eventType || (row.event_id && typeOfEvent.get(row.event_id) === eventType))
+    .filter((row) => !vendor || (isPayment(row) && row.counterpart === vendor));
+  const narrowed = Boolean(eventType || vendor || direction !== 'all');
   const balance = Number(totals?.balance ?? 0);
   const heldBySociety = Number(data?.society?.balance ?? 0);
   const movements = data?.movements ?? [];
@@ -308,7 +329,7 @@ function SocietyMoney() {
   // event's figures come from its own numbers, not the rows on screen, which
   // stop at the newest 500; the society balance's rows are few. Same as the web.
   const scopeTotals = (() => {
-    if (!scope || direction !== 'all') return null;
+    if (!scope || narrowed) return null;
     if (eventSlug === SOCIETY_BALANCE_LEDGER) return ledgerTotals(visible);
     const id = (data?.eventNames ?? []).find((row) => row.slug === eventSlug)?.id;
     const stats = (data?.eventStats ?? []).find((row) => row.event_id === id);
@@ -319,6 +340,25 @@ function SocietyMoney() {
       left: Number(stats.available ?? 0),
     };
   })();
+  // What the rows on screen add up to. Unfiltered it is the society's own
+  // totals; narrowed by a type or vendor it is summed from the rows, which stop
+  // at the newest 500.
+  const shown = (() => {
+    if (scopeTotals) return { received: scopeTotals.in, paid: scopeTotals.out };
+    if (!narrowed && !scope) {
+      return { received: Number(totals?.total_in ?? 0), paid: Number(totals?.total_out ?? 0) };
+    }
+    let received = 0;
+    let paid = 0;
+    for (const row of visible) {
+      const amount = Math.abs(Number(row.amount ?? 0));
+      if (row.direction === 'in') received += amount;
+      else paid += amount;
+    }
+    return { received, paid };
+  })();
+  const shownBalance = shown.received - shown.paid;
+  const filtering = narrowed || Boolean(scope);
 
   return (
     <Screen>
@@ -341,7 +381,7 @@ function SocietyMoney() {
                   textTransform: 'uppercase',
                 }}
               >
-                Balance
+                Overall balance
               </Text>
               <Amount
                 value={balance}
@@ -350,8 +390,8 @@ function SocietyMoney() {
                 style={balance < 0 ? { color: colors.danger } : undefined}
               />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.xl }}>
-                <Caption>Collected {formatMoney(totals?.total_in ?? 0, currency)}</Caption>
-                <Caption>Spent {formatMoney(totals?.total_out ?? 0, currency)}</Caption>
+                <Caption>Received {formatMoney(totals?.total_in ?? 0, currency)}</Caption>
+                <Caption>Paid out {formatMoney(totals?.total_out ?? 0, currency)}</Caption>
               </View>
             </Card>
 
@@ -446,67 +486,116 @@ function SocietyMoney() {
               </Card>
             ) : null}
 
-            <ChipRow>
-              {LEDGER_FILTERS.map((option) => (
-                <Chip
-                  key={option.value}
-                  label={option.label}
-                  selected={direction === option.value}
-                  onPress={() => setDirection(option.value)}
-                />
-              ))}
-            </ChipRow>
+            {/* The filters, and only these: the kind of event, the vendor, and
+                whether to read the money coming in (Receipts) or going out
+                (Payments). */}
+            <Segmented
+              options={DIRECTIONS}
+              value={direction}
+              onChange={(next) => {
+                setDirection(next);
+                // A receipt has no vendor, so a vendor cannot stay chosen
+                // while only receipts are showing.
+                if (next === 'in') setVendor('');
+              }}
+            />
+
+            {eventTypes.length ? (
+              <View style={{ gap: spacing.xs }}>
+                <Caption>Event type</Caption>
+                <ChipRow>
+                  <Chip
+                    label="All types"
+                    selected={eventType === ''}
+                    onPress={() => setEventType('')}
+                  />
+                  {eventTypes.map((type) => (
+                    <Chip
+                      key={type}
+                      label={type}
+                      selected={eventType === type}
+                      onPress={() => setEventType(type)}
+                    />
+                  ))}
+                </ChipRow>
+              </View>
+            ) : null}
+
+            {vendors.length && direction !== 'in' ? (
+              <View style={{ gap: spacing.xs }}>
+                <Caption>Vendor</Caption>
+                <ChipRow>
+                  <Chip
+                    label="All vendors"
+                    selected={vendor === ''}
+                    onPress={() => setVendor('')}
+                  />
+                  {vendors.map((name) => (
+                    <Chip
+                      key={name}
+                      label={name}
+                      selected={vendor === name}
+                      onPress={() => setVendor(name)}
+                    />
+                  ))}
+                </ChipRow>
+              </View>
+            ) : null}
 
             {scopes.length ? (
-              <ChipRow>
-                <Chip
-                  label="Every event"
-                  selected={eventSlug === ''}
-                  onPress={() => setEventSlug('')}
-                />
-                {scopes.map((option) => (
+              <View style={{ gap: spacing.xs }}>
+                <Caption>Event</Caption>
+                <ChipRow>
                   <Chip
-                    key={option.value}
-                    label={option.label}
-                    selected={eventSlug === option.value}
-                    onPress={() => setEventSlug(option.value)}
+                    label="Every event"
+                    selected={eventSlug === ''}
+                    onPress={() => setEventSlug('')}
                   />
-                ))}
-              </ChipRow>
+                  {scopes.map((option) => (
+                    <Chip
+                      key={option.value}
+                      label={option.label}
+                      selected={eventSlug === option.value}
+                      onPress={() => setEventSlug(option.value)}
+                    />
+                  ))}
+                </ChipRow>
+              </View>
             ) : null}
 
-            {/* What the narrowed ledger adds up to: in, out, and what is left
-                in that event or kept by the society. */}
-            {scope && scopeTotals ? (
-              <Card style={{ gap: 4 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Caption>Money in</Caption>
-                  <Caption>+{formatMoney(scopeTotals.in, currency)}</Caption>
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Caption>Money out</Caption>
-                  <Caption>−{formatMoney(scopeTotals.out, currency)}</Caption>
-                </View>
-                <View
-                  style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md }}
-                >
-                  <Text style={{ color: colors.ink, fontSize: 14, fontWeight: '700', flex: 1 }}>
-                    {eventSlug === SOCIETY_BALANCE_LEDGER
+            {/* What the current filter adds up to: received, paid out and the
+                balance between them. */}
+            <Card style={{ gap: 4 }}>
+              <Caption>{filtering ? 'For this filter' : 'Everything'}</Caption>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Caption>Received</Caption>
+                <Caption>+{formatMoney(shown.received, currency)}</Caption>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Caption>Paid out</Caption>
+                <Caption>−{formatMoney(shown.paid, currency)}</Caption>
+              </View>
+              <View
+                style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md }}
+              >
+                <Text style={{ color: colors.ink, fontSize: 14, fontWeight: '700', flex: 1 }}>
+                  {scope && !narrowed
+                    ? eventSlug === SOCIETY_BALANCE_LEDGER
                       ? 'Kept for the society'
-                      : `Left in ${scope.label}`}
-                  </Text>
-                  <Text
-                    style={{
-                      color: scopeTotals.left < 0 ? colors.danger : colors.ink,
-                      fontSize: 14,
-                      fontWeight: '700',
-                    }}
-                  >
-                    {formatMoney(scopeTotals.left, currency)}
-                  </Text>
-                </View>
-              </Card>
-            ) : null}
+                      : `Left in ${scope.label}`
+                    : 'Balance'}
+                </Text>
+                <Text
+                  style={{
+                    color: shownBalance < 0 ? colors.danger : colors.ink,
+                    fontSize: 14,
+                    fontWeight: '700',
+                  }}
+                >
+                  {formatMoney(shownBalance, currency)}
+                </Text>
+              </View>
+            </Card>
 
             {/* Staff and the committee spend the society's own balance from
                 here: a repair, damage, anything that is not an event's. */}
@@ -519,9 +608,9 @@ function SocietyMoney() {
             ) : null}
 
             <Caption>
-              Confirmed payments in; approved bills and the society&rsquo;s own spending out.
-              Payments show here once confirmed. Pick an event to see the money the committee moved
-              in or out of it too.
+              Receipts are confirmed money in; payments are approved bills and the society&rsquo;s
+              own spending out. Receipts show here once confirmed. Pick an event to see the money
+              the committee moved in or out of it too.
             </Caption>
           </View>
         }
@@ -531,14 +620,14 @@ function SocietyMoney() {
             description={
               rows.length
                 ? 'Try a different filter.'
-                : 'Confirmed payments and approved bills will show up here.'
+                : 'Confirmed receipts and approved bills will show up here.'
             }
           />
         }
         ListFooterComponent={
           <View style={{ gap: spacing.xs, paddingTop: spacing.lg }}>
             <Caption>
-              Money in shows who paid, their flat and how. Money out shows the vendor, who approved
+              A receipt shows who paid, their flat and how. A payment shows the vendor, who approved
               it and the bill, which anyone can open. Only the payer and staff can open a payment
               screenshot. No contact details are shown here.
             </Caption>

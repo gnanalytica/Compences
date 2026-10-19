@@ -20,7 +20,7 @@ import { AppearanceCard } from '../../src/components/appearance-card';
 import { useUnreadCount } from '../../src/lib/notifications';
 import { minTapTarget, spacing } from '../../src/lib/theme';
 
-/** Profile, registrations, notifications, societies, sign out. Payments are under Money. */
+/** Profile, registrations, notifications, societies, sign out. Receipts are under Money. */
 export default function Me() {
   const router = useRouter();
   const {
@@ -79,7 +79,7 @@ export default function Me() {
         <Card style={{ gap: spacing.xs }}>
           <LinkRow
             label={unread ? `Notifications (${unread} unread)` : 'Notifications'}
-            detail="Join requests, payments, bills and new events"
+            detail="Join requests, receipts, bills and new events"
             onPress={() => router.push('/notifications')}
           />
           {moneyOnTheBar ? null : (

@@ -52,8 +52,8 @@ const COPY: Record<Role, Copy> = {
         detail: 'Photograph each bill, pick its category and vendor, and fix any sent back.',
       },
       {
-        title: 'Confirm payments',
-        detail: 'Match reported UPI payments with the bank statement; record cash.',
+        title: 'Confirm receipts',
+        detail: 'Match reported UPI receipts with the bank statement; record cash.',
       },
       { title: 'Keep the catalogue tidy', detail: 'Categories, venues and vendors events use.' },
     ],
