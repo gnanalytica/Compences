@@ -6,8 +6,10 @@ import {
   SURPLUS_ANSWERS,
   SURPLUS_ANSWER_DETAIL,
   SURPLUS_ANSWER_LABEL,
+  budgetLineLabel,
   formatDate,
   formatMoney,
+  overLineBy,
   todayIn,
   type SurplusAnswer,
 } from '@compences/core';
@@ -19,6 +21,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { EMPTY_STATE, wasAccepted, type ActionState } from '@/lib/action-state';
 import { FileUpload } from '@/components/file-upload';
 import { CatalogueSelect, type PickerItem } from '@/components/catalogue-select';
+import { SuggestionList } from '@/components/suggestion-list';
 import {
   addActivity,
   addBudgetLine,
@@ -259,28 +262,45 @@ export function AddBudgetLineForm({
   eventSlug: string;
   pickers: Pickers;
 }) {
-  const { state, action, ref, version } = useResettingAction(addBudgetLine);
+  const { state, action, ref } = useResettingAction(addBudgetLine);
   return (
     <form ref={ref} action={action} className="flex flex-wrap items-end gap-2">
       <Hidden slug={slug} eventSlug={eventSlug} />
-      <div className="min-w-44 flex-1">
-        <CatalogueSelect
-          key={version}
-          slug={slug}
-          kind="budget_category"
-          name="category"
-          label="Category"
-          items={pickers.budget_category}
-          error={state.fieldErrors?.category}
-          placeholder="Choose a category"
-          manageHref={pickers.manageHref}
-          required
-        />
+      <SuggestionList id="bl-types" items={pickers.budget_category} />
+      <SuggestionList id="bl-vendors" items={pickers.vendor} />
+      <div className="min-w-36 flex-1">
+        <Field label="Type" htmlFor="bl-type" error={state.fieldErrors?.category}>
+          {(control) => (
+            <Input
+              {...control}
+              name="category"
+              list="bl-types"
+              placeholder="Food"
+              maxLength={80}
+              autoComplete="off"
+              required
+            />
+          )}
+        </Field>
+      </div>
+      <div className="min-w-36 flex-1">
+        <Field label="Vendor" htmlFor="bl-vendor" error={state.fieldErrors?.vendor}>
+          {(control) => (
+            <Input
+              {...control}
+              name="vendor"
+              list="bl-vendors"
+              placeholder="Tesla"
+              maxLength={80}
+              autoComplete="off"
+            />
+          )}
+        </Field>
       </div>
       <div className="w-36">
         <Field label="Amount (₹)" htmlFor="bl-amount" error={state.fieldErrors?.amount}>
           {(control) => (
-            <Input {...control} name="amount" type="number" min={0} step="1" required />
+            <Input {...control} name="amount" type="number" min={1} step="1" required />
           )}
         </Field>
       </div>
@@ -536,6 +556,8 @@ type ExpenseDraft = {
   name: string;
   category: string | null;
   category_id: string | null;
+  budget_line_id: string | null;
+  status: string;
   amount: number;
   vendor: string | null;
   vendor_id: string | null;
@@ -544,6 +566,161 @@ type ExpenseDraft = {
   bill_url: string | null;
   spent_on: string;
 };
+
+/** A budget line a bill can be paid out of, with what it has left. */
+export type BillLine = {
+  id: string;
+  category: string;
+  vendor: string | null;
+  planned: number;
+  remaining: number;
+  pending: number;
+};
+
+/** "₹6L total · ₹6L remaining", plus "· ₹1L pending" when bills are waiting. */
+export function lineFigures(
+  line: { planned: number; remaining: number; pending: number },
+  currency: string,
+) {
+  return [
+    `${formatMoney(line.planned, currency)} total`,
+    `${formatMoney(line.remaining, currency)} remaining`,
+    line.pending > 0 ? `${formatMoney(line.pending, currency)} pending` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/**
+ * The first half of the bill form: which budget line it is paid from, what
+ * that line has left, and how much this bill is for. The amount starts empty —
+ * the line's balance is information, not a suggestion. Going past what is left
+ * warns but does not stop the bill, since real spending runs over and the
+ * committee decides.
+ */
+function BillLineFields({
+  lines,
+  currency,
+  expense,
+  errors,
+}: {
+  lines: BillLine[];
+  currency: string;
+  expense?: ExpenseDraft;
+  errors: Record<string, string> | undefined;
+}) {
+  const id = expense?.id ?? 'new';
+  const [lineId, setLineId] = useState(expense?.budget_line_id ?? '');
+  const [amount, setAmount] = useState(expense ? String(expense.amount) : '');
+  const line = lines.find((entry) => entry.id === lineId);
+  // A bill already approved against this line is counted in what the line has
+  // spent; the correction replaces it, so it is not held against itself.
+  const own =
+    expense?.status === 'approved' && expense.budget_line_id === lineId ? expense.amount : 0;
+  const over = line ? overLineBy(line.remaining + own, Number(amount) || 0) : 0;
+  // A bill from before bills drew on a line has none, and may stay without.
+  const legacy = Boolean(expense) && !expense?.budget_line_id;
+
+  return (
+    <>
+      <Field
+        label="Budget line"
+        htmlFor={`ex-line-${id}`}
+        error={errors?.budget_line_id}
+        hint={
+          lines.length
+            ? undefined
+            : 'This event has no budget lines yet. Add one on the Budget tab first.'
+        }
+        required={!legacy}
+      >
+        {(control) => (
+          <Select
+            {...control}
+            name="budget_line_id"
+            value={lineId}
+            onChange={(event) => setLineId(event.target.value)}
+            required={!legacy}
+          >
+            <option value="">{legacy ? 'Not in the budget' : 'Choose a budget line'}</option>
+            {lines.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {budgetLineLabel(entry)}
+              </option>
+            ))}
+          </Select>
+        )}
+      </Field>
+      {line ? (
+        <div className="bg-surface-sunken space-y-2 rounded-lg px-4 py-3 text-sm">
+          {line.vendor ? (
+            <p>
+              <span className="text-ink-muted">Vendor </span>
+              <span className="text-ink font-medium">{line.vendor}</span>
+            </p>
+          ) : (
+            <Field
+              label="Vendor"
+              htmlFor={`ex-vendor-${id}`}
+              error={errors?.vendor}
+              hint="This line names no vendor, so say who was paid."
+              required
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  name="vendor"
+                  defaultValue={expense?.vendor ?? ''}
+                  maxLength={80}
+                  required
+                />
+              )}
+            </Field>
+          )}
+          <p className="text-ink-muted">{lineFigures(line, currency)}</p>
+        </div>
+      ) : legacy ? (
+        <Field
+          label="Vendor"
+          htmlFor={`ex-vendor-${id}`}
+          error={errors?.vendor}
+          hint="Not in the budget."
+          required
+        >
+          {(control) => (
+            <Input
+              {...control}
+              name="vendor"
+              defaultValue={expense?.vendor ?? ''}
+              maxLength={140}
+              required
+            />
+          )}
+        </Field>
+      ) : null}
+      <Field label="Record amount (₹)" htmlFor={`ex-amount-${id}`} error={errors?.amount} required>
+        {(control) => (
+          <Input
+            {...control}
+            name="amount"
+            type="number"
+            min={1}
+            step="1"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            required
+          />
+        )}
+      </Field>
+      {over > 0 ? (
+        <p role="status" className="text-warning text-sm">
+          {formatMoney(over, currency)} over what’s left on this line. You can still upload it; the
+          committee will see the difference.
+        </p>
+      ) : null}
+    </>
+  );
+}
 
 const METHODS = [
   ['upi', 'UPI'],
@@ -557,8 +734,8 @@ const METHODS = [
 
 /**
  * Upload a new bill, or correct and re-upload one that is pending or sent back.
- * What, amount, category, vendor and the photo come first, and the last two
- * are required: the committee approves a bill on everybody's behalf, and
+ * The budget line, amount and the photo come first, then remarks; the vendor
+ * comes with the line. The committee approves a bill on everybody's behalf, and
  * cannot without knowing who was paid and seeing the bill. The rest has
  * sensible defaults (today, UPI, paid by the society) under "More details".
  */
@@ -568,7 +745,8 @@ export function ExpenseForm({
   communityId,
   eventId,
   expense,
-  pickers,
+  lines,
+  currency,
   today,
 }: {
   slug: string;
@@ -576,7 +754,9 @@ export function ExpenseForm({
   communityId: string;
   eventId: string;
   expense?: ExpenseDraft;
-  pickers: Pickers;
+  /** The event's budget lines, with what each has left. */
+  lines: BillLine[];
+  currency: string;
   /** Today in the society's timezone, the default bill date. */
   today: string;
 }) {
@@ -600,63 +780,12 @@ export function ExpenseForm({
       <Hidden slug={slug} eventSlug={eventSlug} />
       {expense ? <input type="hidden" name="expense_id" value={expense.id} /> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="What" htmlFor={`ex-name-${id}`} error={state.fieldErrors?.name} required>
-          {(control) => (
-            <Input
-              {...control}
-              name="name"
-              placeholder="Pandal and stage"
-              defaultValue={expense?.name}
-              required
-            />
-          )}
-        </Field>
-        <Field
-          label="Amount (₹)"
-          htmlFor={`ex-amount-${id}`}
-          error={state.fieldErrors?.amount}
-          required
-        >
-          {(control) => (
-            <Input
-              {...control}
-              name="amount"
-              type="number"
-              min={1}
-              step="1"
-              defaultValue={expense?.amount}
-              required
-            />
-          )}
-        </Field>
-      </div>
-      <CatalogueSelect
-        key={creating ? `cat-${created.version}` : `cat-${expense.id}`}
-        slug={slug}
-        kind="budget_category"
-        name="category"
-        label="Category"
-        items={pickers.budget_category}
-        defaultId={expense?.category_id}
-        defaultLabel={expense?.category}
-        placeholder="Choose a category"
-        hint="Same categories as the budget."
-        manageHref={pickers.manageHref}
-      />
-      <CatalogueSelect
-        key={creating ? `ven-${created.version}` : `ven-${expense.id}`}
-        slug={slug}
-        kind="vendor"
-        name="vendor"
-        label="Vendor"
-        items={pickers.vendor}
-        defaultId={expense?.vendor_id}
-        defaultLabel={expense?.vendor}
-        placeholder="Choose a vendor"
-        error={state.fieldErrors?.vendor}
-        required
-        allowQuickAdd
+      <BillLineFields
+        key={creating ? `line-${created.version}` : `line-${expense.id}`}
+        lines={lines}
+        currency={currency}
+        expense={expense}
+        errors={state.fieldErrors}
       />
       <div className="space-y-1.5">
         <FileUpload
@@ -674,6 +803,24 @@ export function ExpenseForm({
           <p className="text-danger text-sm">{state.fieldErrors.bill_url}</p>
         ) : null}
       </div>
+      <Field
+        label="Remarks"
+        htmlFor={`ex-name-${id}`}
+        error={state.fieldErrors?.name}
+        hint="What the money was for. Residents see this beside the bill."
+        required
+      >
+        {(control) => (
+          <Input
+            {...control}
+            name="name"
+            placeholder="Pandal and stage, advance"
+            defaultValue={expense?.name}
+            maxLength={140}
+            required
+          />
+        )}
+      </Field>
 
       <details className="group border-border-base rounded-lg border" open={!creating}>
         <summary className="text-ink flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
@@ -733,17 +880,31 @@ export function ExpenseForm({
   );
 }
 
+/** What the committee is told when approving a bill would overdraw its line. */
+export function OverBudgetFlag({ overBy, currency }: { overBy: number; currency: string }) {
+  return (
+    <p role="status" className="text-warning text-xs font-medium">
+      Over budget by {formatMoney(overBy, currency)}: approving takes this line below zero.
+    </p>
+  );
+}
+
 export function ReviewExpenseForm({
   slug,
   eventSlug,
   expenseId,
   mayApprove,
+  overBy = 0,
+  currency = 'INR',
 }: {
   slug: string;
   eventSlug: string;
   expenseId: string;
   /** False when the viewer wrote the version waiting to be approved. */
   mayApprove: boolean;
+  /** How far approving would take its budget line below zero. Warns; never blocks. */
+  overBy?: number;
+  currency?: string;
 }) {
   const [state, action] = useActionState<ActionState, FormData>(reviewExpense, EMPTY_STATE);
   return (
@@ -758,6 +919,7 @@ export function ReviewExpenseForm({
         name="note"
         placeholder="Note for staff, if sending back or rejecting"
       />
+      {overBy > 0 ? <OverBudgetFlag overBy={overBy} currency={currency} /> : null}
       <div className="flex flex-wrap gap-2">
         {mayApprove ? (
           <Button type="submit" name="decision" value="approved" size="sm">
@@ -786,7 +948,7 @@ export function ReviewExpenseForm({
   );
 }
 
-/** Staff confirm a reported UPI payment, or turn it down with a reason. */
+/** Staff confirm a reported UPI receipt, or turn it down with a reason. */
 export function ReviewPaymentForm({
   slug,
   eventSlug,
@@ -832,7 +994,7 @@ export function ReviewPaymentForm({
       ) : null}
       {/* Pre-filled with what the resident reported, so confirming an
           accurate report is still one tap. A resident who typed ₹1,000 and
-          sent ₹10 is a digit, not a fraud, and rejecting the whole payment
+          sent ₹10 is a digit, not a fraud, and rejecting the whole receipt
           over it makes them report it all over again. */}
       {mayCorrect && reportedAmount ? (
         <>
@@ -947,13 +1109,13 @@ export function RecordPaymentForm({
         bucket="payment-proofs"
         folder={`${communityId}/${membershipId}`}
         name="proof_path"
-        label="Screenshot of the payment"
+        label="Screenshot of the receipt"
         hint="For UPI, bank transfer or cheque, if there is no reference to type. Not needed for cash."
         maxBytes={5 * 1_048_576}
         onUploadingChange={setUploading}
       />
       <Feedback state={state} />
-      <Submit label="Record payment" busy="Recording…" disabled={uploading} />
+      <Submit label="Record receipt" busy="Recording…" disabled={uploading} />
     </form>
   );
 }

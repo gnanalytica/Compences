@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowLeft, FileText, Receipt, Sparkles, Wallet } from 'lucide-react';
 import {
   COPY,
+  budgetLineLabel,
   can,
   eventMoney,
   formatDate,
@@ -9,6 +10,7 @@ import {
   fundBarSegments,
   inTheFund,
   nextEditionName,
+  overLineBy,
   practiceDatesLine,
   receiptRef,
   stillNeeded,
@@ -18,7 +20,6 @@ import {
 } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import {
-  budgetVsSpent,
   getActivities,
   getBudgetLines,
   getCommitteeCount,
@@ -34,7 +35,7 @@ import {
 import { getSupabase } from '@/lib/supabase/server';
 import { activeItems, getCatalogue } from '@/lib/catalogue';
 import { CarriedIn } from '@/components/carried-in';
-import { CatalogueSelect } from '@/components/catalogue-select';
+import { SuggestionList } from '@/components/suggestion-list';
 import { PageBody, PageHeader } from '@/components/page-header';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Button, ButtonLink } from '@/components/ui/button';
@@ -65,6 +66,7 @@ import {
   ReviewExpenseForm,
   ReviewPaymentForm,
   SpendBalanceForm,
+  type BillLine,
   type Pickers,
 } from './forms';
 import { removeBudgetLine, setEventStatus, updateActivity, updateBudgetLine } from '../actions';
@@ -172,7 +174,37 @@ export default async function ManageEventPage(
     .sort((a, b) => a.label.localeCompare(b.label));
   const open = expenses.filter((e) => e.status === 'pending' || e.status === 'changes_requested');
   const decided = expenses.filter((e) => e.status === 'approved' || e.status === 'rejected');
-  const categories = budgetVsSpent(budget, expenses);
+  const billLines: BillLine[] = budget.map((line) => ({
+    id: line.id,
+    category: line.category,
+    vendor: line.vendor,
+    planned: line.planned,
+    remaining: line.remaining,
+    pending: line.pending,
+  }));
+  const lineOf = (expense: { budget_line_id: string | null }) =>
+    budget.find((line) => line.id === expense.budget_line_id);
+  // How far approving this bill would take its line below zero. The view's
+  // `remaining` counts approved bills only, so it is exactly what is left.
+  const overBy = (expense: { budget_line_id: string | null; amount: number | string }) => {
+    const line = lineOf(expense);
+    return line ? overLineBy(line.remaining, Number(expense.amount)) : 0;
+  };
+  const draftOf = (expense: (typeof expenses)[number]) => ({
+    id: expense.id,
+    name: expense.name,
+    category: expense.category,
+    category_id: expense.category_id,
+    budget_line_id: expense.budget_line_id,
+    status: expense.status,
+    amount: Number(expense.amount),
+    vendor: expense.vendor,
+    vendor_id: expense.vendor_id,
+    paid_by: expense.paid_by,
+    method: expense.method,
+    bill_url: expense.bill_url,
+    spent_on: expense.spent_on,
+  });
   const confirmedPayments = payments.filter((payment) => payment.status === 'succeeded');
   const waitingPayments = payments.filter((payment) => payment.status === 'pending');
   const flatsPaid = new Set(
@@ -357,74 +389,85 @@ export default async function ManageEventPage(
               />
               {budget.length ? (
                 <ul className="divide-border-base divide-y">
-                  {budget.map((line) => {
-                    const spent =
-                      categories.find(
-                        (row) => row.label.toLowerCase() === line.category.trim().toLowerCase(),
-                      )?.spent ?? 0;
-                    return (
-                      <li key={line.id} className="px-5 py-3">
-                        <form
-                          action={updateBudgetLine}
-                          className="flex flex-wrap items-center gap-2"
-                        >
-                          <input type="hidden" name="slug" value={slug} />
-                          <input type="hidden" name="event" value={event.slug} />
-                          <input type="hidden" name="line_id" value={line.id} />
-                          <div className="min-w-44 flex-1">
-                            <CatalogueSelect
-                              slug={slug}
-                              kind="budget_category"
-                              name="category"
-                              label={`Category for ${line.category}`}
-                              items={pickers.budget_category}
-                              defaultId={line.category_id}
-                              defaultLabel={line.category}
-                              disabled={closed}
-                              hideLabel
-                              required
-                            />
-                          </div>
-                          <label className="sr-only" htmlFor={`amt-${line.id}`}>
-                            Amount
-                          </label>
-                          <Input
-                            id={`amt-${line.id}`}
-                            name="amount"
-                            type="number"
-                            min={0}
-                            defaultValue={Number(line.amount)}
-                            className="w-32"
-                            disabled={closed}
-                          />
-                          <span className="text-ink-subtle w-36 text-xs">
-                            Spent {formatMoney(spent, community.currency)}
-                          </span>
-                          {!closed ? (
-                            <>
-                              <Button type="submit" size="sm" variant="secondary">
-                                Save
-                              </Button>
-                              <Button
-                                type="submit"
-                                size="sm"
-                                variant="ghost"
-                                formAction={removeBudgetLine}
-                              >
-                                Remove
-                              </Button>
-                            </>
-                          ) : null}
-                        </form>
-                      </li>
-                    );
-                  })}
+                  <SuggestionList id="budget-types" items={pickers.budget_category} />
+                  <SuggestionList id="budget-vendors" items={pickers.vendor} />
+                  {budget.map((line) => (
+                    <li key={line.id} className="px-5 py-3">
+                      <form action={updateBudgetLine} className="flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="slug" value={slug} />
+                        <input type="hidden" name="event" value={event.slug} />
+                        <input type="hidden" name="line_id" value={line.id} />
+                        <label className="sr-only" htmlFor={`type-${line.id}`}>
+                          Type
+                        </label>
+                        <Input
+                          id={`type-${line.id}`}
+                          name="category"
+                          list="budget-types"
+                          defaultValue={line.category}
+                          className="min-w-32 flex-1"
+                          maxLength={80}
+                          autoComplete="off"
+                          disabled={closed}
+                          required
+                        />
+                        <label className="sr-only" htmlFor={`vendor-${line.id}`}>
+                          Vendor
+                        </label>
+                        <Input
+                          id={`vendor-${line.id}`}
+                          name="vendor"
+                          list="budget-vendors"
+                          defaultValue={line.vendor ?? ''}
+                          placeholder="Vendor"
+                          className="min-w-32 flex-1"
+                          maxLength={80}
+                          autoComplete="off"
+                          disabled={closed}
+                        />
+                        <label className="sr-only" htmlFor={`amt-${line.id}`}>
+                          Amount
+                        </label>
+                        <Input
+                          id={`amt-${line.id}`}
+                          name="amount"
+                          type="number"
+                          min={1}
+                          defaultValue={line.planned}
+                          className="w-32"
+                          disabled={closed}
+                        />
+                        <span className="text-ink-subtle w-full text-xs sm:w-auto">
+                          Paid {formatMoney(line.approved, community.currency)} ·{' '}
+                          {formatMoney(line.remaining, community.currency)} left
+                          {line.pending > 0
+                            ? ` · ${formatMoney(line.pending, community.currency)} pending`
+                            : ''}
+                        </span>
+                        {!closed ? (
+                          <>
+                            <Button type="submit" size="sm" variant="secondary">
+                              Save
+                            </Button>
+                            <Button
+                              type="submit"
+                              size="sm"
+                              variant="ghost"
+                              formAction={removeBudgetLine}
+                            >
+                              Remove
+                            </Button>
+                          </>
+                        ) : null}
+                      </form>
+                    </li>
+                  ))}
                 </ul>
               ) : (
                 <EmptyState
                   icon={<Wallet className="size-6" />}
                   title="No budget yet"
-                  description="Add what you plan to spend, category by category."
+                  description="Add what you plan to spend: a type, a vendor and an amount for each."
                 />
               )}
               {!closed ? (
@@ -588,7 +631,13 @@ export default async function ManageEventPage(
                             {expense.name} · {formatMoney(expense.amount, community.currency)}
                           </p>
                           <p className="text-ink-subtle mt-0.5 text-xs">
-                            {[expense.category, expense.vendor, formatDate(expense.spent_on)]
+                            {[
+                              lineOf(expense)
+                                ? budgetLineLabel(lineOf(expense)!)
+                                : [expense.category, expense.vendor].filter(Boolean).join(' · '),
+                              expense.budget_line_id ? null : 'Not in the budget',
+                              formatDate(expense.spent_on),
+                            ]
                               .filter(Boolean)
                               .join(' · ')}
                             {expense.requester?.profiles?.full_name
@@ -628,6 +677,8 @@ export default async function ManageEventPage(
                           mayApprove={
                             alone || (expense.revised_by ?? expense.requested_by) !== membership.id
                           }
+                          overBy={overBy(expense)}
+                          currency={community.currency}
                         />
                       ) : null}
                       {!closed ? (
@@ -641,20 +692,9 @@ export default async function ManageEventPage(
                               eventSlug={event.slug}
                               communityId={community.id}
                               eventId={event.id}
-                              expense={{
-                                id: expense.id,
-                                name: expense.name,
-                                category: expense.category,
-                                category_id: expense.category_id,
-                                amount: Number(expense.amount),
-                                vendor: expense.vendor,
-                                vendor_id: expense.vendor_id,
-                                paid_by: expense.paid_by,
-                                method: expense.method,
-                                bill_url: expense.bill_url,
-                                spent_on: expense.spent_on,
-                              }}
-                              pickers={pickers}
+                              expense={draftOf(expense)}
+                              lines={billLines}
+                              currency={community.currency}
                               today={today}
                             />
                           </div>
@@ -676,7 +716,12 @@ export default async function ManageEventPage(
                         <div className="min-w-0">
                           <p className="text-ink text-sm font-medium">{expense.name}</p>
                           <p className="text-ink-subtle text-xs">
-                            {[expense.category, expense.vendor].filter(Boolean).join(' · ')}
+                            {[
+                              [expense.category, expense.vendor].filter(Boolean).join(' · '),
+                              expense.budget_line_id ? null : 'Not in the budget',
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
                             {expense.approver?.profiles?.full_name
                               ? ` · approved by ${expense.approver.profiles.full_name}`
                               : ''}
@@ -707,20 +752,9 @@ export default async function ManageEventPage(
                               eventSlug={event.slug}
                               communityId={community.id}
                               eventId={event.id}
-                              expense={{
-                                id: expense.id,
-                                name: expense.name,
-                                category: expense.category,
-                                category_id: expense.category_id,
-                                amount: Number(expense.amount),
-                                vendor: expense.vendor,
-                                vendor_id: expense.vendor_id,
-                                paid_by: expense.paid_by,
-                                method: expense.method,
-                                bill_url: expense.bill_url,
-                                spent_on: expense.spent_on,
-                              }}
-                              pickers={pickers}
+                              expense={draftOf(expense)}
+                              lines={billLines}
+                              currency={community.currency}
                               today={today}
                             />
                           </div>
@@ -747,7 +781,8 @@ export default async function ManageEventPage(
                     eventSlug={event.slug}
                     communityId={community.id}
                     eventId={event.id}
-                    pickers={pickers}
+                    lines={billLines}
+                    currency={community.currency}
                     today={today}
                   />
                 </CardBody>
@@ -763,7 +798,7 @@ export default async function ManageEventPage(
                 label="Collected"
                 value={formatMoney(stats.fundRaised, community.currency)}
               />
-              <StatTile label="Confirmed payments" value={String(confirmedPayments.length)} />
+              <StatTile label="Confirmed receipts" value={String(confirmedPayments.length)} />
               <StatTile label="Flats paid" value={String(flatsPaid)} />
             </StatTiles>
             {waitingPayments.length ? (
@@ -772,8 +807,8 @@ export default async function ManageEventPage(
                   title={`Waiting for confirmation (${waitingPayments.length})`}
                   description={
                     isCommittee
-                      ? 'Check each UPI transaction ID against the bank statement. Only confirmed payments count. Correct the amount if the bank shows a different one.'
-                      : 'Check each UPI transaction ID against the bank statement. Only confirmed payments count.'
+                      ? 'Check each UPI transaction ID against the bank statement. Only confirmed receipts count. Correct the amount if the bank shows a different one.'
+                      : 'Check each UPI transaction ID against the bank statement. Only confirmed receipts count.'
                   }
                 />
                 <ul className="divide-border-base divide-y">
@@ -810,13 +845,13 @@ export default async function ManageEventPage(
                         </div>
                         <Badge tone="warning">Waiting</Badge>
                       </div>
-                      {/* Reporting a payment and confirming it in the next tap
+                      {/* Reporting a receipt and confirming it in the next tap
                           is the fund bar moving on nobody's word but yours.
                           The database refuses it; saying so here saves the
                           round trip. */}
                       {payment.membership_id === membership.id && !alone ? (
                         <p className="border-border-base text-ink-muted rounded-lg border border-dashed px-4 py-3 text-sm">
-                          This is your own payment. Another committee member confirms it.
+                          This is your own receipt. Another committee member confirms it.
                         </p>
                       ) : (
                         <ReviewPaymentForm
@@ -837,7 +872,7 @@ export default async function ManageEventPage(
             {event.status === 'published' && can(role, 'payments:record') ? (
               <Card>
                 <CardHeader
-                  title="Record a payment"
+                  title="Record a receipt"
                   description="Cash, UPI to the society account or a cheque, collected from a flat."
                 />
                 <CardBody>
@@ -857,7 +892,7 @@ export default async function ManageEventPage(
             <Card>
               <CardHeader
                 title="Who paid"
-                description="Every payment for this event, newest first."
+                description="Every receipt for this event, newest first."
               />
               {payments.length ? (
                 <div className="overflow-x-auto">
@@ -966,8 +1001,8 @@ export default async function ManageEventPage(
               ) : (
                 <EmptyState
                   icon={<Wallet className="size-6" />}
-                  title="No payments yet"
-                  description="Payments made in the app and recorded by staff appear here."
+                  title="No receipts yet"
+                  description="Receipts made in the app and recorded by staff appear here."
                 />
               )}
             </Card>

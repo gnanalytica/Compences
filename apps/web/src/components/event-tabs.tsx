@@ -42,7 +42,7 @@ const TABS: Tab[] = [
   { id: 'overview', label: 'Overview', admin: true, capability: 'events:manage' },
   { id: 'budget', label: 'Budget', admin: true, capability: 'events:manage' },
   { id: 'bills', label: 'Bills', admin: true, capability: 'events:manage' },
-  { id: 'payments', label: 'Payments', admin: true, capability: 'events:manage' },
+  { id: 'payments', label: 'Receipts', admin: true, capability: 'events:manage' },
   { id: 'close', label: 'Close', admin: true, capability: 'events:close' },
 ];
 
