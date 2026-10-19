@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import { festivalFor, normalizeStats } from '@compences/core';
+import { budgetLineLabel, festivalFor, normalizeStats, overLineBy } from '@compences/core';
 import { getCatalogue } from './catalogue';
 import { getSupabase } from './supabase/server';
 import { rowsOf } from './rows';
@@ -162,7 +162,7 @@ export const getExpenses = cache(async (eventId: string) => {
   const { data } = await supabase
     .from('expenses')
     .select(
-      'id, name, category, category_id, amount, vendor, vendor_id, paid_by, method, status, bill_url, spent_on, review_note, created_at, approved_at, updated_at, requested_by, revised_by, revised_at, requester:memberships!expenses_requested_by_fkey(profiles(full_name)), approver:memberships!expenses_approved_by_fkey(profiles(full_name)), editor:memberships!expenses_updated_by_fkey(profiles(full_name)), reviser:memberships!expenses_revised_by_fkey(profiles(full_name))',
+      'id, name, category, category_id, budget_line_id, amount, vendor, vendor_id, paid_by, method, status, bill_url, spent_on, review_note, created_at, approved_at, updated_at, requested_by, revised_by, revised_at, requester:memberships!expenses_requested_by_fkey(profiles(full_name)), approver:memberships!expenses_approved_by_fkey(profiles(full_name)), editor:memberships!expenses_updated_by_fkey(profiles(full_name)), reviser:memberships!expenses_revised_by_fkey(profiles(full_name))',
     )
     .eq('event_id', eventId)
     .order('created_at', { ascending: false });
@@ -301,17 +301,71 @@ export const getMyParticipation = cache(async (eventId: string, membershipId: st
   };
 });
 
-/** Planned spend for an event, line by line. Their sum is the fund target. */
+/**
+ * Planned spend for an event, line by line, with what each line has left. Their
+ * planned amounts sum to the fund target. `approved`, `pending` and `remaining`
+ * come from budget_line_balances: only an approved bill takes anything off a
+ * line, and a resident (who cannot see pending bills) always sees `pending` 0.
+ */
 export const getBudgetLines = cache(async (eventId: string) => {
   const supabase = await getSupabase();
-  const { data } = await supabase
-    .from('budget_lines')
-    .select('id, category, category_id, amount, notes, position')
-    .eq('event_id', eventId)
-    .order('position')
-    .order('created_at');
-  return data ?? [];
+  const [lines, balances] = await Promise.all([
+    supabase
+      .from('budget_lines')
+      .select('id, category, category_id, vendor, vendor_id, amount, notes, position')
+      .eq('event_id', eventId)
+      .order('position')
+      .order('created_at'),
+    supabase
+      .from('budget_line_balances')
+      .select('id, approved, pending, remaining')
+      .eq('event_id', eventId),
+  ]);
+  const byId = new Map((balances.data ?? []).map((row) => [row.id, row]));
+  return (lines.data ?? []).map((line) => {
+    const balance = byId.get(line.id);
+    const planned = Number(line.amount);
+    const approved = Number(balance?.approved ?? 0);
+    return {
+      ...line,
+      planned,
+      approved,
+      pending: Number(balance?.pending ?? 0),
+      remaining: balance?.remaining == null ? planned - approved : Number(balance.remaining),
+    };
+  });
 });
+
+/**
+ * For bills waiting on the committee, how far approving each would take its
+ * budget line below zero. A bill that fits, or has no line, is left out. The
+ * view's `remaining` counts approved bills only, so each bill is weighed
+ * against what is genuinely left, whatever else is waiting.
+ */
+export async function getBillOverruns(expenseIds: string[]): Promise<Map<string, number>> {
+  const overruns = new Map<string, number>();
+  if (!expenseIds.length) return overruns;
+  const supabase = await getSupabase();
+  const { data: bills } = await supabase
+    .from('expenses')
+    .select('id, amount, budget_line_id')
+    .in('id', expenseIds)
+    .not('budget_line_id', 'is', null);
+  const lineIds = [...new Set((bills ?? []).map((bill) => bill.budget_line_id!))];
+  if (!lineIds.length) return overruns;
+  const { data: balances } = await supabase
+    .from('budget_line_balances')
+    .select('id, remaining')
+    .in('id', lineIds);
+  const remaining = new Map((balances ?? []).map((row) => [row.id, Number(row.remaining ?? 0)]));
+  for (const bill of bills ?? []) {
+    const left = remaining.get(bill.budget_line_id!);
+    if (left === undefined) continue;
+    const over = overLineBy(left, Number(bill.amount));
+    if (over > 0) overruns.set(bill.id, over);
+  }
+  return overruns;
+}
 
 /** Normalises a budget or expense category so "Decoration" and "decoration" line up. */
 export function categoryKey(value: string | null | undefined): string {
@@ -319,24 +373,39 @@ export function categoryKey(value: string | null | undefined): string {
 }
 
 /**
- * Planned against actually spent, per category. Only approved expenses count
- * as spent; categories that were spent without a budget line still appear.
+ * Planned against actually spent, one row per budget line. Only approved
+ * expenses count as spent. A bill with no line behind it (one filed before
+ * bills drew on a line, or whose line was removed) still appears, grouped by
+ * its category and marked as not in the budget.
  */
 export function budgetVsSpent(
-  lines: { category: string; amount: number | string }[],
-  expenses: { category: string | null; amount: number | string; status: string }[],
+  lines: { id: string; category: string; vendor?: string | null; amount: number | string }[],
+  expenses: {
+    budget_line_id?: string | null;
+    category: string | null;
+    amount: number | string;
+    status: string;
+  }[],
 ) {
-  const rows = new Map<string, { label: string; planned: number; spent: number }>();
+  const rows = new Map<string, { key: string; label: string; planned: number; spent: number }>();
   for (const line of lines) {
-    const key = categoryKey(line.category);
-    const row = rows.get(key) ?? { label: line.category.trim(), planned: 0, spent: 0 };
-    row.planned += Number(line.amount);
-    rows.set(key, row);
+    rows.set(line.id, {
+      key: line.id,
+      label: budgetLineLabel(line),
+      planned: Number(line.amount),
+      spent: 0,
+    });
   }
   for (const expense of expenses) {
     if (expense.status !== 'approved') continue;
-    const key = categoryKey(expense.category);
+    const line = expense.budget_line_id ? rows.get(expense.budget_line_id) : undefined;
+    if (line) {
+      line.spent += Number(expense.amount);
+      continue;
+    }
+    const key = `unplanned:${categoryKey(expense.category)}`;
     const row = rows.get(key) ?? {
+      key,
       label: expense.category?.trim() || 'Other',
       planned: 0,
       spent: 0,

@@ -220,7 +220,7 @@ export async function getLedger(principal: ApiPrincipal, eventId: string) {
     principal.db
       .from('expenses')
       .select(
-        'id, name, category, amount, vendor, paid_by, method, status, bill_url, spent_on, requester:memberships!expenses_requested_by_fkey(profiles(full_name)), approver:memberships!expenses_approved_by_fkey(profiles(full_name))',
+        'id, name, category, budget_line_id, amount, vendor, paid_by, method, status, bill_url, spent_on, requester:memberships!expenses_requested_by_fkey(profiles(full_name)), approver:memberships!expenses_approved_by_fkey(profiles(full_name))',
       )
       .eq('community_id', withCommunity(principal))
       .eq('event_id', event.id)
@@ -262,17 +262,34 @@ export async function createExpense(
   const parsed = createExpenseSchema.safeParse({ ...raw, event_id: event.id });
   if (!parsed.success) return invalid(parsed.error);
 
+  // Optional, so integrations written before bills drew on a budget line keep
+  // working. When given, it has to be one of this event's lines.
+  let budgetLineId: string | null = null;
+  if (raw.budget_line_id != null && raw.budget_line_id !== '') {
+    const { data: line, error: lineError } = await principal.db
+      .from('budget_lines')
+      .select('id')
+      .eq('id', String(raw.budget_line_id))
+      .eq('event_id', event.id)
+      .eq('community_id', withCommunity(principal))
+      .maybeSingle();
+    if (lineError && lineError.code !== '22P02') throw lineError;
+    if (!line) return notFound();
+    budgetLineId = line.id;
+  }
+
   const { data, error } = await principal.db
     .from('expenses')
     .insert({
       ...parsed.data,
+      budget_line_id: budgetLineId,
       community_id: withCommunity(principal),
       requested_by: principal.membershipId,
       // Always pending. Approval goes through review_expense, which refuses
       // self-approval — an integration cannot bypass that by asking nicely.
       status: 'pending',
     })
-    .select('id, name, amount, vendor, status')
+    .select('id, name, amount, vendor, status, budget_line_id')
     .single();
 
   if (error) throw error;

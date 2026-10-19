@@ -10,7 +10,7 @@ export function BudgetBars({
   rows,
   currency,
 }: {
-  rows: { label: string; planned: number; spent: number }[];
+  rows: { key?: string; label: string; planned: number; spent: number }[];
   currency: string;
 }) {
   const total = budgetTotal(rows);
@@ -44,7 +44,7 @@ export function BudgetBars({
         {rows.map((row) => {
           const bar = budgetBar(row.planned, row.spent);
           return (
-            <li key={row.label}>
+            <li key={row.key ?? row.label}>
               <div className="flex justify-between gap-3 text-sm">
                 <span className="text-ink font-medium">{row.label}</span>
                 <span className={bar.over ? 'text-danger' : 'text-ink-muted'}>
