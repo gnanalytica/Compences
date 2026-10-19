@@ -3841,3 +3841,47 @@ select test.ok(
   not has_table_privilege('anon', 'public.comment_reactions', 'SELECT')
   and not has_table_privilege('anon', 'public.comment_reactions', 'INSERT'),
   'a stranger can neither see a reaction nor leave one');
+
+-- ---------------------------------------------------------------------------
+-- Money in is a receipt; "payment" is money out (20261019.0200)
+-- ---------------------------------------------------------------------------
+reset role;
+select test.ok(
+  (select count(*) from public.notifications
+    where kind in ('payment_reported', 'payment_confirmed', 'payment_declined')) > 0
+  and not exists (
+    select 1 from public.notifications
+     where kind in ('payment_reported', 'payment_confirmed', 'payment_declined')
+       and title not like 'Receipt %'),
+  'every notification about money in is titled as a receipt, never a payment');
+select test.ok(
+  exists (select 1 from public.notifications where kind = 'payment_reported' and title like 'Receipt to confirm: %')
+  and exists (select 1 from public.notifications where kind = 'payment_confirmed' and title like 'Receipt confirmed: %'),
+  'staff are asked to confirm a receipt and the payer is told it was confirmed');
+select test.ok(
+  exists (select 1 from public.notifications where kind = 'payment_confirmed' and title like 'Receipt confirmed as %'),
+  'and a corrected one says it was confirmed as the corrected figure');
+
+-- The error text a person reads says receipt too.
+do $$
+declare v_msg text;
+begin
+  begin
+    perform public.review_contribution('00000000-0000-4000-8000-00000000dead', true);
+  exception when others then v_msg := sqlerrm;
+  end;
+  perform test.eq(v_msg, 'No such receipt', 'confirming something that does not exist says there is no such receipt');
+end $$;
+
+-- Notifications stored before the rename read the same as the new ones, and the
+-- backfill can run again without touching them twice.
+insert into public.notifications (community_id, user_id, kind, title, body)
+select community_id, user_id, 'payment_declined', 'Payment not confirmed: ₹5', 'old'
+  from public.notifications where kind = 'payment_confirmed' limit 1;
+update public.notifications
+   set title = regexp_replace(title, '^Payment (to confirm|not confirmed|confirmed)', 'Receipt \1')
+ where kind in ('payment_reported', 'payment_confirmed', 'payment_declined')
+   and title like 'Payment %';
+select test.eq(
+  (select title from public.notifications where body = 'old' and kind = 'payment_declined'),
+  'Receipt not confirmed: ₹5', 'a notification stored with the old wording is rewritten');

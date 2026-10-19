@@ -27,7 +27,7 @@ export const ROLE_LABEL: Record<Role, string> = {
 export const ROLE_DESCRIPTION: Record<Role, string> = {
   resident: 'Contributes, votes, suggests ideas and proposes campaigns.',
   staff:
-    'Runs events, uploads bills, records payments, and admits or removes residents. Doesn’t contribute or vote.',
+    'Runs events, uploads bills, records receipts, and admits or removes residents. Doesn’t contribute or vote.',
   committee:
     'Everything residents and staff can do, plus approving bills, campaigns and suggestions, closing events and assigning roles.',
 };
