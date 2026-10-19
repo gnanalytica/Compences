@@ -18,7 +18,7 @@ describe('the budget', () => {
   it('draws every line against its own plan, on both apps', () => {
     expect(webEvent()).toContain('<BudgetBars');
     expect(read('web', 'src', 'components', 'budget-bars.tsx')).toContain('budgetBar(');
-    expect(phoneEvent()).toContain('budgetBar(row.planned, row.spent)');
+    expect(phoneEvent()).toContain('budgetBar(line.planned, line.approved)');
   });
 
   it('never sizes a line against the biggest one again', () => {
@@ -63,7 +63,7 @@ describe('money', () => {
     expect(web).toContain('My receipts');
     expect(web).toContain("view === 'mine'");
     const phone = read('mobile', 'app', '(tabs)', 'money.tsx');
-    expect(phone).toContain("{ id: 'mine', label: 'My contributions' }");
+    expect(phone).toContain("{ id: 'mine', label: 'My receipts' }");
     expect(phone).toContain('function MyContributions()');
   });
 

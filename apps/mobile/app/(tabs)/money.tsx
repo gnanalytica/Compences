@@ -73,7 +73,7 @@ const DIRECTIONS = [
 
 const MONEY_VIEWS = [
   { id: 'society', label: 'Society' },
-  { id: 'mine', label: 'My contributions' },
+  { id: 'mine', label: 'My receipts' },
 ] as const;
 
 /** The society's money and the member's own, as two views of one tab. */
