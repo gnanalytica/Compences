@@ -612,6 +612,8 @@ export type Database = {
           position: number
           created_at: string
           category_id: string | null
+          vendor: string | null
+          vendor_id: string | null
         }
         Insert: {
           id?: string
@@ -623,6 +625,8 @@ export type Database = {
           position?: number
           created_at?: string
           category_id?: string | null
+          vendor?: string | null
+          vendor_id?: string | null
         }
         Update: {
           id?: string
@@ -634,6 +638,8 @@ export type Database = {
           position?: number
           created_at?: string
           category_id?: string | null
+          vendor?: string | null
+          vendor_id?: string | null
         }
         Relationships: [
           {
@@ -655,6 +661,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "catalogue_items"
             referencedColumns: ["id"]
           }
         ]
@@ -1413,6 +1426,7 @@ export type Database = {
           updated_by: string | null
           revised_by: string | null
           revised_at: string | null
+          budget_line_id: string | null
         }
         Insert: {
           id?: string
@@ -1439,6 +1453,7 @@ export type Database = {
           updated_by?: string | null
           revised_by?: string | null
           revised_at?: string | null
+          budget_line_id?: string | null
         }
         Update: {
           id?: string
@@ -1465,6 +1480,7 @@ export type Database = {
           updated_by?: string | null
           revised_by?: string | null
           revised_at?: string | null
+          budget_line_id?: string | null
         }
         Relationships: [
           {
@@ -1472,6 +1488,13 @@ export type Database = {
             columns: ["approved_by"]
             isOneToOne: false
             referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_budget_line_id_fkey"
+            columns: ["budget_line_id"]
+            isOneToOne: false
+            referencedRelation: "budget_lines"
             referencedColumns: ["id"]
           },
           {
@@ -2677,6 +2700,23 @@ export type Database = {
           event_id: string | null
           community_id: string | null
           interested: number | null
+        }
+        Relationships: [
+
+        ]
+      }
+      budget_line_balances: {
+        Row: {
+          id: string | null
+          event_id: string | null
+          community_id: string | null
+          category: string | null
+          vendor: string | null
+          planned: number | null
+          approved: number | null
+          pending: number | null
+          remaining: number | null
+          position: number | null
         }
         Relationships: [
 
