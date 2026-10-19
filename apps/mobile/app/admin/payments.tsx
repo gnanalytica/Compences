@@ -176,7 +176,7 @@ export default function Payments() {
               <Card style={{ gap: spacing.xs }}>
                 <Heading>{current.name}</Heading>
                 <KeyValue label="Collected" value={formatMoney(total, currency)} />
-                <KeyValue label="Payments" value={String(rows.length)} />
+                <KeyValue label="Receipts" value={String(rows.length)} />
                 <KeyValue label="Waiting for confirmation" value={String(waiting.length)} />
                 <KeyValue
                   label="Flats paid"
@@ -196,7 +196,7 @@ export default function Payments() {
                     }}
                   />
                 ) : (
-                  <Button label="Record a payment for a flat" onPress={() => setRecording(true)} />
+                  <Button label="Record a receipt for a flat" onPress={() => setRecording(true)} />
                 )
               ) : null}
 
@@ -204,7 +204,7 @@ export default function Payments() {
                 <Card style={{ gap: spacing.md }}>
                   <Heading>Waiting for confirmation</Heading>
                   <Caption>
-                    Match each against the bank statement before confirming. Only confirmed payments
+                    Match each against the bank statement before confirming. Only confirmed receipts
                     count.
                   </Caption>
                   {waiting.map((row) => (
@@ -222,7 +222,7 @@ export default function Payments() {
               ) : null}
 
               <Card style={{ gap: spacing.md }}>
-                <Heading>Confirmed payments</Heading>
+                <Heading>Confirmed receipts</Heading>
                 <Caption>
                   Transaction IDs and screenshots stay here, to check against the statement any
                   time.
@@ -271,7 +271,7 @@ export default function Payments() {
                     </View>
                   ))
                 ) : (
-                  <Caption>No payments yet.</Caption>
+                  <Caption>No receipts yet.</Caption>
                 )}
               </Card>
             </>
@@ -406,7 +406,7 @@ function PendingPayment({
         editedAt={row.updated_at}
       />
       {mine ? (
-        <Caption>You reported this payment. Another committee member must confirm it.</Caption>
+        <Caption>You reported this receipt. Another committee member must confirm it.</Caption>
       ) : mayReview ? (
         declining ? (
           <View style={{ gap: spacing.sm }}>
@@ -538,7 +538,7 @@ function RecordPayment({
 
   return (
     <Card style={{ gap: spacing.md }}>
-      <Heading>Record a payment</Heading>
+      <Heading>Record a receipt</Heading>
       {chosen ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
           <Body>Flat {unitLabel(chosen)}</Body>

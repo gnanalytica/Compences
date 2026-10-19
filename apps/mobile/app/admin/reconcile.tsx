@@ -194,8 +194,8 @@ export default function Reconcile() {
             <Heading>Nobody has explained these yet ({allOpen.length})</Heading>
             <Caption>
               {allOpen.length > PAGE
-                ? `Pair each with a payment, or say what it was. Showing the ${PAGE} most recent.`
-                : 'Pair each with a payment, or say what it was.'}
+                ? `Pair each with a receipt, or say what it was. Showing the ${PAGE} most recent.`
+                : 'Pair each with a receipt, or say what it was.'}
             </Caption>
             {open.length ? (
               open.map((line) => (
@@ -206,7 +206,7 @@ export default function Reconcile() {
                 title={lines.length ? 'Everything is accounted for' : 'Nothing imported yet'}
                 description={
                   lines.length
-                    ? 'Every bank line is matched to a payment or set aside with a reason.'
+                    ? 'Every bank line is matched to a receipt or set aside with a reason.'
                     : 'Import a statement above to see its lines here.'
                 }
               />
@@ -477,7 +477,7 @@ function OpenLine({
         candidates === null ? (
           <ChipRow>
             <Chip
-              label={busy === 'look' ? 'Looking…' : 'Find the payment'}
+              label={busy === 'look' ? 'Looking…' : 'Find the receipt'}
               onPress={look}
               disabled={busy !== null}
             />
@@ -519,7 +519,7 @@ function OpenLine({
             ) : null}
           </View>
         ) : (
-          <Caption>No reported payment matches this. Ask around, or set it aside.</Caption>
+          <Caption>No reported receipt matches this. Ask around, or set it aside.</Caption>
         )
       ) : (
         <Caption>Money out can’t be matched to a bill yet. Set it aside with what it was.</Caption>

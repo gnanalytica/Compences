@@ -2,7 +2,15 @@ import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { COPY, billPath, can, formatDate, formatMoney } from '@compences/core';
+import {
+  COPY,
+  billPath,
+  budgetLineLabel,
+  can,
+  formatDate,
+  formatMoney,
+  overLineBy,
+} from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
 import { useCommunityData } from '../../src/lib/use-community-data';
@@ -21,7 +29,7 @@ import {
 import { DateField, today } from '../../src/components/date-field';
 import { Chip, ChipRow, Disclosure, ErrorText } from '../../src/components/admin-ui';
 import { FilePickerField, ViewFileButton } from '../../src/components/file-ui';
-import { CataloguePicker } from '../../src/components/catalogue-ui';
+import { LineSummary, useLineBalances } from '../../src/components/budget-line-ui';
 import { uploadFile, type PickedFile } from '../../src/lib/storage';
 import { spacing } from '../../src/lib/theme';
 
@@ -33,6 +41,12 @@ const METHODS = [
 ] as const;
 
 type Method = (typeof METHODS)[number]['value'];
+
+/** The number in an amount field, 0 when there is none. */
+const amountValue = (text: string) => {
+  const value = Number.parseFloat(text.replace(/[^0-9.]/g, ''));
+  return Number.isFinite(value) ? value : 0;
+};
 
 /**
  * Add a bill, or correct one that is still waiting or was sent back. A
@@ -46,7 +60,7 @@ export default function BillForm() {
     const [events, existing] = await Promise.all([
       supabase
         .from('events')
-        .select('id, name, emoji, status, budget_lines(category)')
+        .select('id, name, emoji, status')
         .eq('community_id', communityId)
         .in('status', ['draft', 'published'])
         .order('starts_on', { ascending: true }),
@@ -54,7 +68,7 @@ export default function BillForm() {
         ? supabase
             .from('expenses')
             .select(
-              'id, event_id, name, category, category_id, amount, vendor, vendor_id, method, bill_url, spent_on, status',
+              'id, event_id, budget_line_id, name, category, category_id, amount, vendor, vendor_id, method, bill_url, spent_on, status',
             )
             .eq('id', id)
             .maybeSingle()
@@ -100,12 +114,12 @@ type EventOption = {
   id: string;
   name: string;
   emoji: string;
-  budget_lines: { category: string }[];
 };
 
 type Existing = {
   id: string;
   event_id: string;
+  budget_line_id: string | null;
   name: string;
   category: string | null;
   category_id: string | null;
@@ -136,15 +150,10 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
 
   const [eventId, setEventId] = useState(existing?.event_id ?? events[0]?.id ?? '');
   const [name, setName] = useState(existing?.name ?? '');
-  const [category, setCategory] = useState<{ id: string | null; label: string | null }>({
-    id: existing?.category_id ?? null,
-    label: existing?.category ?? null,
-  });
+  // The line the bill is paid out of. A bill from before lines existed has
+  // none, and keeps the category and vendor it was written with.
+  const [lineId, setLineId] = useState<string | null>(existing?.budget_line_id ?? null);
   const [amount, setAmount] = useState(existing ? String(existing.amount) : '');
-  const [vendor, setVendor] = useState<{ id: string | null; label: string | null }>({
-    id: existing?.vendor_id ?? null,
-    label: existing?.vendor ?? null,
-  });
   const [method, setMethod] = useState<Method>(
     (METHODS.find((item) => item.value === existing?.method)?.value ?? 'upi') as Method,
   );
@@ -158,31 +167,35 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selected = events.find((event) => event.id === eventId);
-  const categories = [...new Set((selected?.budget_lines ?? []).map((line) => line.category))];
+  const { data: lines, loading: loadingLines } = useLineBalances(eventId);
+  const line = (lines ?? []).find((item) => item.id === lineId) ?? null;
+  const legacy = existing != null && existing.budget_line_id == null && !line;
+  // An approved bill is already taken off its line, so editing it must not
+  // count it twice.
+  const ownShare =
+    existing?.status === 'approved' && existing.budget_line_id === line?.id
+      ? Number(existing.amount)
+      : 0;
+  const over = line ? overLineBy(line.remaining + ownShare, amountValue(amount)) : 0;
 
   const save = async () => {
-    const value = Number.parseFloat(amount.replace(/[^0-9.]/g, ''));
+    const value = amountValue(amount);
     if (!eventId) {
       setError('Pick the event this bill belongs to.');
       return;
     }
-    if (name.trim().length < 2) {
-      setError('Describe what was bought.');
-      return;
-    }
-    if (!Number.isFinite(value) || value <= 0) {
-      setError('Enter the bill amount.');
-      return;
-    }
-    if (!category.label) {
-      setError('Pick the budget category this bill belongs to.');
-      return;
-    }
     // The committee approves a bill on everybody's behalf, and cannot without
-    // knowing who was paid.
-    if (!vendor.label) {
-      setError('Pick the vendor this bill is from.');
+    // knowing which line of the budget and which vendor it is for.
+    if (!line && !legacy) {
+      setError('Pick the budget line this bill is paid from.');
+      return;
+    }
+    if (value <= 0) {
+      setError('Enter the amount to record.');
+      return;
+    }
+    if (name.trim().length < 2) {
+      setError('Add remarks about the bill.');
       return;
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(spentOn)) {
@@ -219,13 +232,15 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
     const fields = {
       event_id: eventId,
       name: name.trim(),
-      // The id links the catalogue; the label stays on the bill so renaming a
-      // category later never rewrites a ledger residents have already seen.
-      category: category.label,
-      category_id: category.id,
+      budget_line_id: line?.id ?? null,
+      // Copied off the line. The id links the catalogue; the label stays on
+      // the bill so renaming a category later never rewrites a ledger
+      // residents have already seen.
+      category: line ? line.category : (existing?.category ?? null),
+      category_id: line ? line.categoryId : (existing?.category_id ?? null),
       amount: value,
-      vendor: vendor.label,
-      vendor_id: vendor.id,
+      vendor: line ? line.vendor : (existing?.vendor ?? null),
+      vendor_id: line ? line.vendorId : (existing?.vendor_id ?? null),
       method,
       spent_on: spentOn,
       bill_url: billUrl,
@@ -320,7 +335,10 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
                       key={event.id}
                       label={event.name}
                       selected={eventId === event.id}
-                      onPress={() => setEventId(event.id)}
+                      onPress={() => {
+                        setEventId(event.id);
+                        setLineId(null);
+                      }}
                     />
                   ))}
                 </ChipRow>
@@ -328,30 +346,51 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
                 <Caption>No open events. Create one from Manage → New event first.</Caption>
               )}
             </View>
+            <View style={{ gap: spacing.sm }}>
+              <Body>Budget line</Body>
+              {lines?.length ? (
+                <ChipRow>
+                  {lines.map((item) => (
+                    <Chip
+                      key={item.id}
+                      label={budgetLineLabel(item)}
+                      selected={lineId === item.id}
+                      onPress={() => setLineId(item.id)}
+                    />
+                  ))}
+                </ChipRow>
+              ) : loadingLines ? (
+                <Caption>Loading…</Caption>
+              ) : (
+                <Caption>
+                  This event has no budget lines yet. Add them from Manage → the event.
+                </Caption>
+              )}
+              {line ? <LineSummary line={line} currency={currency} /> : null}
+              {legacy ? (
+                <Caption>
+                  {[existing?.category, existing?.vendor].filter(Boolean).join(' · ') ||
+                    'Not tied to a budget line'}{' '}
+                  · raised before budget lines. Pick a line to move it onto one.
+                </Caption>
+              ) : null}
+            </View>
             <Input
-              label="What was bought"
-              value={name}
-              onChangeText={setName}
-              placeholder="Pandal and chairs"
-            />
-            <Input
-              label={`Amount (${currency})`}
+              label={`Record (${currency})`}
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
               placeholder="12000"
             />
-            {Number.parseFloat(amount) > 0 ? (
-              <Caption>{formatMoney(Number.parseFloat(amount), currency)}</Caption>
+            {amountValue(amount) > 0 ? (
+              <Caption>{formatMoney(amountValue(amount), currency)}</Caption>
             ) : null}
-            <CataloguePicker
-              kind="budget_category"
-              label="Category"
-              valueId={category.id}
-              valueLabel={category.label}
-              onChange={setCategory}
-              preferred={categories}
-            />
+            {over > 0 ? (
+              <Caption tone="warning">
+                {formatMoney(over, currency)} over what’s left on this line. You can still submit;
+                the committee will see it.
+              </Caption>
+            ) : null}
             <FilePickerField
               label="Photo of the bill"
               file={billFile}
@@ -365,25 +404,24 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
             {existing?.bill_url && !billFile ? (
               <ViewFileButton bucket="bills" value={existing.bill_url} label="View current bill" />
             ) : null}
+            <Input
+              label="Remarks"
+              value={name}
+              onChangeText={setName}
+              placeholder="Pandal and chairs, advance"
+              multiline
+            />
 
             <Disclosure
               label={COPY.moreDetails}
               summary={[
-                vendor.label ?? 'No vendor',
+                line?.vendor ?? existing?.vendor ?? 'No vendor',
                 spentOn === today() ? 'Today' : formatDate(spentOn),
                 METHODS.find((item) => item.value === method)?.label,
               ]
                 .filter(Boolean)
                 .join(' · ')}
             >
-              <CataloguePicker
-                kind="vendor"
-                label="Vendor"
-                valueId={vendor.id}
-                valueLabel={vendor.label}
-                onChange={setVendor}
-                allowAdd
-              />
               <DateField
                 label="Bill date"
                 value={spentOn}

@@ -12,7 +12,12 @@ import { spacing } from '../lib/theme';
 import { Body, Button, Caption, Input } from './ui';
 import { DateField } from './date-field';
 import { Chip, ChipRow, Disclosure } from './admin-ui';
-import { CataloguePicker, useCatalogue } from './catalogue-ui';
+import {
+  CataloguePicker,
+  SuggestInput,
+  findOrCreateCatalogueItem,
+  useCatalogue,
+} from './catalogue-ui';
 
 /**
  * Pieces shared by creating and editing an event on the phone. Structured
@@ -267,11 +272,12 @@ export function FundRuleFields({
   );
 }
 
-export type DraftBudgetLine = { key: string; category: Choice; amount: string };
+export type DraftBudgetLine = { key: string; category: string; vendor: string; amount: string };
 
 export const newBudgetLine = (): DraftBudgetLine => ({
   key: Math.random().toString(36).slice(2),
-  category: { id: null, label: null },
+  category: '',
+  vendor: '',
   amount: '',
 });
 
@@ -280,6 +286,12 @@ export const lineAmount = (line: { amount: string }) => {
   return Number.isFinite(value) ? value : 0;
 };
 
+/**
+ * The event's budget: a row per Type, Vendor and Amount (Food · Tesla · 6L).
+ * Nothing is predefined. Type and vendor are typed, with the society's earlier
+ * ones offered underneath, and a type may repeat across rows. The rows add up
+ * to the fund target.
+ */
 export function BudgetLinesEditor({
   lines,
   onChange,
@@ -297,12 +309,20 @@ export function BudgetLinesEditor({
     <View style={{ gap: spacing.lg }}>
       {lines.map((line, index) => (
         <View key={line.key} style={{ gap: spacing.sm }}>
-          <CataloguePicker
+          <Caption>Line {index + 1}</Caption>
+          <SuggestInput
             kind="budget_category"
-            label={`Line ${index + 1}`}
-            valueId={line.category.id}
-            valueLabel={line.category.label}
-            onChange={(category) => update(line.key, { category })}
+            label="Type"
+            value={line.category}
+            onChangeText={(category) => update(line.key, { category })}
+            placeholder="Food"
+          />
+          <SuggestInput
+            kind="vendor"
+            label="Vendor"
+            value={line.vendor}
+            onChangeText={(vendor) => update(line.key, { vendor })}
+            placeholder="Tesla"
           />
           <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-end' }}>
             <View style={{ flex: 1 }}>
@@ -311,7 +331,7 @@ export function BudgetLinesEditor({
                 value={line.amount}
                 onChangeText={(amount) => update(line.key, { amount })}
                 keyboardType="decimal-pad"
-                placeholder="25000"
+                placeholder="600000"
               />
             </View>
             <View style={{ width: 110 }}>
@@ -329,7 +349,7 @@ export function BudgetLinesEditor({
         variant="secondary"
         onPress={() => onChange([...lines, newBudgetLine()])}
       />
-      <Body>Fund target: {formatMoney(total, currency)}</Body>
+      <Body>Overall budget: {formatMoney(total, currency)}</Body>
       <Caption>Residents see this as the target.</Caption>
     </View>
   );
@@ -339,10 +359,51 @@ export function BudgetLinesEditor({
 export function budgetProblem(lines: DraftBudgetLine[]): string | null {
   for (const line of lines) {
     const amount = lineAmount(line);
-    if (!line.category.label && amount > 0) return 'Pick a category for every budget line.';
+    if (!line.category.trim() && (amount > 0 || line.vendor.trim())) {
+      return 'Give every budget line a type.';
+    }
     if (line.amount.trim() && amount <= 0) return 'Budget amounts must be more than zero.';
   }
   return null;
+}
+
+/** The lines worth saving: a type and an amount. */
+export const filledBudgetLines = (lines: DraftBudgetLine[]) =>
+  lines.filter((line) => line.category.trim() && lineAmount(line) > 0);
+
+/**
+ * Rows for budget_lines: each type and vendor found in (or added to) the
+ * society's catalogue without regard to case, and stored both as text and as
+ * the catalogue id, so renaming a catalogue entry never rewrites a budget.
+ */
+export async function budgetLineRows(
+  lines: DraftBudgetLine[],
+  eventId: string,
+  communityId: string,
+  userId: string | null,
+  firstPosition = 0,
+) {
+  const rows = [];
+  for (const [index, line] of filledBudgetLines(lines).entries()) {
+    const category = await findOrCreateCatalogueItem(
+      communityId,
+      userId,
+      'budget_category',
+      line.category,
+    );
+    const vendor = await findOrCreateCatalogueItem(communityId, userId, 'vendor', line.vendor);
+    rows.push({
+      event_id: eventId,
+      community_id: communityId,
+      category: category?.label ?? line.category.trim(),
+      category_id: category?.id ?? null,
+      vendor: vendor?.label ?? null,
+      vendor_id: vendor?.id ?? null,
+      amount: lineAmount(line),
+      position: firstPosition + index,
+    });
+  }
+  return rows;
 }
 
 export type DraftActivity = { key: string; typeId: string | null; name: string; emoji: string };

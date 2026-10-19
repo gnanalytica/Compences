@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { COPY } from '@compences/core';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../src/lib/auth';
 import { usePushRegistration } from '../src/lib/use-push-registration';
 import { usePushTapHandler } from '../src/lib/notifications';
@@ -35,6 +35,7 @@ void SplashScreen.preventAutoHideAsync();
 
 function RootStack() {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user, memberships, loading } = useAuth();
 
   // Runs inside the provider so it re-registers whenever the signed-in user
@@ -54,14 +55,22 @@ function RootStack() {
           headerShadowVisible: false,
           headerTintColor: colors.ink,
           headerTitleStyle: { fontFamily: fonts.serif, fontSize: 18 },
-          contentStyle: { backgroundColor: colors.surface },
+          // Screens end above the home indicator and the gesture bar. The
+          // tabs set their own, because their bar already stands clear.
+          contentStyle: { backgroundColor: colors.surface, paddingBottom: insets.bottom },
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
         <Stack.Screen name="join" options={{ title: 'Join your community' }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.surface, paddingBottom: 0 },
+          }}
+        />
         {/* The event's banner carries its name. */}
         <Stack.Screen name="event/[slug]" options={{ title: '' }} />
         <Stack.Screen name="contribute" options={{ title: 'Contribute', presentation: 'modal' }} />
@@ -72,7 +81,7 @@ function RootStack() {
         <Stack.Screen name="admin/member/[id]" options={{ title: 'Resident' }} />
         <Stack.Screen name="admin/bills" options={{ title: 'Bills' }} />
         <Stack.Screen name="admin/bill" options={{ title: 'Bill' }} />
-        <Stack.Screen name="admin/payments" options={{ title: 'Payments' }} />
+        <Stack.Screen name="admin/payments" options={{ title: 'Receipts' }} />
         <Stack.Screen name="admin/pay-back" options={{ title: 'Pay back' }} />
         <Stack.Screen name="admin/society-spend" options={{ title: 'Society balance' }} />
         <Stack.Screen name="admin/reconcile" options={{ title: 'Reconcile' }} />
