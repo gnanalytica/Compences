@@ -1,4 +1,5 @@
 import { DEFAULT_FESTIVAL, festivalFor, normalizeStats } from '@compences/core';
+import { fetchLineBalances } from '../components/budget-line-ui';
 import { today as localToday } from '../components/date-field';
 import { supabase } from './supabase';
 import { useCommunityData } from './use-community-data';
@@ -78,15 +79,12 @@ export async function fetchEventDetail(communityId: string, slug: string, member
     movedFrom,
   ] = await Promise.all([
     supabase.from('event_stats').select('*').eq('event_id', event.id).maybeSingle(),
-    supabase
-      .from('budget_lines')
-      .select('id, category, amount, notes')
-      .eq('event_id', event.id)
-      .order('position'),
+    // Each budget line with what it has left; a resident's pending is 0.
+    fetchLineBalances(event.id),
     // Residents only ever get approved rows back; that is the public ledger.
     supabase
       .from('expenses')
-      .select('id, name, category, amount, vendor, bill_url, spent_on, status')
+      .select('id, budget_line_id, name, category, amount, vendor, bill_url, spent_on, status')
       .eq('event_id', event.id)
       .eq('status', 'approved')
       .order('spent_on', { ascending: false }),
@@ -135,7 +133,7 @@ export async function fetchEventDetail(communityId: string, slug: string, member
     event,
     eventType: eventType.data?.label ?? null,
     stats: normalizeStats(stats.data),
-    budget: budget.data ?? [],
+    lines: budget,
     expenses: expenses.data ?? [],
     activities: (activities.data ?? []).map((activity) => ({
       ...activity,
@@ -225,36 +223,6 @@ export async function fetchIdeas(communityId: string, membershipId: string) {
     .limit(100);
 
   return withTallies(data ?? [], membershipId);
-}
-
-/**
- * Planned against actual spend per category. Categories are matched
- * case-insensitively; anything spent outside the budget gets its own row.
- */
-export function budgetVsSpent(
-  budget: { category: string; amount: number }[],
-  expenses: { category: string | null; amount: number }[],
-) {
-  const rows = new Map<string, { category: string; planned: number; spent: number }>();
-  const key = (value: string | null) => (value ?? 'Other').trim().toLowerCase();
-
-  for (const line of budget) {
-    const existing = rows.get(key(line.category));
-    rows.set(key(line.category), {
-      category: existing?.category ?? line.category,
-      planned: (existing?.planned ?? 0) + Number(line.amount),
-      spent: existing?.spent ?? 0,
-    });
-  }
-  for (const expense of expenses) {
-    const existing = rows.get(key(expense.category));
-    rows.set(key(expense.category), {
-      category: existing?.category ?? expense.category ?? 'Other',
-      planned: existing?.planned ?? 0,
-      spent: (existing?.spent ?? 0) + Number(expense.amount),
-    });
-  }
-  return [...rows.values()].sort((a, b) => b.planned + b.spent - (a.planned + a.spent));
 }
 
 /** The soonest published event that has not happened yet. */

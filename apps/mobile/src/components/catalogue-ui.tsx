@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -204,4 +204,104 @@ export function ManageCatalogueLink() {
       <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>Manage</Text>
     </Pressable>
   );
+}
+
+/**
+ * Free text with the society's own catalogue offered back as suggestions
+ * under the field. Nothing has to be picked from the list: a new type or
+ * vendor is typed once and joins the catalogue when the form is saved
+ * (findOrCreateCatalogueItem), so the committee never starts from a fixed list.
+ */
+export function SuggestInput({
+  kind,
+  label,
+  value,
+  onChangeText,
+  placeholder,
+}: {
+  kind: CatalogueKind;
+  label: string;
+  value: string;
+  onChangeText: (next: string) => void;
+  placeholder?: string;
+}) {
+  const { data: items } = useCatalogue(kind);
+  const [focused, setFocused] = useState(false);
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const needle = value.trim().toLowerCase();
+  const matches = focused
+    ? (items ?? [])
+        .filter((item) => {
+          const text = item.label.toLowerCase();
+          return text !== needle && (!needle || text.includes(needle));
+        })
+        .slice(0, 6)
+    : [];
+
+  return (
+    <View style={{ gap: spacing.xs }}>
+      <Input
+        label={label}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        maxLength={80}
+        autoCapitalize="words"
+        onFocus={() => {
+          if (blurTimer.current) clearTimeout(blurTimer.current);
+          setFocused(true);
+        }}
+        // A beat of grace, so a tap on a suggestion lands before it goes away.
+        onBlur={() => {
+          blurTimer.current = setTimeout(() => setFocused(false), 200);
+        }}
+      />
+      {matches.length ? (
+        <ChipRow>
+          {matches.map((item) => (
+            <Chip key={item.id} label={item.label} onPress={() => onChangeText(item.label)} />
+          ))}
+        </ChipRow>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * The catalogue item for typed text, matched case-insensitively and created
+ * when the society has none yet. Null for empty text. A concurrent create by
+ * someone else (the unique label constraint) falls back to reading theirs.
+ */
+export async function findOrCreateCatalogueItem(
+  communityId: string,
+  userId: string | null,
+  kind: CatalogueKind,
+  text: string,
+): Promise<{ id: string; label: string } | null> {
+  const wanted = text.trim();
+  if (!wanted) return null;
+  const find = async () => {
+    const { data } = await supabase
+      .from('catalogue_items')
+      .select('id, label')
+      .eq('community_id', communityId)
+      .eq('kind', kind)
+      // ilike with the wildcards escaped is an exact match that ignores case.
+      .ilike(
+        'label',
+        wanted.replace(/[\\%_]/g, (char) => `\\${char}`),
+      )
+      .limit(1)
+      .maybeSingle();
+    return data;
+  };
+  const existing = await find();
+  if (existing) return existing;
+  const { data, error } = await supabase
+    .from('catalogue_items')
+    .insert({ community_id: communityId, kind, label: wanted, created_by: userId })
+    .select('id, label')
+    .single();
+  if (error || !data) return find();
+  return data;
 }

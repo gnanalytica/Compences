@@ -8,6 +8,7 @@ import {
   EVENT_STATUS_LABEL,
   EVENT_TABS,
   budgetBar,
+  budgetLineLabel,
   budgetTotal,
   can,
   carriedFromLine,
@@ -23,7 +24,7 @@ import {
 } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
-import { budgetVsSpent, fetchEventDetail, lookOf } from '../../src/lib/events';
+import { fetchEventDetail, lookOf } from '../../src/lib/events';
 import { useCommunityData } from '../../src/lib/use-community-data';
 import {
   Amount,
@@ -326,7 +327,7 @@ function About({ data }: { data: Detail }) {
 function YourPayments({ data, currency }: { data: Detail; currency: string }) {
   return (
     <Card style={{ gap: spacing.sm }}>
-      <Heading>Your payments</Heading>
+      <Heading>Your receipts</Heading>
       {data.myPayments.map((payment) => (
         <View key={payment.id} style={{ gap: 2 }}>
           <View
@@ -394,15 +395,44 @@ function Analytics({ data, currency }: { data: Detail; currency: string }) {
   );
 }
 
+type SpendBill = Detail['expenses'][number];
+
+/** One approved bill: its remarks, the amount, and the picture behind it. */
+function SpendBillRow({ bill, currency }: { bill: SpendBill; currency: string }) {
+  return (
+    <View style={{ gap: spacing.xs }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Body>{bill.name}</Body>
+          <Caption>{bill.spent_on ? formatDate(bill.spent_on) : 'No date'}</Caption>
+        </View>
+        <Body>{formatMoney(bill.amount, currency)}</Body>
+      </View>
+      <ViewFileButton bucket="bills" value={bill.bill_url} label="View bill" />
+    </View>
+  );
+}
+
+/**
+ * Budget and spending, line by line: what each Type · Vendor was planned at,
+ * what has been paid out of it (approved bills only, so a resident and the
+ * committee agree), what is left, and each bill with its remarks and picture.
+ * Bills with no line behind them are listed last as not in the budget.
+ */
 function BudgetAndSpending({ data, currency }: { data: Detail; currency: string }) {
-  const rows = budgetVsSpent(data.budget, data.expenses);
-  const total = budgetTotal(rows);
+  const unlinked = data.expenses.filter(
+    (expense) => !data.lines.some((line) => line.id === expense.budget_line_id),
+  );
+  const total = budgetTotal([
+    ...data.lines.map((line) => ({ planned: line.planned, spent: line.approved })),
+    ...unlinked.map((expense) => ({ planned: 0, spent: Number(expense.amount) })),
+  ]);
 
   return (
     <>
       <Card style={{ gap: spacing.md }}>
-        <Heading>Budget and spending</Heading>
-        {rows.length ? (
+        <Heading>Budget &amp; spending</Heading>
+        {data.lines.length || unlinked.length ? (
           <>
             <View style={{ gap: 4 }}>
               <View
@@ -428,10 +458,11 @@ function BudgetAndSpending({ data, currency }: { data: Detail; currency: string 
                 />
               ) : null}
             </View>
-            {rows.map((row) => {
-              const bar = budgetBar(row.planned, row.spent);
+            {data.lines.map((line) => {
+              const bar = budgetBar(line.planned, line.approved);
+              const bills = data.expenses.filter((expense) => expense.budget_line_id === line.id);
               return (
-                <View key={row.category} style={{ gap: 4 }}>
+                <View key={line.id} style={{ gap: spacing.xs }}>
                   <View
                     style={{
                       flexDirection: 'row',
@@ -439,84 +470,89 @@ function BudgetAndSpending({ data, currency }: { data: Detail; currency: string 
                       gap: spacing.md,
                     }}
                   >
-                    <Body>{row.category}</Body>
-                    <Caption tone={bar.over ? 'danger' : undefined}>
-                      {bar.unplanned
-                        ? formatMoney(row.spent, currency)
-                        : `${formatMoney(row.spent, currency)} of ${formatMoney(row.planned, currency)}`}
-                    </Caption>
+                    <View style={{ flex: 1 }}>
+                      <Body>{line.category}</Body>
+                      {line.vendor ? <Caption>{line.vendor}</Caption> : null}
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Body>{formatMoney(line.approved, currency)} paid</Body>
+                      <Caption tone={bar.over ? 'danger' : undefined}>
+                        {formatMoney(line.planned, currency)} planned ·{' '}
+                        {bar.over
+                          ? `${formatMoney(bar.over, currency)} over`
+                          : `${formatMoney(line.remaining, currency)} left`}
+                      </Caption>
+                    </View>
                   </View>
                   <Meter
                     percent={bar.percent}
-                    tone={bar.over ? 'danger' : bar.unplanned ? 'warning' : 'success'}
-                    label={`${row.category}, spent against plan`}
+                    tone={bar.over ? 'danger' : 'success'}
+                    label={`${budgetLineLabel(line)}, spent against plan`}
                   />
-                  {bar.over ? (
-                    <Caption tone="danger">{formatMoney(bar.over, currency)} over</Caption>
+                  {line.pending > 0 ? (
+                    <Caption>{formatMoney(line.pending, currency)} waiting for approval</Caption>
                   ) : null}
-                  {bar.unplanned ? <Caption tone="warning">Not in the budget</Caption> : null}
+                  {bills.map((bill) => (
+                    <SpendBillRow key={bill.id} bill={bill} currency={currency} />
+                  ))}
                 </View>
               );
             })}
+            {unlinked.length ? (
+              <View style={{ gap: spacing.xs }}>
+                <Body>Not in the budget</Body>
+                {unlinked.map((bill) => (
+                  <View key={bill.id} style={{ gap: 2 }}>
+                    <Caption tone="warning">
+                      {[bill.category, bill.vendor].filter(Boolean).join(' · ') || 'No budget line'}
+                    </Caption>
+                    <SpendBillRow bill={bill} currency={currency} />
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {!data.expenses.length ? (
+              <Caption>Nothing spent yet. Approved bills appear here, itemised.</Caption>
+            ) : null}
           </>
         ) : (
           <Caption>No budget set yet.</Caption>
         )}
       </Card>
 
-      <Card style={{ gap: spacing.md }}>
-        <Heading>Where the money went</Heading>
-        {data.expenses.length || data.movedFrom.length ? (
-          data.expenses.map((expense) => (
+      {/* What was left when the event closed, and where the committee sent
+          it: the last entries in its ledger, so every rupee is accounted for. */}
+      {data.movedFrom.length ? (
+        <Card style={{ gap: spacing.md }}>
+          <Heading>Where the rest went</Heading>
+          {data.movedFrom.map((movement) => (
             <View
-              key={expense.id}
+              key={movement.id}
               style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md }}
             >
               <View style={{ flex: 1, gap: 2 }}>
-                <Body>{expense.name}</Body>
+                <Body>
+                  {movement.kind === 'society_balance'
+                    ? 'Kept for the society'
+                    : `Carried to ${movement.to_event?.name ?? 'another event'}`}
+                </Body>
                 <Caption>
-                  {[expense.category, expense.vendor ?? 'Vendor not recorded']
+                  {[
+                    movement.decider?.profiles?.full_name
+                      ? `Decided by ${movement.decider.profiles.full_name}`
+                      : null,
+                    movement.decided_at ? formatDate(movement.decided_at.slice(0, 10)) : null,
+                    movement.note,
+                  ]
                     .filter(Boolean)
                     .join(' · ')}
-                  {expense.spent_on ? ` · ${formatDate(expense.spent_on)}` : ''}
                 </Caption>
-                <ViewFileButton bucket="bills" value={expense.bill_url} label="View bill" />
               </View>
-              <Body>{formatMoney(expense.amount, currency)}</Body>
+              <Body>{formatMoney(movement.amount, currency)}</Body>
             </View>
-          ))
-        ) : (
-          <Caption>Nothing spent yet. Approved bills appear here, itemised.</Caption>
-        )}
-        {/* What was left when the event closed, and where the committee sent
-            it: the last entries in its ledger, so every rupee is accounted for. */}
-        {data.movedFrom.map((movement) => (
-          <View
-            key={movement.id}
-            style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md }}
-          >
-            <View style={{ flex: 1, gap: 2 }}>
-              <Body>
-                {movement.kind === 'society_balance'
-                  ? 'Kept for the society'
-                  : `Carried to ${movement.to_event?.name ?? 'another event'}`}
-              </Body>
-              <Caption>
-                {[
-                  movement.decider?.profiles?.full_name
-                    ? `Decided by ${movement.decider.profiles.full_name}`
-                    : null,
-                  movement.decided_at ? formatDate(movement.decided_at.slice(0, 10)) : null,
-                  movement.note,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Caption>
-            </View>
-            <Body>{formatMoney(movement.amount, currency)}</Body>
-          </View>
-        ))}
-      </Card>
+          ))}
+        </Card>
+      ) : null}
     </>
   );
 }

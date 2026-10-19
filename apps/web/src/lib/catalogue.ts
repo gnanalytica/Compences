@@ -74,3 +74,78 @@ export async function resolveCatalogueChoice(
   const legacy = String(formData.get(`${name}_legacy`) ?? '').trim();
   return { id: null, label: legacy || null };
 }
+
+/** The most a catalogue label can hold; the database checks the same. */
+export const CATALOGUE_LABEL_MAX = 80;
+
+/** The words a person typed, tidied the way the catalogue compares them. */
+export function tidyLabel(value: unknown): string {
+  return String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export type FoundItems = Map<string, { id: string; label: string }>;
+
+/**
+ * Turns words someone typed (a budget row's Type or Vendor) into catalogue
+ * items, so the suggestions the next form offers grow with use. Matching
+ * ignores case and spacing, so "food" finds "Food" rather than adding a twin,
+ * and an item staff archived is reused as it is. Several rows may name the same
+ * new word; it is created once.
+ *
+ * The label stored is the catalogue's, never the browser's, as with a picker.
+ * Returns a map from each word's lower case to what to store, or an error for
+ * a word the catalogue cannot hold.
+ */
+export async function findOrCreateCatalogueItems(
+  communityId: string,
+  userId: string,
+  kind: CatalogueKind,
+  words: string[],
+): Promise<{ items: FoundItems } | { error: string }> {
+  const supabase = await getSupabase();
+  const known: FoundItems = new Map();
+  const { data: existing } = await supabase
+    .from('catalogue_items')
+    .select('id, label')
+    .eq('community_id', communityId)
+    .eq('kind', kind);
+  for (const row of existing ?? []) known.set(tidyLabel(row.label).toLowerCase(), row);
+
+  let position = existing?.length ?? 0;
+  for (const word of words.map(tidyLabel).filter(Boolean)) {
+    const key = word.toLowerCase();
+    if (known.has(key)) continue;
+    if (word.length > CATALOGUE_LABEL_MAX) {
+      return { error: `Keep “${word.slice(0, 20)}…” under ${CATALOGUE_LABEL_MAX} characters.` };
+    }
+    const { data } = await supabase
+      .from('catalogue_items')
+      .insert({
+        community_id: communityId,
+        kind,
+        label: word,
+        position: position++,
+        created_by: userId,
+      })
+      .select('id, label')
+      .single();
+    if (data) {
+      known.set(key, data);
+      continue;
+    }
+    // Somebody added the same word a moment ago; theirs is the one to use.
+    const { data: winner } = await supabase
+      .from('catalogue_items')
+      .select('id, label')
+      .eq('community_id', communityId)
+      .eq('kind', kind)
+      .ilike('label', word.replace(/[\\%_]/g, '\\$&'))
+      .limit(1)
+      .maybeSingle();
+    if (!winner) return { error: `Could not save “${word}”. Try again.` };
+    known.set(key, winner);
+  }
+  return { items: known };
+}

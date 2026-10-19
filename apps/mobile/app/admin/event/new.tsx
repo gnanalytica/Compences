@@ -21,8 +21,10 @@ import {
   ActivityTypeChips,
   BudgetLinesEditor,
   DetailsFields,
+  budgetLineRows,
   budgetProblem,
   emptyDetails,
+  filledBudgetLines,
   lineAmount,
   newBudgetLine,
   validateDetails,
@@ -65,7 +67,7 @@ export default function NewEvent() {
       setError(problem);
       return;
     }
-    const budget = lines.filter((line) => line.category.label && lineAmount(line) > 0);
+    const budget = filledBudgetLines(lines);
     const fundTarget = budget.reduce((sum, line) => sum + lineAmount(line), 0);
     const checked = validateDetails(details, activeCommunity.id, fundTarget);
     if ('error' in checked) {
@@ -128,16 +130,9 @@ export default function NewEvent() {
 
     const problems: string[] = [];
     if (budget.length) {
-      const { error: budgetError } = await supabase.from('budget_lines').insert(
-        budget.map((line, position) => ({
-          event_id: created.id,
-          community_id: activeCommunity.id,
-          category: line.category.label as string,
-          category_id: line.category.id,
-          amount: lineAmount(line),
-          position,
-        })),
-      );
+      const { error: budgetError } = await supabase
+        .from('budget_lines')
+        .insert(await budgetLineRows(budget, created.id, activeCommunity.id, user.id));
       if (budgetError) problems.push('the budget');
     }
     if (activities.length) {

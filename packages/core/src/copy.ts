@@ -34,7 +34,7 @@ export type TodoKind =
 /** Section headings and action labels for the To do queue. */
 export const TODO_KIND: Record<TodoKind, { section: string; action: string }> = {
   join_request: { section: 'New residents', action: 'Review' },
-  payment_to_confirm: { section: 'Payments to confirm', action: 'Confirm' },
+  payment_to_confirm: { section: 'Receipts to confirm', action: 'Confirm' },
   bill_to_approve: { section: 'Bills to approve', action: 'Approve' },
   bill_sent_back: { section: 'Your bills sent back', action: 'Fix' },
   campaign_to_review: { section: 'Campaigns to review', action: 'Review' },

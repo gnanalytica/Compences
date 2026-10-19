@@ -8,6 +8,7 @@ import { groupTodo, invalidateAfterDecision, type TodoItem } from '../lib/todo';
 import { spacing } from '../lib/theme';
 import { Body, Button, Caption, Card, Heading, Input } from './ui';
 import { ErrorText } from './admin-ui';
+import { OverBudgetFlagForBill } from './budget-line-ui';
 
 /**
  * The To do queue: one list of everything waiting on this person, grouped by
@@ -319,6 +320,10 @@ function TodoCard({ item, currency }: { item: TodoItem; currency: string }) {
         </View>
       </Pressable>
 
+      {item.kind === 'bill_to_approve' ? (
+        <OverBudgetFlagForBill billId={item.id} currency={currency} />
+      ) : null}
+
       {pending?.note ? (
         <View style={{ gap: spacing.sm }}>
           <Input
@@ -379,7 +384,7 @@ function TodoCard({ item, currency }: { item: TodoItem; currency: string }) {
 export function TodoEmpty() {
   return (
     <Card>
-      <Body muted>Nothing waiting. New payments, bills and requests appear here.</Body>
+      <Body muted>Nothing waiting. New receipts, bills and requests appear here.</Body>
     </Card>
   );
 }

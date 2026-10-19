@@ -16,8 +16,12 @@ import { useTodoItems } from '../../src/lib/todo';
 import { NavDrawerButton } from '../../src/components/nav-drawer';
 import { NotificationBell } from '../../src/components/notification-bell';
 import { Loading, Screen } from '../../src/components/ui';
-import { fonts, lookColours } from '../../src/lib/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { fonts, lookColours, spacing } from '../../src/lib/theme';
 import { useTheme } from '../../src/lib/use-theme';
+
+/** The bar above the home indicator: an icon, a label and room to tap. */
+const TAB_BAR_HEIGHT = 58;
 
 /** A line icon, a touch heavier when its tab is the one open. */
 function tabIcon(Icon: LucideIcon) {
@@ -76,6 +80,8 @@ function ContributeButton({ onPress }: { onPress: () => void }) {
             </View>
           </View>
           <Text
+            allowFontScaling={false}
+            numberOfLines={1}
             style={{ color: colors.inkSubtle, fontSize: 10.5, fontWeight: '500', marginTop: 2 }}
           >
             Contribute
@@ -89,6 +95,9 @@ function ContributeButton({ onPress }: { onPress: () => void }) {
 export default function TabsLayout() {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  // Some devices report no inset; keep a little air under the labels anyway.
+  const bottomInset = Math.max(insets.bottom, spacing.sm);
   const { loading, user, memberships, welcomedAt, viewRole } = useAuth();
   // The committee's resident view hides Manage, exactly as residents see it.
   const staffView = can(viewRole, 'events:manage');
@@ -124,12 +133,22 @@ export default function TabsLayout() {
         headerLeft: () => <NavDrawerButton />,
         headerTitleAlign: 'center',
         // Visible, so the Contribute button can rise above the bar's edge.
+        // The bar is its own height plus the home indicator's inset, so its
+        // labels sit clear of the gesture area on every device.
         tabBarStyle: {
           backgroundColor: colors.surfaceRaised,
           borderTopColor: colors.border,
           overflow: 'visible',
+          height: TAB_BAR_HEIGHT + bottomInset,
+          paddingTop: spacing.xs,
+          paddingBottom: bottomInset,
         },
+        // Icon over label however wide the screen, so a tablet's bar does not
+        // swap to a side-by-side layout the labels have no room for.
+        tabBarLabelPosition: 'below-icon',
         tabBarLabelStyle: { fontSize: 10.5, fontWeight: '500' },
+        // Five equal slots on a 320-point phone leave no room for a long label.
+        tabBarItemStyle: { minWidth: 0, paddingHorizontal: 0 },
         // A bar has a fixed height; scaling its labels with the system font
         // size is what pushed them out of it.
         tabBarAllowFontScaling: false,

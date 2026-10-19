@@ -22,6 +22,7 @@ import {
 import { Chip, ChipRow, ErrorText } from '../../src/components/admin-ui';
 import { ViewFileButton } from '../../src/components/file-ui';
 import { AuditTrail } from '../../src/components/audit-trail';
+import { OverBudgetFlag } from '../../src/components/budget-line-ui';
 import { spacing } from '../../src/lib/theme';
 
 type Filter = 'pending' | 'changes_requested' | 'approved' | 'rejected';
@@ -53,7 +54,7 @@ export default function Bills() {
         supabase
           .from('expenses')
           .select(
-            'id, name, category, amount, vendor, method, bill_url, spent_on, status, review_note, requested_by, revised_by, revised_at, created_at, approved_at, updated_at, events(name, emoji), requester:memberships!expenses_requested_by_fkey(profiles(full_name)), approver:memberships!expenses_approved_by_fkey(profiles(full_name)), editor:memberships!expenses_updated_by_fkey(profiles(full_name)), reviser:memberships!expenses_revised_by_fkey(profiles(full_name))',
+            'id, name, category, amount, vendor, budget_line_id, method, bill_url, spent_on, status, review_note, requested_by, revised_by, revised_at, created_at, approved_at, updated_at, events(name, emoji), requester:memberships!expenses_requested_by_fkey(profiles(full_name)), approver:memberships!expenses_approved_by_fkey(profiles(full_name)), editor:memberships!expenses_updated_by_fkey(profiles(full_name)), reviser:memberships!expenses_revised_by_fkey(profiles(full_name))',
           )
           .eq('community_id', communityId)
           .order('created_at', { ascending: false })
@@ -157,6 +158,7 @@ type BillRow = {
   category: string | null;
   amount: number;
   vendor: string | null;
+  budget_line_id: string | null;
   bill_url: string | null;
   spent_on: string;
   status: string;
@@ -226,6 +228,11 @@ function BillCard({
           .join(' · ')}
       </Caption>
       <Caption>Raised by {bill.requester?.profiles?.full_name ?? 'someone'}</Caption>
+      {/* Approving would take the line below zero: said before the committee
+          decides, not as a reason to refuse. */}
+      {mayDecide ? (
+        <OverBudgetFlag lineId={bill.budget_line_id} amount={bill.amount} currency={currency} />
+      ) : null}
       {/* Who wrote the version on the table, which is who may not approve it. */}
       {bill.revised_at ? (
         <Caption>

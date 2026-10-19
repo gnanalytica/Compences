@@ -1053,8 +1053,12 @@ select test.eq(test.visible($q$select id from storage.objects where bucket_id = 
 reset role;
 select test.ok(
   (select count(*) from public.catalogue_items i join public.communities c on c.id = i.community_id
-    where c.slug = 'hill-crest' and i.kind = 'budget_category') >= 10,
+    where c.slug = 'hill-crest' and i.kind = 'event_type') >= 5,
   'a new society starts with a default catalogue');
+select test.ok(
+  (select count(*) from public.catalogue_items i join public.communities c on c.id = i.community_id
+    where c.slug = 'hill-crest' and i.kind = 'budget_category') = 0,
+  'but with no predefined budget categories');
 
 select test.act_as('cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd');
 select test.ok(
@@ -3841,3 +3845,86 @@ select test.ok(
   not has_table_privilege('anon', 'public.comment_reactions', 'SELECT')
   and not has_table_privilege('anon', 'public.comment_reactions', 'INSERT'),
   'a stranger can neither see a reaction nor leave one');
+
+
+-- A bill is paid out of a budget line, and what the line has left is derived.
+reset role;
+select test.act_as('88888888-8888-4888-8888-888888888888');
+insert into public.budget_lines (id, event_id, community_id, category, vendor, amount)
+select 'b0b0b0b0-0000-4000-8000-000000000001', 'cccccccc-0000-4000-8000-0000000000aa',
+       (select community_id from public.events where id = 'cccccccc-0000-4000-8000-0000000000aa'), 'Food', 'Tesla', 600000;
+reset role;
+select test.act_as('99999999-9999-4999-8999-999999999999');
+insert into public.expenses (id, event_id, community_id, name, category, amount, vendor, bill_url, requested_by, budget_line_id)
+select 'dddddddd-0000-4000-8000-0000000000c1', 'cccccccc-0000-4000-8000-0000000000aa',
+       (select community_id from public.events where id = 'cccccccc-0000-4000-8000-0000000000aa'), 'Lunch', 'Food', 200000, 'Tesla',
+       'aaaaaaaa-0000-4000-8000-000000000001/cccccccc-0000-4000-8000-000000000001/lunch.pdf',
+       app.my_membership_id((select community_id from public.events where id = 'cccccccc-0000-4000-8000-0000000000aa')),
+       'b0b0b0b0-0000-4000-8000-000000000001';
+select test.eq(
+  (select remaining from public.budget_line_balances where id = 'b0b0b0b0-0000-4000-8000-000000000001'),
+  600000::numeric, 'a bill waiting for approval leaves the line''s remaining untouched');
+select test.eq(
+  (select pending from public.budget_line_balances where id = 'b0b0b0b0-0000-4000-8000-000000000001'),
+  200000::numeric, 'but is shown as pending beside it');
+reset role;
+select test.act_as('88888888-8888-4888-8888-888888888888');
+select public.review_expense('dddddddd-0000-4000-8000-0000000000c1', 'approved');
+select test.eq(
+  (select remaining from public.budget_line_balances where id = 'b0b0b0b0-0000-4000-8000-000000000001'),
+  400000::numeric, 'approving the bill takes it off what the line has left');
+select test.eq(
+  (select pending from public.budget_line_balances where id = 'b0b0b0b0-0000-4000-8000-000000000001'),
+  0::numeric, 'and it is no longer pending');
+reset role;
+select test.act_as('99999999-9999-4999-8999-999999999999');
+select test.raises(
+  $q$insert into public.expenses (event_id, community_id, name, amount, vendor, bill_url, requested_by, budget_line_id)
+     select 'cccccccc-0000-4000-8000-000000000001', m.community_id, 'Wrong event', 100, 'Tesla', 'x/y.pdf', m.id,
+            'b0b0b0b0-0000-4000-8000-000000000001'
+       from public.memberships m where m.user_id = '99999999-9999-4999-8999-999999999999' limit 1$q$,
+  'a bill cannot draw on another event''s budget line');
+
+-- ---------------------------------------------------------------------------
+-- Money in is a receipt; "payment" is money out (20261019.0200)
+-- ---------------------------------------------------------------------------
+reset role;
+select test.ok(
+  (select count(*) from public.notifications
+    where kind in ('payment_reported', 'payment_confirmed', 'payment_declined')) > 0
+  and not exists (
+    select 1 from public.notifications
+     where kind in ('payment_reported', 'payment_confirmed', 'payment_declined')
+       and title not like 'Receipt %'),
+  'every notification about money in is titled as a receipt, never a payment');
+select test.ok(
+  exists (select 1 from public.notifications where kind = 'payment_reported' and title like 'Receipt to confirm: %')
+  and exists (select 1 from public.notifications where kind = 'payment_confirmed' and title like 'Receipt confirmed: %'),
+  'staff are asked to confirm a receipt and the payer is told it was confirmed');
+select test.ok(
+  exists (select 1 from public.notifications where kind = 'payment_confirmed' and title like 'Receipt confirmed as %'),
+  'and a corrected one says it was confirmed as the corrected figure');
+
+-- The error text a person reads says receipt too.
+do $$
+declare v_msg text;
+begin
+  begin
+    perform public.review_contribution('00000000-0000-4000-8000-00000000dead', true);
+  exception when others then v_msg := sqlerrm;
+  end;
+  perform test.eq(v_msg, 'No such receipt', 'confirming something that does not exist says there is no such receipt');
+end $$;
+
+-- Notifications stored before the rename read the same as the new ones, and the
+-- backfill can run again without touching them twice.
+insert into public.notifications (community_id, user_id, kind, title, body)
+select community_id, user_id, 'payment_declined', 'Payment not confirmed: ₹5', 'old'
+  from public.notifications where kind = 'payment_confirmed' limit 1;
+update public.notifications
+   set title = regexp_replace(title, '^Payment (to confirm|not confirmed|confirmed)', 'Receipt \1')
+ where kind in ('payment_reported', 'payment_confirmed', 'payment_declined')
+   and title like 'Payment %';
+select test.eq(
+  (select title from public.notifications where body = 'old' and kind = 'payment_declined'),
+  'Receipt not confirmed: ₹5', 'a notification stored with the old wording is rewritten');

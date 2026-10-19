@@ -71,7 +71,7 @@ export default function NotificationsScreen() {
         ListEmptyComponent={
           <EmptyState
             title="No notifications yet"
-            description="Join requests, payments, bills and new events will show up here."
+            description="Join requests, receipts, bills and new events will show up here."
           />
         }
         renderItem={({ item }) => (

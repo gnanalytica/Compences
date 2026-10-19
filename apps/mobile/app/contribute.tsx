@@ -95,7 +95,7 @@ function ChooseEvent() {
       <Screen>
         <EmptyState
           title="Staff don’t contribute"
-          description="Record a flat’s payment from Manage → Payments."
+          description="Record a flat’s payment from Manage → Receipts."
         />
       </Screen>
     );
@@ -224,7 +224,7 @@ function ContributeTo({ eventSlug }: { eventSlug: string }) {
       <Screen>
         <EmptyState
           title="Staff don’t contribute"
-          description="Record a flat’s payment from Manage → Payments."
+          description="Record a flat’s payment from Manage → Receipts."
         />
       </Screen>
     );

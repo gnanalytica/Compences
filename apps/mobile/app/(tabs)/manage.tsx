@@ -91,7 +91,7 @@ export default function Manage() {
             onPress={() => router.push('/admin/bills')}
           />
           <LinkRow
-            label="Payments"
+            label="Receipts"
             detail="Who has paid for each event"
             onPress={() => router.push('/admin/payments')}
           />
@@ -100,7 +100,7 @@ export default function Manage() {
           {can(role, 'payments:record') ? (
             <LinkRow
               label="Reconcile"
-              detail="Match the bank statement to reported payments"
+              detail="Match the bank statement to reported receipts"
               onPress={() => router.push('/admin/reconcile')}
             />
           ) : null}

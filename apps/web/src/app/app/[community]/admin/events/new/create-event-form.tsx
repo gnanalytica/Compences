@@ -14,6 +14,7 @@ import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { EMPTY_STATE } from '@/lib/action-state';
 import { CatalogueSelect } from '@/components/catalogue-select';
+import { SuggestionList } from '@/components/suggestion-list';
 import { cn } from '@/lib/utils';
 import type { Pickers } from '../[event]/forms';
 import { createEvent, type EventFormState } from '../actions';
@@ -128,7 +129,7 @@ function Rail({
   );
 }
 
-type Line = { key: number; categoryId: string | null; amount: string };
+type Line = { key: number; type: string; vendor: string; amount: string };
 type ActivityRow = { key: number; typeId: string; name: string; emoji: string };
 
 export function CreateEventForm({
@@ -155,15 +156,11 @@ export function CreateEventForm({
   // Kept only to warn under the date. Cleared the moment somebody edits either
   // field, because the warning is about the date we filled in, not theirs.
   const [picked, setPicked] = useState<FestivalDraft | null>(null);
-  // Start with the society's first three budget categories; each row keeps a
-  // stable key so removing one does not shuffle the others' choices.
-  const [lines, setLines] = useState<Line[]>(() =>
-    pickers.budget_category
-      .slice(0, 3)
-      .map((item, key) => ({ key, categoryId: item.id, amount: '' })),
-  );
+  // No predefined rows: one blank to type into, which is ignored if left empty.
+  // Each row keeps a stable key so removing one does not shuffle the others.
+  const [lines, setLines] = useState<Line[]>([{ key: 0, type: '', vendor: '', amount: '' }]);
   const [activities, setActivities] = useState<ActivityRow[]>([]);
-  const [nextKey, setNextKey] = useState(3);
+  const [nextKey, setNextKey] = useState(1);
   const total = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
 
   const form = useRef<HTMLFormElement>(null);
@@ -381,58 +378,92 @@ export function CreateEventForm({
         <Card>
           <CardHeader
             title={STEPS[1].title}
-            description={`What you plan to spend. The total, ${formatMoney(total)}, becomes the fund target.`}
+            description={`What you plan to spend, as type, vendor and amount. The total, ${formatMoney(total)}, becomes the fund target.`}
           />
           <CardBody className="space-y-2">
-            {lines.map((line) => (
-              <div key={line.key} className="flex items-center gap-2">
-                <div className="min-w-0 flex-1">
-                  <CatalogueSelect
-                    slug={slug}
-                    kind="budget_category"
-                    name="budget_category"
-                    label="Budget category"
-                    items={pickers.budget_category}
-                    defaultId={line.categoryId}
-                    placeholder="Choose a category"
-                    hideLabel
-                  />
+            <SuggestionList id="budget-types" items={pickers.budget_category} />
+            <SuggestionList id="budget-vendors" items={pickers.vendor} />
+            {lines.map((line) => {
+              const patch = (change: Partial<Line>) =>
+                setLines((current) =>
+                  current.map((l) => (l.key === line.key ? { ...l, ...change } : l)),
+                );
+              return (
+                <div key={line.key} className="flex flex-wrap items-end gap-2">
+                  <div className="min-w-32 flex-1">
+                    <label
+                      className="text-ink-muted mb-1 block text-xs"
+                      htmlFor={`bl-type-${line.key}`}
+                    >
+                      Type
+                    </label>
+                    <Input
+                      id={`bl-type-${line.key}`}
+                      name="budget_type"
+                      list="budget-types"
+                      value={line.type}
+                      onChange={(event) => patch({ type: event.target.value })}
+                      placeholder="Food"
+                      maxLength={80}
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="min-w-32 flex-1">
+                    <label
+                      className="text-ink-muted mb-1 block text-xs"
+                      htmlFor={`bl-vendor-${line.key}`}
+                    >
+                      Vendor
+                    </label>
+                    <Input
+                      id={`bl-vendor-${line.key}`}
+                      name="budget_vendor"
+                      list="budget-vendors"
+                      value={line.vendor}
+                      onChange={(event) => patch({ vendor: event.target.value })}
+                      placeholder="Tesla"
+                      maxLength={80}
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="w-32">
+                    <label
+                      className="text-ink-muted mb-1 block text-xs"
+                      htmlFor={`bl-amt-${line.key}`}
+                    >
+                      Amount (₹)
+                    </label>
+                    <Input
+                      id={`bl-amt-${line.key}`}
+                      name="budget_amount"
+                      type="number"
+                      min={0}
+                      value={line.amount}
+                      onChange={(event) => patch({ amount: event.target.value })}
+                      placeholder="₹"
+                      required={Boolean(line.type.trim())}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLines((current) => current.filter((l) => l.key !== line.key))}
+                    className="text-ink-subtle hover:text-ink mb-1 p-1.5"
+                    aria-label="Remove this budget line"
+                  >
+                    <X className="size-4" aria-hidden="true" />
+                  </button>
                 </div>
-                <label className="sr-only" htmlFor={`bl-amt-${line.key}`}>
-                  Amount
-                </label>
-                <Input
-                  id={`bl-amt-${line.key}`}
-                  name="budget_amount"
-                  type="number"
-                  min={0}
-                  value={line.amount}
-                  onChange={(event) =>
-                    setLines((current) =>
-                      current.map((l) =>
-                        l.key === line.key ? { ...l, amount: event.target.value } : l,
-                      ),
-                    )
-                  }
-                  placeholder="₹"
-                  className="w-32"
-                />
-                <button
-                  type="button"
-                  onClick={() => setLines((current) => current.filter((l) => l.key !== line.key))}
-                  className="text-ink-subtle hover:text-ink p-1.5"
-                  aria-label="Remove this budget line"
-                >
-                  <X className="size-4" aria-hidden="true" />
-                </button>
-              </div>
-            ))}
+              );
+            })}
             <Button
               type="button"
               size="sm"
               variant="ghost"
               onClick={() => {
-                setLines((current) => [...current, { key: nextKey, categoryId: null, amount: '' }]);
+                setLines((current) => [
+                  ...current,
+                  { key: nextKey, type: '', vendor: '', amount: '' },
+                ]);
                 setNextKey((key) => key + 1);
               }}
             >

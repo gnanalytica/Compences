@@ -50,7 +50,7 @@ export default async function NotificationsPage(
             <EmptyState
               icon={<Bell className="size-6" aria-hidden="true" />}
               title="No notifications yet"
-              description="Approvals, payments, new events and votes will show up here."
+              description="Approvals, receipts, new events and votes will show up here."
             />
           ) : (
             <ul className="divide-border-base divide-y">

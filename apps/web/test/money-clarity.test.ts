@@ -84,7 +84,9 @@ describe('the phone', () => {
   });
 
   it('holds bills and payments to the same rules', () => {
-    expect(phone('app', 'admin', 'bill.tsx')).toContain('Pick the vendor this bill is from.');
+    expect(phone('app', 'admin', 'bill.tsx')).toContain(
+      'Pick the budget line this bill is paid from.',
+    );
     expect(phone('app', 'admin', 'payments.tsx')).toContain('recordedPaymentEvidenceProblem(');
   });
 

@@ -196,5 +196,5 @@ export async function undoMatch(_prev: ActionState, formData: FormData): Promise
   if (error) return { error: friendlyDbError(error) };
 
   refresh(slug);
-  return { ...EMPTY_STATE, success: 'Match undone; the payment is waiting again.' };
+  return { ...EMPTY_STATE, success: 'Match undone; the receipt is waiting again.' };
 }

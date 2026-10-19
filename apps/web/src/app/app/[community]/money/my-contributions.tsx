@@ -47,7 +47,7 @@ export async function MyContributions({
       </StatTiles>
 
       <Card className="mt-5">
-        <CardHeader title="Your payments" />
+        <CardHeader title="Your receipts" />
         {rows.length ? (
           <ul className="divide-border-base divide-y">
             {rows.map((contribution) => {

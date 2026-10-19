@@ -27,7 +27,13 @@ import {
   uuid,
 } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
-import { getCatalogue, resolveCatalogueChoice } from '@/lib/catalogue';
+import {
+  CATALOGUE_LABEL_MAX,
+  findOrCreateCatalogueItems,
+  getCatalogue,
+  resolveCatalogueChoice,
+  tidyLabel,
+} from '@/lib/catalogue';
 import { getSupabase } from '@/lib/supabase/server';
 import { removeStoredFile } from '@/lib/storage';
 import { EMPTY_STATE, fieldErrors, friendlyDbError, type ActionState } from '@/lib/action-state';
@@ -50,12 +56,84 @@ function refreshEvent(communitySlug: string, eventSlug: string) {
   revalidatePath(`/app/${communitySlug}/admin`);
 }
 
-async function billChoices(communityId: string, formData: FormData) {
-  const [category, vendor] = await Promise.all([
-    resolveCatalogueChoice(communityId, 'budget_category', formData, 'category'),
-    resolveCatalogueChoice(communityId, 'vendor', formData, 'vendor'),
+/** One row of a budget as typed: Type, Vendor and Amount. */
+type BudgetRowInput = { type: string; vendor: string; amount: number };
+
+/**
+ * Reads the budget rows a form posted. A row with nothing in it is ignored; a
+ * row with anything in it needs a type and an amount above zero. The same type
+ * may repeat with different vendors.
+ */
+function readBudgetRows(formData: FormData): { rows: BudgetRowInput[] } | { error: string } {
+  const types = formData.getAll('budget_type');
+  const vendors = formData.getAll('budget_vendor');
+  const amounts = formData.getAll('budget_amount');
+  const rows: BudgetRowInput[] = [];
+  for (const [index, rawType] of types.entries()) {
+    const type = tidyLabel(rawType);
+    const vendor = tidyLabel(vendors[index]);
+    const raw = String(amounts[index] ?? '').trim();
+    if (!type && !vendor && !raw) continue;
+    const amount = raw ? Number(raw) : 0;
+    if (!type) return { error: 'Give every budget row a type, such as Food.' };
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { error: `Enter an amount above zero for ${type}.` };
+    }
+    if (amount > 100_000_000) return { error: `The amount for ${type} is too large.` };
+    if (type.length > CATALOGUE_LABEL_MAX || vendor.length > CATALOGUE_LABEL_MAX) {
+      return { error: `Keep types and vendors under ${CATALOGUE_LABEL_MAX} characters.` };
+    }
+    rows.push({ type, vendor, amount });
+  }
+  return { rows };
+}
+
+type BudgetLineRecord = {
+  category: string;
+  category_id: string;
+  vendor: string | null;
+  vendor_id: string | null;
+  amount: number;
+};
+
+/**
+ * Finds or creates the catalogue items behind typed budget rows, so the
+ * suggestions grow, and returns what to store on each line. Labels come from
+ * the catalogue, so "food" typed against an existing "Food" is stored as "Food".
+ */
+async function budgetLineRecords(
+  context: { community: { id: string }; user: { id: string } },
+  rows: BudgetRowInput[],
+): Promise<{ lines: BudgetLineRecord[] } | { error: string }> {
+  const [types, vendors] = await Promise.all([
+    findOrCreateCatalogueItems(
+      context.community.id,
+      context.user.id,
+      'budget_category',
+      rows.map((row) => row.type),
+    ),
+    findOrCreateCatalogueItems(
+      context.community.id,
+      context.user.id,
+      'vendor',
+      rows.map((row) => row.vendor),
+    ),
   ]);
-  return { category, vendor };
+  if ('error' in types) return types;
+  if ('error' in vendors) return vendors;
+  return {
+    lines: rows.map((row) => {
+      const type = types.items.get(row.type.toLowerCase())!;
+      const vendor = row.vendor ? (vendors.items.get(row.vendor.toLowerCase()) ?? null) : null;
+      return {
+        category: type.label,
+        category_id: type.id,
+        vendor: vendor?.label ?? null,
+        vendor_id: vendor?.id ?? null,
+        amount: row.amount,
+      };
+    }),
+  };
 }
 
 async function findEvent(communityId: string, eventSlug: string) {
@@ -105,7 +183,7 @@ function slugCandidates(name: string, startsOn: string) {
 }
 
 /**
- * Creates an event with its first budget lines (their sum is the fund target)
+ * Creates an event with its first budget rows (their sum is the fund target)
  * and activities. The web address comes from the name. "Save for later" keeps
  * it a draft; "Publish" shows it to residents straight away.
  */
@@ -117,24 +195,12 @@ export async function createEvent(
   const context = await requireCapability(communitySlug, 'events:manage');
   const publish = formData.get('intent') === 'publish';
 
-  // Budget lines pick a category from the catalogue; the label stored on the
-  // line comes from the catalogue, not the form.
+  // Budget rows are Type | Vendor | Amount, typed freely; they are turned into
+  // catalogue items once the event itself checks out.
   const catalogue = await getCatalogue(context.community.id);
-  const categoryIds = formData.getAll('budget_category_id').map((value) => String(value).trim());
-  const amounts = formData.getAll('budget_amount').map((value) => Number(value || 0));
-  const lines = categoryIds
-    .map((id, index) => ({
-      item: catalogue.budget_category.find((entry) => entry.id === id) ?? null,
-      amount: amounts[index] ?? 0,
-    }))
-    .filter((line) => line.item || line.amount > 0);
-  if (lines.some((line) => !line.item)) {
-    return { error: 'Pick a category for every budget line that has an amount.' };
-  }
-  if (lines.some((line) => !Number.isFinite(line.amount) || line.amount < 0)) {
-    return { error: 'Budget amounts must be numbers.' };
-  }
-  const fundTarget = lines.reduce((sum, line) => sum + line.amount, 0);
+  const budget = readBudgetRows(formData);
+  if ('error' in budget) return { error: budget.error };
+  const fundTarget = budget.rows.reduce((sum, row) => sum + row.amount, 0);
 
   const [eventType, venue] = await Promise.all([
     resolveCatalogueChoice(context.community.id, 'event_type', formData, 'event_type'),
@@ -167,6 +233,10 @@ export async function createEvent(
     fund_target: fundTarget,
   });
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+
+  const records = await budgetLineRecords(context, budget.rows);
+  if ('error' in records) return { error: records.error };
+  const lines = records.lines;
 
   const supabase = await getSupabase();
   let created: { id: string; slug: string } | null = null;
@@ -212,9 +282,7 @@ export async function createEvent(
       lines.map((line, position) => ({
         event_id: event.id,
         community_id: context.community.id,
-        category: line.item!.label,
-        category_id: line.item!.id,
-        amount: line.amount,
+        ...line,
         position,
       })),
     );
@@ -322,11 +390,34 @@ async function syncFundTarget(eventId: string) {
   await supabase.from('events').update({ fund_target: total }).eq('id', eventId);
 }
 
-const budgetLineInput = z.object({
-  category: z.string().trim().min(1, 'Pick a category').max(80),
-  amount: z.coerce.number().min(0, 'Enter an amount').max(100_000_000),
-  notes: z.string().trim().max(300).optional(),
-});
+/** One line from a form that posts `category`, `vendor` and `amount` as typed. */
+async function readBudgetLine(
+  context: { community: { id: string }; user: { id: string } },
+  formData: FormData,
+): Promise<
+  { line: BudgetLineRecord } | { error: string } | { fieldErrors: Record<string, string> }
+> {
+  const parsed = z
+    .object({
+      category: z.string().trim().min(1, 'Type a type, such as Food').max(CATALOGUE_LABEL_MAX),
+      vendor: z.string().trim().max(CATALOGUE_LABEL_MAX).optional(),
+      amount: z.coerce
+        .number()
+        .positive('Enter an amount above zero')
+        .max(100_000_000, 'That amount is too large'),
+    })
+    .safeParse({
+      category: tidyLabel(formData.get('category')),
+      vendor: tidyLabel(formData.get('vendor')) || undefined,
+      amount: formData.get('amount'),
+    });
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const records = await budgetLineRecords(context, [
+    { type: parsed.data.category, vendor: parsed.data.vendor ?? '', amount: parsed.data.amount },
+  ]);
+  if ('error' in records) return { error: records.error };
+  return { line: records.lines[0]! };
+}
 
 export async function addBudgetLine(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const communitySlug = String(formData.get('slug') ?? '');
@@ -336,18 +427,8 @@ export async function addBudgetLine(_prev: ActionState, formData: FormData): Pro
   if (!event) return { error: 'That event no longer exists.' };
   if (event.kind === 'campaign') return { error: 'Campaigns have a single target, not a budget.' };
 
-  const category = await resolveCatalogueChoice(
-    context.community.id,
-    'budget_category',
-    formData,
-    'category',
-  );
-  const parsed = budgetLineInput.safeParse({
-    category: category.label ?? '',
-    amount: formData.get('amount'),
-    notes: formData.get('notes') || undefined,
-  });
-  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const read = await readBudgetLine(context, formData);
+  if (!('line' in read)) return read;
 
   const supabase = await getSupabase();
   const { count } = await supabase
@@ -355,8 +436,7 @@ export async function addBudgetLine(_prev: ActionState, formData: FormData): Pro
     .select('id', { count: 'exact', head: true })
     .eq('event_id', event.id);
   const { error } = await supabase.from('budget_lines').insert({
-    ...parsed.data,
-    category_id: category.id,
+    ...read.line,
     event_id: event.id,
     community_id: context.community.id,
     position: count ?? 0,
@@ -376,28 +456,11 @@ export async function updateBudgetLine(formData: FormData): Promise<void> {
   if (!event) return;
 
   const id = uuid.safeParse(formData.get('line_id'));
-  const category = await resolveCatalogueChoice(
-    context.community.id,
-    'budget_category',
-    formData,
-    'category',
-  );
-  const parsed = budgetLineInput.safeParse({
-    category: category.label ?? '',
-    amount: formData.get('amount'),
-  });
-  if (!id.success || !parsed.success) return;
+  const read = await readBudgetLine(context, formData);
+  if (!id.success || !('line' in read)) return;
 
   const supabase = await getSupabase();
-  await supabase
-    .from('budget_lines')
-    .update({
-      category: parsed.data.category,
-      category_id: category.id,
-      amount: parsed.data.amount,
-    })
-    .eq('id', id.data)
-    .eq('event_id', event.id);
+  await supabase.from('budget_lines').update(read.line).eq('id', id.data).eq('event_id', event.id);
 
   await syncFundTarget(event.id);
   refreshEvent(communitySlug, eventSlug);
@@ -603,17 +666,82 @@ export async function editActivity(_prev: ActionState, formData: FormData): Prom
 // Bills
 // ---------------------------------------------------------------------------
 
-/** Bill fields; category and vendor are resolved from the catalogue by the caller. */
+/**
+ * A bill's fields, as the schema checks them. The Remarks box is the bill's
+ * `name`: what the money was for, in a few words.
+ */
+const billSchema = createExpenseSchema.extend({
+  name: z.string().trim().min(2, 'Add a remark about this bill').max(140),
+});
+
+/**
+ * The budget line a bill is paid out of. The line has to be this event's: the
+ * form only offers those, but the id is the browser's to post, and the
+ * database checks it again. The bill takes its type and vendor from the line,
+ * so the ledger reads the same as the budget. A line with no vendor leaves the
+ * vendor to be typed, as a bill must say who was paid.
+ */
+async function billLine(
+  context: { community: { id: string }; user: { id: string } },
+  eventId: string,
+  formData: FormData,
+  { optional }: { optional: boolean },
+): Promise<
+  | {
+      line: { id: string } | null;
+      category: { id: string | null; label: string } | null;
+      vendor: { id: string | null; label: string | null } | null;
+    }
+  | { error: string }
+  | { fieldErrors: Record<string, string> }
+> {
+  const raw = String(formData.get('budget_line_id') ?? '').trim();
+  if (!raw && optional) return { line: null, category: null, vendor: null };
+  const lineId = uuid.safeParse(raw);
+  if (!lineId.success) {
+    return { fieldErrors: { budget_line_id: 'Pick the budget line this bill is paid from' } };
+  }
+  const supabase = await getSupabase();
+  const { data: line } = await supabase
+    .from('budget_lines')
+    .select('id, category, category_id, vendor, vendor_id')
+    .eq('id', lineId.data)
+    .eq('event_id', eventId)
+    .maybeSingle();
+  if (!line) return { fieldErrors: { budget_line_id: 'That line is not in this event’s budget' } };
+
+  let vendor: { id: string | null; label: string | null } = {
+    id: line.vendor_id,
+    label: line.vendor,
+  };
+  if (!vendor.label) {
+    const typed = tidyLabel(formData.get('vendor'));
+    if (typed) {
+      const found = await findOrCreateCatalogueItems(
+        context.community.id,
+        context.user.id,
+        'vendor',
+        [typed],
+      );
+      if ('error' in found) return { error: found.error };
+      const item = found.items.get(typed.toLowerCase());
+      vendor = { id: item?.id ?? null, label: item?.label ?? typed };
+    }
+  }
+  return { line, category: { id: line.category_id, label: line.category }, vendor };
+}
+
+/** Bill fields that come straight off the form. */
 function expenseFields(
   formData: FormData,
-  category: { label: string | null },
-  vendor: { label: string | null },
+  category: { label: string | null } | null,
+  vendor: { label: string | null } | null,
 ) {
   return {
     name: formData.get('name'),
-    category: category.label ?? undefined,
+    category: category?.label ?? undefined,
     amount: formData.get('amount'),
-    vendor: vendor.label ?? undefined,
+    vendor: vendor?.label ?? undefined,
     paid_by: formData.get('paid_by') || undefined,
     method: formData.get('method') || 'upi',
     bill_url: formData.get('bill_url') || undefined,
@@ -621,7 +749,11 @@ function expenseFields(
   };
 }
 
-/** Staff upload a bill; it waits for the committee before residents see it. */
+/**
+ * Staff upload a bill, paid out of one of the event's budget lines; it waits
+ * for the committee before residents see it. Nothing comes off the line until
+ * the committee approves, which the database works out from the approved bills.
+ */
 export async function submitExpense(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const communitySlug = String(formData.get('slug') ?? '');
   const eventSlug = String(formData.get('event') ?? '');
@@ -632,8 +764,12 @@ export async function submitExpense(_prev: ActionState, formData: FormData): Pro
     return { error: 'This event is closed; its ledger cannot be changed.' };
   }
 
-  const { category, vendor } = await billChoices(context.community.id, formData);
-  const parsed = createExpenseSchema.safeParse({
+  const chosen = await billLine(context, event.id, formData, { optional: false });
+  if (!('line' in chosen) || !chosen.line || !chosen.category || !chosen.vendor) {
+    return 'line' in chosen ? { error: 'Pick the budget line this bill is paid from.' } : chosen;
+  }
+  const { category, vendor } = chosen;
+  const parsed = billSchema.safeParse({
     event_id: event.id,
     ...expenseFields(formData, category, vendor),
   });
@@ -642,6 +778,7 @@ export async function submitExpense(_prev: ActionState, formData: FormData): Pro
   const supabase = await getSupabase();
   const { error } = await supabase.from('expenses').insert({
     ...parsed.data,
+    budget_line_id: chosen.line.id,
     category_id: category.id,
     vendor_id: vendor.id,
     community_id: context.community.id,
@@ -656,9 +793,10 @@ export async function submitExpense(_prev: ActionState, formData: FormData): Pro
 }
 
 /**
- * Corrects a bill, including attaching a new copy. A corrected bill goes back
- * to the committee as pending — including one that had already been approved,
- * where the database resets the approval whatever this function asks for.
+ * Corrects a bill, including attaching a new copy or moving it to another
+ * budget line. A corrected bill goes back to the committee as pending —
+ * including one that had already been approved, where the database resets the
+ * approval whatever this function asks for.
  */
 export async function correctExpense(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const communitySlug = String(formData.get('slug') ?? '');
@@ -670,22 +808,34 @@ export async function correctExpense(_prev: ActionState, formData: FormData): Pr
   const expenseId = uuid.safeParse(formData.get('expense_id'));
   if (!expenseId.success) return { error: 'That bill no longer exists.' };
 
-  const { category, vendor } = await billChoices(context.community.id, formData);
-  const parsed = createExpenseSchema.safeParse({
-    event_id: event.id,
-    ...expenseFields(formData, category, vendor),
-  });
-  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
-
   const supabase = await getSupabase();
   // Remember the file this bill pointed at, and whether it had been approved.
   const { data: previous } = await supabase
     .from('expenses')
-    .select('bill_url, status')
+    .select('bill_url, status, budget_line_id, category')
     .eq('id', expenseId.data)
     .eq('event_id', event.id)
     .maybeSingle();
   if (!previous) return { error: 'That bill no longer exists.' };
+
+  // A bill filed before bills drew on a line may stay without one; every other
+  // bill names its line.
+  const chosen = await billLine(context, event.id, formData, {
+    optional: previous.budget_line_id == null,
+  });
+  if (!('line' in chosen)) return chosen;
+  const { line, category, vendor } = chosen;
+  const parsed = billSchema.safeParse({
+    event_id: event.id,
+    // Without a line the bill keeps the words it was filed with.
+    ...expenseFields(
+      formData,
+      category ?? { label: previous.category },
+      vendor ?? { label: String(formData.get('vendor') ?? '') },
+    ),
+  });
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+
   const wasDecided = previous.status !== 'pending' && previous.status !== 'changes_requested';
   if (wasDecided && !can(context.role, 'expenses:approve')) {
     return { error: 'Only the committee can revise a bill that has already been decided.' };
@@ -696,8 +846,9 @@ export async function correctExpense(_prev: ActionState, formData: FormData): Pr
     .update({
       name: parsed.data.name,
       category: parsed.data.category ?? null,
-      category_id: category.id,
-      vendor_id: vendor.id,
+      ...(line && category && vendor
+        ? { budget_line_id: line.id, category_id: category.id, vendor_id: vendor.id }
+        : {}),
       amount: parsed.data.amount,
       vendor: parsed.data.vendor ?? null,
       paid_by: parsed.data.paid_by ?? null,
@@ -767,7 +918,7 @@ export async function reviewExpense(_prev: ActionState, formData: FormData): Pro
 }
 
 // ---------------------------------------------------------------------------
-// Payments
+// Receipts
 // ---------------------------------------------------------------------------
 
 const recordPaymentSchema = z.object({
@@ -789,7 +940,7 @@ export async function recordPayment(_prev: ActionState, formData: FormData): Pro
   const event = await findEvent(context.community.id, eventSlug);
   if (!event) return { error: 'That event no longer exists.' };
   if (event.status !== 'published') {
-    return { error: 'Payments can only be recorded while the event is open.' };
+    return { error: 'Receipts can only be recorded while the event is open.' };
   }
 
   const parsed = recordPaymentSchema.safeParse({
@@ -832,7 +983,7 @@ export async function recordPayment(_prev: ActionState, formData: FormData): Pro
   if (error) return { error: friendlyDbError(error) };
 
   refreshEvent(communitySlug, eventSlug);
-  return { ...EMPTY_STATE, success: 'Payment recorded.' };
+  return { ...EMPTY_STATE, success: 'Receipt recorded.' };
 }
 
 const reviewPaymentSchema = z

@@ -11,7 +11,7 @@ import {
 } from '@compences/core';
 import { requireCapability } from '@/lib/auth';
 import { getTodoItems, type TodoItem } from '@/lib/todo';
-import { getSocietyBalance } from '@/lib/events';
+import { getBillOverruns, getSocietyBalance } from '@/lib/events';
 import { CoverOverspendForm } from '../money/money-forms';
 import { PageBody, PageHeader } from '@/components/page-header';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -54,7 +54,7 @@ function detailHref(base: string, item: TodoItem): string | null {
 }
 
 const DETAIL_LABEL: Record<TodoKind, string> = {
-  payment_to_confirm: 'See screenshot and payments',
+  payment_to_confirm: 'See screenshot and receipts',
   join_request: 'See all join requests',
   bill_to_approve: 'See the bill',
   bill_sent_back: 'Fix the bill',
@@ -88,6 +88,10 @@ export default async function TodoPage(props: PageProps<'/app/[community]/todo'>
     getTodoItems(community.id, role),
     getSocietyBalance(community.id),
   ]);
+  // Bills that would take their budget line below zero, flagged beside Approve.
+  const overruns = await getBillOverruns(
+    items.filter((item) => item.kind === 'bill_to_approve').map((item) => item.id),
+  );
   const base = `/app/${community.slug}`;
   const committee = can(role, 'roles:manage');
 
@@ -141,6 +145,7 @@ export default async function TodoPage(props: PageProps<'/app/[community]/todo'>
                           communityId={community.id}
                           societyBalance={society.balance}
                           item={item}
+                          overBy={overruns.get(item.id) ?? 0}
                           committee={committee}
                           currency={community.currency}
                           role={role}
@@ -168,7 +173,7 @@ export default async function TodoPage(props: PageProps<'/app/[community]/todo'>
             <EmptyState
               icon={<CheckCircle2 className="size-6" />}
               title="All done"
-              description="Payments to confirm, new residents, bills and suggestions show up here when they need you."
+              description="Receipts to confirm, new residents, bills and suggestions show up here when they need you."
             />
           </Card>
         )}
@@ -182,6 +187,7 @@ function TodoActions({
   communityId,
   societyBalance,
   item,
+  overBy,
   committee,
   currency,
   role,
@@ -191,6 +197,8 @@ function TodoActions({
   communityId: string;
   societyBalance: number;
   item: TodoItem;
+  /** For a bill: how far approving it takes its budget line below zero. */
+  overBy: number;
   committee: boolean;
   currency: string;
   role: Parameters<typeof can>[0];
@@ -263,6 +271,8 @@ function TodoActions({
           eventSlug={item.eventSlug ?? ''}
           expenseId={item.id}
           mayApprove
+          overBy={overBy}
+          currency={currency}
         />
       ) : null;
 
