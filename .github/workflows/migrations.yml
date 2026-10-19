@@ -1,9 +1,11 @@
 name: Migrations
 
-# Vercel deploys the app the moment main moves; the schema waits for a person
-# to run `pnpm db:push`. This watches the gap between the two, so a migration
-# that never got applied shows up as a red check rather than as a resident
-# reporting that a button does nothing.
+# Vercel deploys the app the moment main moves, and Supabase's GitHub
+# integration ("Deploy to production") applies new files in supabase/migrations
+# on the same push. They finish at different times, and the integration can
+# fail on its own. This watches the gap between the two, so a migration that
+# never got applied shows up as a red check rather than as a resident reporting
+# that a button does nothing.
 on:
   push:
     branches: [main]
