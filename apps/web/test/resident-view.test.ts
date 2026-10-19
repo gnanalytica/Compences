@@ -60,7 +60,7 @@ describe('the Contribute button', () => {
 describe('money', () => {
   it('puts the society and the member’s own payments side by side, on both apps', () => {
     const web = read(...WEB, 'money', 'page.tsx');
-    expect(web).toContain('My contributions');
+    expect(web).toContain('My receipts');
     expect(web).toContain("view === 'mine'");
     const phone = read('mobile', 'app', '(tabs)', 'money.tsx');
     expect(phone).toContain("{ id: 'mine', label: 'My contributions' }");

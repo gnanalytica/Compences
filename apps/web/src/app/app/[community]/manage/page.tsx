@@ -62,7 +62,7 @@ export default async function ManagePage(props: PageProps<'/app/[community]/mana
     rows.push({
       href: `${base}/admin/reconcile`,
       label: 'Reconcile',
-      detail: 'Match the bank statement to reported payments',
+      detail: 'Match the bank statement to reported receipts',
       icon: Scale,
     });
   }

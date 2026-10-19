@@ -107,7 +107,7 @@ export default async function ReconcilePage(props: PageProps<'/app/[community]/a
     <>
       <PageHeader
         title="Reconcile"
-        description="Import the bank statement and match each line to a payment."
+        description="Import the bank statement and match each line to a receipt."
       />
       <PageBody>
         <StatTiles>
@@ -159,7 +159,7 @@ export default async function ReconcilePage(props: PageProps<'/app/[community]/a
             description={
               allOpen.length > PAGE
                 ? `Showing the ${PAGE} most recent. Clear these to see the rest.`
-                : 'Match each to a payment, or set it aside with a reason.'
+                : 'Match each to a receipt, or set it aside with a reason.'
             }
           />
           {open.length ? (
@@ -197,7 +197,7 @@ export default async function ReconcilePage(props: PageProps<'/app/[community]/a
                         ) : null}
                       </div>
                       <Badge tone={incoming ? 'success' : 'warning'}>
-                        {incoming ? 'Money in' : 'Money out'}
+                        {incoming ? 'Receipt' : 'Payment'}
                       </Badge>
                     </div>
 
@@ -212,7 +212,7 @@ export default async function ReconcilePage(props: PageProps<'/app/[community]/a
                     ) : (
                       <p className="text-ink-subtle text-xs">
                         {incoming
-                          ? 'No reported payment matches this. Ask around, or set it aside.'
+                          ? 'No reported receipt matches this. Ask around, or set it aside.'
                           : 'Matching money out to bills isn’t available yet. Set it aside with what it was.'}
                       </p>
                     )}
@@ -228,7 +228,7 @@ export default async function ReconcilePage(props: PageProps<'/app/[community]/a
               title={lines.length ? 'Everything is accounted for' : 'Nothing imported yet'}
               description={
                 lines.length
-                  ? 'Every line is matched to a payment or set aside with a reason.'
+                  ? 'Every line is matched to a receipt or set aside with a reason.'
                   : 'Import a statement above to see its lines here.'
               }
             />

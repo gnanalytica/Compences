@@ -229,7 +229,7 @@ export function FundToy() {
             <li className="border-border-base text-ink-subtle grid min-h-[9.75rem] place-items-center rounded-xl border border-dashed px-6 text-center text-xs">
               <span>
                 <ReceiptIndianRupee className="mx-auto mb-2 size-6 opacity-60" aria-hidden="true" />
-                Nothing here yet. Payments appear once staff or the committee confirm them.
+                Nothing here yet. Receipts appear once staff or the committee confirm them.
               </span>
             </li>
           ) : (

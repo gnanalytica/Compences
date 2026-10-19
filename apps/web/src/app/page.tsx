@@ -50,7 +50,7 @@ const FEATURES = [
     // 20260920000500_every_resident_can_see_the_ledger.sql).
     icon: Wallet,
     title: 'A fund with a target',
-    body: 'Residents chip in and the bar fills. Each confirmed payment goes on a ledger every resident can see, with the payer’s name and flat.',
+    body: 'Residents chip in and the bar fills. Each confirmed receipt goes on a ledger every resident can see, with the payer’s name and flat.',
   },
   {
     icon: ReceiptIndianRupee,
@@ -92,8 +92,8 @@ const CHAPTERS: Chapter[] = [
     label: 'Collect',
     title: 'Two taps to pay, and someone else confirms it',
     points: [
-      'Residents pay by UPI with the amount and note filled in. Staff record cash payments.',
-      'Staff or the committee confirm each payment. Nobody confirms their own, unless the committee is one person.',
+      'Residents pay by UPI with the amount and note filled in. Staff record cash receipts.',
+      'Staff or the committee confirm each receipt. Nobody confirms their own, unless the committee is one person.',
       'Then every resident can see it on the ledger: name, flat and how they paid.',
     ],
   },
@@ -112,7 +112,7 @@ const CHAPTERS: Chapter[] = [
     label: 'Prove',
     title: 'Match the bank, close the books',
     points: [
-      'Paste in the bank statement and pair each line with its payment; likely matches are suggested. Anything unexplained is listed and totalled.',
+      'Paste in the bank statement and pair each line with its receipt; likely matches are suggested. Anything unexplained is listed and totalled.',
       'When a festival closes, the committee decides where the leftover goes, and residents see who decided.',
       'The Money page shows where every rupee of the balance is, event by event.',
     ],

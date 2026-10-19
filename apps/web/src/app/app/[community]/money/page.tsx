@@ -1,16 +1,13 @@
 import Link from 'next/link';
 import { PiggyBank, Scale, Wallet } from 'lucide-react';
 import {
-  LEDGER_FILTERS,
   SOCIETY_BALANCE_LEDGER,
   UNPUBLISHED_EVENT,
   can,
-  filterLedger,
   formatDate,
   formatMoney,
   fundMovementLine,
   holdingNote,
-  ledgerFilterFrom,
   ledgerScopes,
   ledgerTotals,
   relativeTime,
@@ -19,6 +16,8 @@ import {
 } from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getFundMovements, getSocietyBalance } from '@/lib/events';
+import { getCatalogue } from '@/lib/catalogue';
+import { filterMoney, moneyFiltersFrom, moneyHref, vendorsPaid } from '@/lib/money-filters';
 import { getSupabase } from '@/lib/supabase/server';
 import { rowsOf } from '@/lib/rows';
 import { PageBody, PageHeader } from '@/components/page-header';
@@ -43,17 +42,18 @@ export const metadata = { title: 'Money' };
  * looked like. The history existed and was unreachable, which for a
  * transparency ledger is close to not existing.
  *
- * Money in names the payer, their flat and how they paid; money out names the
- * vendor — the line society_ledger draws and explains. Payments nobody has
+ * Receipts name the payer, their flat and how they paid; payments name the
+ * vendor — the line society_ledger draws and explains. Receipts nobody has
  * confirmed are not here: a ledger of claims is what this replaces.
  *
  * Every row carries its evidence where there is any to carry: the bill behind
- * a payment out, which every member may open, and the screenshot behind a
- * payment in, which the view hands only to the payer and to staff.
+ * a payment, which every member may open, and the screenshot behind a
+ * receipt, which the view hands only to the payer and to staff.
  */
 export default async function MoneyPage(props: PageProps<'/app/[community]/money'>) {
   const { community: slug } = await props.params;
-  const { show, event, view } = await props.searchParams;
+  const search = await props.searchParams;
+  const { view } = search;
   const { community, role, membership } = await requireCommunity(slug);
   // Staff don't contribute, so they have nothing of their own to show.
   const hasOwn = can(role, 'contribute');
@@ -63,7 +63,7 @@ export default async function MoneyPage(props: PageProps<'/app/[community]/money
   if (mine) {
     return (
       <>
-        <PageHeader title="Money" description="Your payments, and where each one stands." />
+        <PageHeader title="Money" description="Your receipts, and where each one stands." />
         <PageBody>
           {views}
           <MyContributions slug={slug} membershipId={membership.id} currency={community.currency} />
@@ -74,42 +74,57 @@ export default async function MoneyPage(props: PageProps<'/app/[community]/money
 
   const supabase = await getSupabase();
 
-  const [ledger, totals, society, movements, eventStats, eventNames] = await Promise.all([
-    supabase
-      .from('society_ledger')
-      .select(
-        'id, kind, direction, happened_at, amount, counterpart, detail, payer_name, unit_label, method, receipt_no, document_url, confirmed_by, confirmed_at, event_id, event_slug, event_name',
-      )
-      .eq('community_id', community.id)
-      .order('happened_at', { ascending: false })
-      .limit(500),
-    supabase.from('society_money').select('*').eq('community_id', community.id).maybeSingle(),
-    getSocietyBalance(community.id),
-    getFundMovements(community.id),
-    // Every event, drafts included: event_stats answers for any member. The
-    // names come from events, which leaves drafts out for a resident — hence
-    // UNPUBLISHED_EVENT rather than a row that silently goes missing.
-    supabase
-      .from('event_stats')
-      .select(
-        'event_id, available, fund_carried, fund_carried_in, fund_raised, spent, fund_moved_out',
-      )
-      .eq('community_id', community.id),
-    supabase
-      .from('events')
-      .select('id, name, emoji, slug, status')
-      .eq('community_id', community.id)
-      .limit(500),
-  ]);
+  const [ledger, totals, society, movements, eventStats, eventNames, catalogue] = await Promise.all(
+    [
+      supabase
+        .from('society_ledger')
+        .select(
+          'id, kind, direction, happened_at, amount, counterpart, detail, payer_name, unit_label, method, receipt_no, document_url, confirmed_by, confirmed_at, event_id, event_slug, event_name',
+        )
+        .eq('community_id', community.id)
+        .order('happened_at', { ascending: false })
+        .limit(500),
+      supabase.from('society_money').select('*').eq('community_id', community.id).maybeSingle(),
+      getSocietyBalance(community.id),
+      getFundMovements(community.id),
+      // Every event, drafts included: event_stats answers for any member. The
+      // names come from events, which leaves drafts out for a resident — hence
+      // UNPUBLISHED_EVENT rather than a row that silently goes missing.
+      supabase
+        .from('event_stats')
+        .select(
+          'event_id, available, fund_carried, fund_carried_in, fund_raised, spent, fund_moved_out',
+        )
+        .eq('community_id', community.id),
+      supabase
+        .from('events')
+        .select('id, name, emoji, slug, status, event_type_id')
+        .eq('community_id', community.id)
+        .limit(500),
+      getCatalogue(community.id),
+    ],
+  );
 
   const rows = rowsOf(ledger, 'the society ledger');
-  const filter = ledgerFilterFrom(show);
-  const eventFilter = typeof event === 'string' ? event : '';
-  const visible = filterLedger(rows, filter, eventFilter);
+  const filters = moneyFiltersFrom(search);
+  const eventFilter = filters.event;
+  // The type of each event, by the catalogue item behind it: the ledger view
+  // carries the event but not its type.
+  const typeById = new Map(
+    (eventNames.data ?? []).map((row) => [row.id, row.event_type_id as string | null]),
+  );
+  const visible = filterMoney(rows, filters, (id) => typeById.get(id) ?? null);
 
-  // Built from the ledger rather than from events, so the filter only ever
-  // offers a year that has something in it — and the society balance, once it
+  // Built from the ledger rather than from events, so a filter only ever
+  // offers something that has a row in it — and the society balance, once it
   // has rows of its own.
+  const eventTypes = catalogue.event_type.filter((item) =>
+    rows.some((row) => row.event_id && typeById.get(row.event_id) === item.id),
+  );
+  const vendors = vendorsPaid(rows);
+  const filtered = Boolean(
+    filters.eventType || filters.vendor || filters.event || !filters.receipts || !filters.payments,
+  );
   const scopes = ledgerScopes(rows);
   const scope = scopes.find((option) => option.value === eventFilter);
   // One event's ledger, or the society balance's, adds up to what it holds:
@@ -127,7 +142,11 @@ export default async function MoneyPage(props: PageProps<'/app/[community]/money
       left: Number(stats.available ?? 0),
     };
   };
-  const scopeTotals = !scope || filter !== 'all' ? null : totalsFor(eventFilter);
+  // Only the event alone has figures of its own; any other filter adds up what
+  // is on screen.
+  const onlyEvent =
+    !filters.eventType && !filters.vendor && filters.receipts && filters.payments && scope;
+  const shown = onlyEvent ? totalsFor(eventFilter) : ledgerTotals(visible);
 
   const balance = Number(totals.data?.balance ?? 0);
   const holdings = whereTheBalanceIs(
@@ -149,7 +168,9 @@ export default async function MoneyPage(props: PageProps<'/app/[community]/money
         {/* The one number everybody asks the committee for, as large as the
             page allows, with what came in and went out beneath it. */}
         <Card className="rise-in px-5 py-5">
-          <p className="text-gold text-[11px] font-semibold tracking-[0.14em] uppercase">Balance</p>
+          <p className="text-gold text-[11px] font-semibold tracking-[0.14em] uppercase">
+            Overall Balance
+          </p>
           <RollingAmount
             value={balance}
             currency={community.currency}
@@ -160,13 +181,13 @@ export default async function MoneyPage(props: PageProps<'/app/[community]/money
           />
           <dl className="text-ink-muted mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm">
             <div className="flex gap-1.5">
-              <dt>Collected</dt>
+              <dt>Received</dt>
               <dd className="text-ink font-medium">
                 {formatMoney(Number(totals.data?.total_in ?? 0), community.currency)}
               </dd>
             </div>
             <div className="flex gap-1.5">
-              <dt>Spent</dt>
+              <dt>Paid out</dt>
               <dd className="text-ink font-medium">
                 {formatMoney(Number(totals.data?.total_out ?? 0), community.currency)}
               </dd>
@@ -303,55 +324,88 @@ export default async function MoneyPage(props: PageProps<'/app/[community]/money
         <Card className="mt-5">
           <CardHeader
             title="Every transaction"
-            description="Confirmed payments in; approved bills and the society's own spending out. A payment appears once staff confirm it. Pick an event to see the money the committee moved in or out of it too."
+            description="Receipts in; approved bills and the society's own spending out as payments. A receipt appears once staff confirm it. Pick an event to see the money the committee moved in or out of it too."
           />
           <CardBody className="border-border-base border-b">
             {/* A GET form, so a filtered ledger is a link somebody can send to
-                a neighbour who is asking where the money went. */}
-            <form method="get" className="flex flex-wrap items-end gap-2">
-              <div>
-                <label htmlFor="show" className="text-ink-subtle mb-1 block text-xs font-medium">
-                  Showing
-                </label>
-                <select
-                  id="show"
-                  name="show"
-                  defaultValue={filter}
-                  className="border-border-base bg-surface-raised text-ink rounded-lg border px-3 py-2 pr-8 text-base sm:text-sm"
+                a neighbour who is asking where the money went. Receipts and
+                Payments are links rather than fields, so the other filters
+                keep their place in the URL when they are toggled. */}
+            <nav aria-label="Receipts or payments" className="mb-3 flex gap-2 text-sm">
+              {[
+                {
+                  label: 'Receipts',
+                  on: filters.receipts && !filters.payments,
+                  change: { receipts: true, payments: false },
+                },
+                {
+                  label: 'Payments',
+                  on: filters.payments && !filters.receipts,
+                  change: { receipts: false, payments: true },
+                },
+              ].map((segment) => (
+                <Link
+                  key={segment.label}
+                  href={moneyHref(
+                    slug,
+                    filters,
+                    segment.on ? { receipts: true, payments: true } : segment.change,
+                  )}
+                  aria-pressed={segment.on}
+                  className={cn(
+                    'flex-1 rounded-lg border px-3 py-2 text-center font-medium sm:flex-none',
+                    segment.on
+                      ? 'border-accent bg-accent text-white'
+                      : 'border-border-base bg-surface-raised text-ink hover:bg-surface-sunken',
+                  )}
                 >
-                  {LEDGER_FILTERS.map((option) => (
+                  {segment.label}
+                </Link>
+              ))}
+            </nav>
+            <form method="get" className="grid gap-2 sm:grid-cols-2">
+              {!filters.receipts || !filters.payments ? (
+                <input type="hidden" name="side" value={filters.receipts ? 'in' : 'out'} />
+              ) : null}
+              <FilterSelect id="type" label="Event type" value={filters.eventType} all="Every type">
+                {eventTypes.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </FilterSelect>
+              <FilterSelect id="vendor" label="Vendor" value={filters.vendor} all="Every vendor">
+                {vendors.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </FilterSelect>
+              {scopes.length ? (
+                <FilterSelect id="event" label="Event" value={eventFilter} all="Every event">
+                  {scopes.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
-                </select>
-              </div>
-              {scopes.length ? (
-                <div>
-                  <label htmlFor="event" className="text-ink-subtle mb-1 block text-xs font-medium">
-                    Event
-                  </label>
-                  <select
-                    id="event"
-                    name="event"
-                    defaultValue={eventFilter}
-                    className="border-border-base bg-surface-raised text-ink rounded-lg border px-3 py-2 pr-8 text-base sm:text-sm"
-                  >
-                    <option value="">Every event</option>
-                    {scopes.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                </FilterSelect>
               ) : null}
-              <button
-                type="submit"
-                className="border-border-base bg-surface-raised text-ink hover:bg-surface-sunken rounded-lg border px-4 py-2 text-sm font-medium"
-              >
-                Apply
-              </button>
+              <div className="flex items-end gap-2">
+                <button
+                  type="submit"
+                  className="border-border-base bg-surface-raised text-ink hover:bg-surface-sunken flex-1 rounded-lg border px-4 py-2 text-sm font-medium sm:flex-none"
+                >
+                  Apply
+                </button>
+                {filtered ? (
+                  <Link
+                    href={`/app/${slug}/money`}
+                    className="text-ink-muted px-2 py-2 text-sm hover:underline"
+                  >
+                    Clear
+                  </Link>
+                ) : null}
+              </div>
             </form>
           </CardBody>
 
@@ -368,34 +422,32 @@ export default async function MoneyPage(props: PageProps<'/app/[community]/money
               description={
                 rows.length
                   ? 'Try a different filter.'
-                  : 'Confirmed payments and approved bills appear here.'
+                  : 'Confirmed receipts and approved bills appear here.'
               }
             />
           )}
-          {scope && scopeTotals && visible.length ? (
+          {visible.length ? (
             <div className="border-border-base bg-surface-sunken space-y-1 border-t px-5 py-3 text-sm">
               <div className="text-ink-muted flex justify-between gap-3">
-                <span>Money in</span>
-                <span className="tabular-nums">
-                  +{formatMoney(scopeTotals.in, community.currency)}
-                </span>
+                <span>Receipts</span>
+                <span className="tabular-nums">+{formatMoney(shown.in, community.currency)}</span>
               </div>
               <div className="text-ink-muted flex justify-between gap-3">
-                <span>Money out</span>
-                <span className="tabular-nums">
-                  −{formatMoney(scopeTotals.out, community.currency)}
-                </span>
+                <span>Payments</span>
+                <span className="tabular-nums">−{formatMoney(shown.out, community.currency)}</span>
               </div>
               <div className="text-ink flex justify-between gap-3 font-semibold">
                 <span>
-                  {eventFilter === SOCIETY_BALANCE_LEDGER
-                    ? 'Kept for the society'
-                    : `Left in ${scope.label}`}
+                  {onlyEvent
+                    ? eventFilter === SOCIETY_BALANCE_LEDGER
+                      ? 'Kept for the society'
+                      : `Left in ${scope.label}`
+                    : filtered
+                      ? 'Balance of these'
+                      : 'Balance'}
                 </span>
-                <span
-                  className={cn('tabular-nums', scopeTotals.left < 0 ? 'text-danger' : undefined)}
-                >
-                  {formatMoney(scopeTotals.left, community.currency)}
+                <span className={cn('tabular-nums', shown.left < 0 ? 'text-danger' : undefined)}>
+                  {formatMoney(shown.left, community.currency)}
                 </span>
               </div>
             </div>
@@ -405,9 +457,9 @@ export default async function MoneyPage(props: PageProps<'/app/[community]/money
         <p className="text-ink-subtle mt-4 flex items-start gap-2 text-xs">
           <Scale className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
           <span>
-            Money in shows who paid, their flat and how they paid. Money out shows the vendor and
-            who approved it, with the bill for anyone to open. A payment screenshot opens only for
-            the payer and staff. Phone numbers and emails stay on the People page, for staff and the
+            Receipts show who paid, their flat and how they paid. Payments show the vendor and who
+            approved it, with the bill for anyone to open. A receipt screenshot opens only for the
+            payer and staff. Phone numbers and emails stay on the People page, for staff and the
             committee only.{' '}
             {totals.data?.last_movement_at ? (
               <>Last movement {relativeTime(totals.data.last_movement_at)}.</>
@@ -451,8 +503,39 @@ function MoneyViews({ slug, mine }: { slug: string; mine: boolean }) {
         aria-current={mine ? 'page' : undefined}
         className={tab(mine)}
       >
-        My contributions
+        My receipts
       </Link>
     </nav>
+  );
+}
+
+function FilterSelect({
+  id,
+  label,
+  value,
+  all,
+  children,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  all: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <label htmlFor={id} className="text-ink-subtle mb-1 block text-xs font-medium">
+        {label}
+      </label>
+      <select
+        id={id}
+        name={id}
+        defaultValue={value}
+        className="border-border-base bg-surface-raised text-ink w-full rounded-lg border px-3 py-2 pr-8 text-base sm:text-sm"
+      >
+        <option value="">{all}</option>
+        {children}
+      </select>
+    </div>
   );
 }
