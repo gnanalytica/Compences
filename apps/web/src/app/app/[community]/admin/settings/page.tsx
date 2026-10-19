@@ -117,7 +117,7 @@ export default async function SocietySettingsPage(
           <Card id="upi" className="scroll-mt-20">
             <CardHeader
               title="UPI ID"
-              description="Residents pay to this UPI ID and report the transaction ID. A payment counts once staff confirm it against the bank statement."
+              description="Residents pay to this UPI ID and report the transaction ID. A receipt counts once staff confirm it against the bank statement."
             />
             <CardBody>
               <SocietyUpiForm

@@ -126,7 +126,7 @@ export default async function ContributePage(
 
           {mine.data?.length ? (
             <Card className="mt-5">
-              <CardHeader title="Your payments for this event" />
+              <CardHeader title="Your receipts for this event" />
               <ul className="divide-border-base divide-y">
                 {mine.data.map((payment) => (
                   <li key={payment.id} className="flex items-start justify-between gap-3 px-5 py-3">

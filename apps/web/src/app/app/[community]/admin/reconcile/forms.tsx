@@ -242,7 +242,7 @@ export function MatchForm({
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="transaction_id" value={transactionId} />
       <label htmlFor={`match-${transactionId}`} className="sr-only">
-        Which payment this line is
+        Which receipt this line is
       </label>
       <Select
         id={`match-${transactionId}`}

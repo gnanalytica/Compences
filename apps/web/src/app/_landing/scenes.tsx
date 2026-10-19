@@ -300,7 +300,7 @@ export function CollectScene({ festival }: SceneProps) {
     <Screen kicker="Collect" title={`${festival} fund`}>
       <Card>
         <p className="text-ink-muted text-[11px] font-semibold tracking-wider uppercase">
-          Payment to confirm
+          Receipt to confirm
         </p>
         <div className="relative mt-2 overflow-hidden" style={{ height: 96 - settled * 60 }}>
           <div style={{ opacity: 1 - settled }}>
@@ -456,7 +456,7 @@ export function ProveScene({ festival }: SceneProps) {
       <Card>
         <div className="flex items-baseline justify-between">
           <span className="text-sm font-semibold">Bank statement</span>
-          <span className="text-ink-subtle text-[11px]">paired with payments</span>
+          <span className="text-ink-subtle text-[11px]">paired with receipts</span>
         </div>
         <ul className="mt-2 space-y-1.5">
           {STATEMENT.map((row) => {

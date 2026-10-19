@@ -54,7 +54,7 @@ function detailHref(base: string, item: TodoItem): string | null {
 }
 
 const DETAIL_LABEL: Record<TodoKind, string> = {
-  payment_to_confirm: 'See screenshot and payments',
+  payment_to_confirm: 'See screenshot and receipts',
   join_request: 'See all join requests',
   bill_to_approve: 'See the bill',
   bill_sent_back: 'Fix the bill',
@@ -168,7 +168,7 @@ export default async function TodoPage(props: PageProps<'/app/[community]/todo'>
             <EmptyState
               icon={<CheckCircle2 className="size-6" />}
               title="All done"
-              description="Payments to confirm, new residents, bills and suggestions show up here when they need you."
+              description="Receipts to confirm, new residents, bills and suggestions show up here when they need you."
             />
           </Card>
         )}

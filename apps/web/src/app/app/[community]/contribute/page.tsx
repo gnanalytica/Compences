@@ -41,7 +41,7 @@ export default async function ChooseWhatToSupport(props: PageProps<'/app/[commun
             <EmptyState
               icon={<HandCoins className="size-6" />}
               title="Staff don’t contribute"
-              description="Record a flat’s payment from the event’s Payments tab."
+              description="Record a flat’s payment from the event’s Receipts tab."
             />
           </Card>
         </PageBody>

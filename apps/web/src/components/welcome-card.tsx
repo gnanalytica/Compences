@@ -61,7 +61,7 @@ function welcomeFor(role: MemberRole, societyName: string): Welcome {
         },
         {
           icon: HandCoins,
-          text: 'Confirm UPI payments against the bank statement and record cash from flats.',
+          text: 'Confirm UPI receipts against the bank statement and record cash receipts from flats.',
         },
         { icon: CalendarDays, text: 'Create events with their budgets and activities.' },
       ],
