@@ -63,6 +63,18 @@ describe('the forms', () => {
     expect(wizard).toContain('Add a service');
   });
 
+  it('let the phone rename a vendor and change a service, as the web does', () => {
+    const card = readFileSync(
+      join(SRC, '..', '..', 'mobile', 'app', 'admin', 'event', '[slug].tsx'),
+      'utf8',
+    );
+    expect(card).toContain('const renameVendor = async');
+    expect(card).toContain('.update({ vendor: item?.label ?? to, vendor_id: item?.id ?? null })');
+    expect(card).toContain('const saveService = async');
+    expect(card).toContain("'budget_category',\n      editing.category");
+    expect(read(...EVENTS, 'actions.ts')).toContain('export async function renameBudgetVendor');
+  });
+
   it('no longer ask for a suggested amount per flat, on either app', () => {
     const phone = (...parts: string[]) =>
       readFileSync(join(SRC, '..', '..', 'mobile', ...parts), 'utf8');
