@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import {
   COPY,
-  budgetLineLabel,
   can,
   correctionNote,
   countdown,
@@ -31,7 +30,6 @@ import {
 } from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import {
-  budgetVsSpent,
   getActivities,
   getBudgetLines,
   getCarriedInto,
@@ -62,7 +60,7 @@ import {
 } from '@/components/badges';
 import { EventBalanceCard, EventMoneyTiles } from '@/components/event-balance';
 import { getSupabase } from '@/lib/supabase/server';
-import { BillLink } from '@/components/bill-link';
+import { BillLink, StoredFileLink } from '@/components/bill-link';
 import { BudgetBars } from '@/components/budget-bars';
 import { CarriedIn } from '@/components/carried-in';
 import { AuditTrail } from '@/components/audit-trail';
@@ -145,7 +143,6 @@ export default async function EventDetailPage(props: PageProps<'/app/[community]
   ).length;
   const approved = expenses.filter((expense) => expense.status === 'approved');
   const awaiting = expenses.filter((expense) => expense.status !== 'approved');
-  const categories = budgetVsSpent(budget, expenses);
   // Approved bills with no budget line behind them: filed before bills drew on
   // a line, or against a line since removed.
   const unplanned = approved.filter(
@@ -442,36 +439,49 @@ export default async function EventDetailPage(props: PageProps<'/app/[community]
               <Card>
                 <CardHeader
                   title="Budget & spending"
-                  description="Each line of the budget, what has been paid out of it, and the bills behind that."
+                  description="Where the budget goes, how much of it is spent, and the bills behind each part."
                 />
-                {categories.length ? (
-                  <>
-                    <CardBody>
-                      <BudgetBars rows={categories} currency={community.currency} />
-                    </CardBody>
-                    <ul className="divide-border-base border-border-base divide-y border-t">
-                      {budget.map((line) => (
-                        <BudgetLineRow
-                          key={line.id}
-                          line={line}
-                          bills={approved.filter((expense) => expense.budget_line_id === line.id)}
-                          currency={community.currency}
-                        />
-                      ))}
-                      {unplanned.length ? (
-                        <BudgetLineRow
-                          line={null}
-                          bills={unplanned}
-                          currency={community.currency}
-                        />
-                      ) : null}
-                    </ul>
-                  </>
+                {budget.length || unplanned.length ? (
+                  <CardBody>
+                    <BudgetBars
+                      lines={budget.map(({ id, category, vendor, planned, approved, pending }) => ({
+                        id,
+                        category,
+                        vendor,
+                        planned,
+                        approved,
+                        pending,
+                      }))}
+                      bills={approved.map((expense) => ({
+                        id: expense.id,
+                        name: expense.name,
+                        amount: expense.amount,
+                        status: expense.status,
+                        category: expense.category,
+                        vendor: expense.vendor,
+                        budget_line_id: expense.budget_line_id,
+                        spent_on: expense.spent_on,
+                      }))}
+                      currency={community.currency}
+                      billLinks={Object.fromEntries(
+                        approved.map((expense) => [
+                          expense.id,
+                          <StoredFileLink
+                            key={expense.id}
+                            bucket="bills"
+                            path={expense.bill_url}
+                            label="View bill"
+                            compact
+                          />,
+                        ]),
+                      )}
+                    />
+                  </CardBody>
                 ) : (
                   <EmptyState
                     icon={<Wallet className="size-6" />}
                     title="No budget yet"
-                    description="Staff add the planned spend: a type, a vendor and an amount for each."
+                    description="Staff add the vendors and, for each, the services they provide and what is set aside for them."
                   />
                 )}
               </Card>
@@ -830,84 +840,3 @@ const SECTION = 'scroll-mt-36 space-y-5 md:scroll-mt-16';
 const HEADING =
   'text-gold flex flex-1 items-center gap-3 text-[11px] font-semibold tracking-[0.14em] uppercase ' +
   'after:h-px after:flex-1 after:bg-gradient-to-r after:from-border-base after:to-transparent';
-
-/**
- * One line of the budget with its approved bills: type and vendor, what has
- * been paid, what was planned and what is left, then each bill's remarks with
- * the picture of the bill. `line` is null for the bills that sit outside the
- * budget, so they are still shown and still add up.
- */
-function BudgetLineRow({
-  line,
-  bills,
-  currency,
-}: {
-  line: {
-    category: string;
-    vendor: string | null;
-    planned: number;
-    approved: number;
-    remaining: number;
-  } | null;
-  bills: {
-    id: string;
-    name: string;
-    amount: number | string;
-    bill_url: string | null;
-    category: string | null;
-    vendor: string | null;
-  }[];
-  currency: string;
-}) {
-  const paid = line ? line.approved : bills.reduce((sum, bill) => sum + Number(bill.amount), 0);
-  return (
-    <li className="space-y-2 px-5 py-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-ink text-sm font-semibold">
-            {line ? budgetLineLabel(line) : 'Not in the budget'}
-          </p>
-          {line ? (
-            <p className="text-ink-subtle mt-0.5 text-xs">
-              {formatMoney(line.planned, currency)} planned ·{' '}
-              <span className={line.remaining < 0 ? 'text-danger' : undefined}>
-                {line.remaining < 0
-                  ? `${formatMoney(-line.remaining, currency)} over`
-                  : `${formatMoney(line.remaining, currency)} left`}
-              </span>
-            </p>
-          ) : null}
-        </div>
-        <div className="shrink-0 text-right">
-          <p className="text-ink text-sm font-semibold">{formatMoney(paid, currency)}</p>
-          <p className="text-ink-subtle text-xs">paid</p>
-        </div>
-      </div>
-      {bills.length ? (
-        <ul className="border-border-base space-y-2 border-l-2 pl-3">
-          {bills.map((bill) => (
-            <li key={bill.id} className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-ink-muted text-sm">
-                  {bill.name}
-                  {line ? null : (
-                    <span className="text-ink-subtle">
-                      {' '}
-                      · {[bill.category, bill.vendor].filter(Boolean).join(' · ')}
-                    </span>
-                  )}
-                </p>
-                <BillLink url={bill.bill_url} />
-              </div>
-              <span className="text-ink-muted shrink-0 text-sm">
-                {formatMoney(bill.amount, currency)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-ink-subtle text-xs">No bills approved against this line yet.</p>
-      )}
-    </li>
-  );
-}

@@ -7,9 +7,6 @@ import {
   COPY,
   EVENT_STATUS_LABEL,
   EVENT_TABS,
-  budgetBar,
-  budgetLineLabel,
-  budgetTotal,
   can,
   carriedFromLine,
   correctionNote,
@@ -53,6 +50,7 @@ import {
 } from '../../src/components/event-ui';
 import { Suggestions } from '../../src/components/suggestions';
 import { ViewFileButton } from '../../src/components/file-ui';
+import { BudgetChart } from '../../src/components/budget-chart';
 import { SectionBar, useSectionScroll } from '../../src/components/section-scroll';
 import { spacing } from '../../src/lib/theme';
 
@@ -414,19 +412,15 @@ function SpendBillRow({ bill, currency }: { bill: SpendBill; currency: string })
 }
 
 /**
- * Budget and spending, line by line: what each Type · Vendor was planned at,
- * what has been paid out of it (approved bills only, so a resident and the
- * committee agree), what is left, and each bill with its remarks and picture.
- * Bills with no line behind them are listed last as not in the budget.
+ * Budget and spending: the ring and bars by vendor or by service, each opening
+ * into its line items and the approved bills paid out of them, with each
+ * bill's remarks and picture. Bills with no line behind them are their own
+ * group, outside the budget.
  */
 function BudgetAndSpending({ data, currency }: { data: Detail; currency: string }) {
   const unlinked = data.expenses.filter(
     (expense) => !data.lines.some((line) => line.id === expense.budget_line_id),
   );
-  const total = budgetTotal([
-    ...data.lines.map((line) => ({ planned: line.planned, spent: line.approved })),
-    ...unlinked.map((expense) => ({ planned: 0, spent: Number(expense.amount) })),
-  ]);
 
   return (
     <>
@@ -434,83 +428,12 @@ function BudgetAndSpending({ data, currency }: { data: Detail; currency: string 
         <Heading>Budget &amp; spending</Heading>
         {data.lines.length || unlinked.length ? (
           <>
-            <View style={{ gap: 4 }}>
-              <View
-                style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md }}
-              >
-                <Body>
-                  {formatMoney(total.spent, currency)}
-                  {total.planned > 0
-                    ? ` of ${formatMoney(total.planned, currency)} spent`
-                    : ' spent, with no budget set'}
-                </Body>
-                {total.planned > 0 ? (
-                  <Caption tone={total.over ? 'danger' : undefined}>
-                    {total.over ? `${formatMoney(total.over, currency)} over` : `${total.percent}%`}
-                  </Caption>
-                ) : null}
-              </View>
-              {total.planned > 0 ? (
-                <Meter
-                  percent={total.percent}
-                  tone={total.over ? 'danger' : 'success'}
-                  label="Whole budget, spent against plan"
-                />
-              ) : null}
-            </View>
-            {data.lines.map((line) => {
-              const bar = budgetBar(line.planned, line.approved);
-              const bills = data.expenses.filter((expense) => expense.budget_line_id === line.id);
-              return (
-                <View key={line.id} style={{ gap: spacing.xs }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      gap: spacing.md,
-                    }}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Body>{line.category}</Body>
-                      {line.vendor ? <Caption>{line.vendor}</Caption> : null}
-                    </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Body>{formatMoney(line.approved, currency)} paid</Body>
-                      <Caption tone={bar.over ? 'danger' : undefined}>
-                        {formatMoney(line.planned, currency)} planned ·{' '}
-                        {bar.over
-                          ? `${formatMoney(bar.over, currency)} over`
-                          : `${formatMoney(line.remaining, currency)} left`}
-                      </Caption>
-                    </View>
-                  </View>
-                  <Meter
-                    percent={bar.percent}
-                    tone={bar.over ? 'danger' : 'success'}
-                    label={`${budgetLineLabel(line)}, spent against plan`}
-                  />
-                  {line.pending > 0 ? (
-                    <Caption>{formatMoney(line.pending, currency)} waiting for approval</Caption>
-                  ) : null}
-                  {bills.map((bill) => (
-                    <SpendBillRow key={bill.id} bill={bill} currency={currency} />
-                  ))}
-                </View>
-              );
-            })}
-            {unlinked.length ? (
-              <View style={{ gap: spacing.xs }}>
-                <Body>Not in the budget</Body>
-                {unlinked.map((bill) => (
-                  <View key={bill.id} style={{ gap: 2 }}>
-                    <Caption tone="warning">
-                      {[bill.category, bill.vendor].filter(Boolean).join(' · ') || 'No budget line'}
-                    </Caption>
-                    <SpendBillRow bill={bill} currency={currency} />
-                  </View>
-                ))}
-              </View>
-            ) : null}
+            <BudgetChart
+              lines={data.lines}
+              bills={data.expenses}
+              currency={currency}
+              renderBill={(bill) => <SpendBillRow bill={bill} currency={currency} />}
+            />
             {!data.expenses.length ? (
               <Caption>Nothing spent yet. Approved bills appear here, itemised.</Caption>
             ) : null}

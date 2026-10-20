@@ -75,13 +75,13 @@ function readBudgetRows(formData: FormData): { rows: BudgetRowInput[] } | { erro
     const raw = String(amounts[index] ?? '').trim();
     if (!type && !vendor && !raw) continue;
     const amount = raw ? Number(raw) : 0;
-    if (!type) return { error: 'Give every budget row a type, such as Food.' };
+    if (!type) return { error: 'Name every service, such as Food or Decoration.' };
     if (!Number.isFinite(amount) || amount <= 0) {
       return { error: `Enter an amount above zero for ${type}.` };
     }
     if (amount > 100_000_000) return { error: `The amount for ${type} is too large.` };
     if (type.length > CATALOGUE_LABEL_MAX || vendor.length > CATALOGUE_LABEL_MAX) {
-      return { error: `Keep types and vendors under ${CATALOGUE_LABEL_MAX} characters.` };
+      return { error: `Keep services and vendors under ${CATALOGUE_LABEL_MAX} characters.` };
     }
     rows.push({ type, vendor, amount });
   }
@@ -162,7 +162,6 @@ function eventFields(formData: FormData) {
     organizer: formData.get('organizer') || undefined,
     description: formData.get('description') || undefined,
     expected_attendance: formData.get('expected_attendance') || undefined,
-    suggested_amount: formData.get('suggested_amount') || null,
     fund_rule: formData.get('fund_rule') || DEFAULT_FUND_RULE,
     fund_rule_note: formData.get('fund_rule_note') || undefined,
     whatsapp_group_url: formData.get('whatsapp_group_url') ?? '',
@@ -308,12 +307,6 @@ const updateEventSchema = z.object({
   venue: z.string().trim().max(140).nullable(),
   organizer: z.string().trim().max(140).nullable(),
   description: z.string().trim().max(5000).nullable(),
-  // Null is a real answer: plenty of events take whatever people give.
-  suggested_amount: z.coerce
-    .number()
-    .positive('Enter an amount greater than zero, or leave it blank')
-    .max(10_000_000)
-    .nullable(),
   whatsapp_group_url: optionalWhatsappGroup,
 });
 
@@ -338,7 +331,6 @@ export async function updateEventDetails(
     venue: venue.label,
     organizer: String(formData.get('organizer') ?? '').trim() || null,
     description: String(formData.get('description') ?? '').trim() || null,
-    suggested_amount: String(formData.get('suggested_amount') ?? '').trim() || null,
     whatsapp_group_url: formData.get('whatsapp_group_url') ?? '',
   });
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
@@ -399,7 +391,7 @@ async function readBudgetLine(
 > {
   const parsed = z
     .object({
-      category: z.string().trim().min(1, 'Type a type, such as Food').max(CATALOGUE_LABEL_MAX),
+      category: z.string().trim().min(1, 'Name the service, such as Food').max(CATALOGUE_LABEL_MAX),
       vendor: z.string().trim().max(CATALOGUE_LABEL_MAX).optional(),
       amount: z.coerce
         .number()
@@ -445,7 +437,7 @@ export async function addBudgetLine(_prev: ActionState, formData: FormData): Pro
 
   await syncFundTarget(event.id);
   refreshEvent(communitySlug, eventSlug);
-  return { ...EMPTY_STATE, success: 'Budget line added.' };
+  return { ...EMPTY_STATE, success: 'Service added.' };
 }
 
 export async function updateBudgetLine(formData: FormData): Promise<void> {
@@ -481,6 +473,98 @@ export async function removeBudgetLine(formData: FormData): Promise<void> {
     .eq('event_id', event.id);
 
   await syncFundTarget(event.id);
+  refreshEvent(communitySlug, eventSlug);
+}
+
+/**
+ * A vendor and the services they provide, each with what is set aside for it:
+ * one budget line per service. The vendor may be left blank when the committee
+ * has not chosen one yet; those lines wait under "Vendor not chosen yet".
+ */
+export async function addVendorServices(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const communitySlug = String(formData.get('slug') ?? '');
+  const eventSlug = String(formData.get('event') ?? '');
+  const context = await requireCapability(communitySlug, 'budget:manage');
+  const event = await findEvent(context.community.id, eventSlug);
+  if (!event) return { error: 'That event no longer exists.' };
+  if (event.kind === 'campaign') return { error: 'Campaigns have a single target, not a budget.' };
+  if (event.status === 'completed') return { error: 'This event is closed.' };
+
+  const vendor = tidyLabel(formData.get('vendor'));
+  if (vendor.length > CATALOGUE_LABEL_MAX) {
+    return { fieldErrors: { vendor: `Keep it under ${CATALOGUE_LABEL_MAX} characters.` } };
+  }
+  const read = readBudgetRows(formData);
+  if ('error' in read) return { error: read.error };
+  if (!read.rows.length) return { error: 'Add at least one service with an amount.' };
+
+  const records = await budgetLineRecords(
+    context,
+    read.rows.map((row) => ({ ...row, vendor })),
+  );
+  if ('error' in records) return { error: records.error };
+
+  const supabase = await getSupabase();
+  const { count } = await supabase
+    .from('budget_lines')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_id', event.id);
+  const { error } = await supabase.from('budget_lines').insert(
+    records.lines.map((line, index) => ({
+      ...line,
+      event_id: event.id,
+      community_id: context.community.id,
+      position: (count ?? 0) + index,
+    })),
+  );
+  if (error) return { error: friendlyDbError(error) };
+
+  await syncFundTarget(event.id);
+  refreshEvent(communitySlug, eventSlug);
+  return { ...EMPTY_STATE, success: vendor ? `${vendor} added.` : 'Services added.' };
+}
+
+/**
+ * Renames a vendor across every line of this event that names them, or names
+ * the vendor for the lines that had none. Bills already filed keep the name
+ * they were filed under: they record who was paid at the time.
+ */
+export async function renameBudgetVendor(formData: FormData): Promise<void> {
+  const communitySlug = String(formData.get('slug') ?? '');
+  const eventSlug = String(formData.get('event') ?? '');
+  const context = await requireCapability(communitySlug, 'budget:manage');
+  const event = await findEvent(context.community.id, eventSlug);
+  if (!event || event.status === 'completed') return;
+
+  const from = tidyLabel(formData.get('from'));
+  const to = tidyLabel(formData.get('to'));
+  if (!to || to.length > CATALOGUE_LABEL_MAX || to === from) return;
+
+  const vendors = await findOrCreateCatalogueItems(
+    context.community.id,
+    context.user.id,
+    'vendor',
+    [to],
+  );
+  if ('error' in vendors) return;
+  const item = vendors.items.get(to.toLowerCase());
+  if (!item) return;
+
+  const supabase = await getSupabase();
+  const lines = supabase
+    .from('budget_lines')
+    .update({ vendor: item.label, vendor_id: item.id })
+    .eq('event_id', event.id);
+  await (from
+    ? lines.ilike(
+        'vendor',
+        from.replace(/[\\%_]/g, (c) => `\\${c}`),
+      )
+    : lines.is('vendor', null));
+
   refreshEvent(communitySlug, eventSlug);
 }
 

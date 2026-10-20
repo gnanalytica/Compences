@@ -82,12 +82,10 @@ until there is an account.
 
 ### Contributing
 
-An event carries the figure its committee asks each flat for, set beside the
-budget it came from. The contribute screen offers that figure first and has it
-already chosen — societies decide an amount ("₹2,100 per flat this year") rather
-than a ladder, and the ladder only stands in when nobody has named one. Twice
-the figure is the other chip, for a household paying for two flats. Anything
-else is typed.
+The contribute screen offers a few round figures and nothing chosen: residents
+give what they choose. A committee that wants a particular figure shares a link
+with it in (`?amount=2100`), which arrives already selected. Anything else is
+typed.
 
 Pick an amount → pay it from a UPI app → report it back with **the amount that
 actually left the account**. The amount is pre-filled and stays editable,

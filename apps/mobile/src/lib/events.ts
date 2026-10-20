@@ -16,7 +16,7 @@ import { useCommunityData } from './use-community-data';
 // along so an event takes the same festival look as it does on the web, which
 // reads the type before the name (festivalFor).
 const EVENT_FIELDS =
-  'id, slug, emoji, name, starts_on, ends_on, venue, organizer, event_type_id, description, status, kind, fund_target, suggested_amount, fund_rule, fund_rule_note, closed_at, created_by, event_type:catalogue_items!event_type_id(label)';
+  'id, slug, emoji, name, starts_on, ends_on, venue, organizer, event_type_id, description, status, kind, fund_target, fund_rule, fund_rule_note, closed_at, created_by, event_type:catalogue_items!event_type_id(label)';
 
 export async function fetchEvents(communityId: string) {
   const { data } = await supabase

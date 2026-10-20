@@ -21,7 +21,6 @@ import {
   formatMoney,
   fundBarSegments,
   inTheFund,
-  isSuggestedAmount,
   newTransactionRef,
   optionalUpiReference,
   parseUpiResponse,
@@ -305,7 +304,7 @@ function PayWithUpi({
   vpa,
   payeeName,
 }: {
-  event: { id: string; slug: string; name: string; suggested_amount?: number | null };
+  event: { id: string; slug: string; name: string };
   unit: { id: string; block: string | null; number: string } | null;
   /** Every flat in the society, and only when `unit` is null. */
   flats: { id: string; block: string | null; number: string }[] | null;
@@ -318,14 +317,12 @@ function PayWithUpi({
   const { activeCommunity, membershipId } = useAuth();
   const currency = activeCommunity?.currency ?? 'INR';
 
-  // The figure the committee asked for, if they named one — chosen for the
-  // resident rather than offered among four guesses. Landing on the screen
-  // with the right number already selected is the whole point of asking.
-  const asked = event.suggested_amount ? Number(event.suggested_amount) : null;
-  const presets = contributionPresets(asked);
+  // A few round figures to start from; nothing is chosen for the resident,
+  // who gives what they choose.
+  const presets = contributionPresets(null);
 
   const [stage, setStage] = useState<Stage>('amount');
-  const [amount, setAmount] = useState<number | null>(asked);
+  const [amount, setAmount] = useState<number | null>(null);
   const [custom, setCustom] = useState('');
   const [reference, setReference] = useState('');
   const [proof, setProof] = useState<PickedFile | null>(null);
@@ -620,11 +617,7 @@ function PayWithUpi({
                   <Text
                     key={preset}
                     accessibilityRole="button"
-                    accessibilityLabel={
-                      isSuggestedAmount(preset, asked)
-                        ? `${formatMoney(preset, currency)}, the suggested amount`
-                        : formatMoney(preset, currency)
-                    }
+                    accessibilityLabel={formatMoney(preset, currency)}
                     accessibilityState={{ selected: amount === preset && custom === '' }}
                     onPress={() => {
                       if (stage !== 'amount') return;
@@ -637,11 +630,6 @@ function PayWithUpi({
                   </Text>
                 ))}
               </View>
-              {asked ? (
-                <Caption>
-                  The committee asks {formatMoney(asked, currency)} per flat. Pay what you can.
-                </Caption>
-              ) : null}
             </View>
             <Input
               label="Or another amount"
