@@ -17,7 +17,7 @@ import {
   SURPLUS_ANSWERS,
   SURPLUS_ANSWER_DETAIL,
   SURPLUS_ANSWER_LABEL,
-  budgetLineLabel,
+  NO_VENDOR,
   can,
   createActivitySchema,
   eventMoney,
@@ -33,6 +33,7 @@ import {
   surplusKindFor,
   type SurplusAnswer,
   updateActivitySchema,
+  vendorGroups,
 } from '@compences/core';
 import { useAuth } from '../../../src/lib/auth';
 import { EventBalanceCard } from '../../../src/components/event-ui';
@@ -52,13 +53,17 @@ import {
   Title,
 } from '../../../src/components/ui';
 import { Chip, ChipRow, ErrorText } from '../../../src/components/admin-ui';
-import { SuggestInput } from '../../../src/components/catalogue-ui';
 import { DateField } from '../../../src/components/date-field';
 import {
   ActivityTypeChips,
+  BudgetLinesEditor,
   budgetLineRows,
+  budgetProblem,
   DetailsFields,
+  filledBudgetLines,
+  newBudgetLine,
   validateDetails,
+  type DraftBudgetLine,
   type EventDetails,
 } from '../../../src/components/event-form';
 import { spacing } from '../../../src/lib/theme';
@@ -67,7 +72,7 @@ async function loadEvent(communityId: string, slug: string) {
   const { data: event } = await supabase
     .from('events')
     .select(
-      'id, community_id, slug, emoji, name, kind, status, starts_on, ends_on, venue, venue_id, event_type_id, organizer, description, expected_attendance, fund_target, suggested_amount, fund_rule, fund_rule_note, created_by',
+      'id, community_id, slug, emoji, name, kind, status, starts_on, ends_on, venue, venue_id, event_type_id, organizer, description, expected_attendance, fund_target, fund_rule, fund_rule_note, created_by',
     )
     .eq('community_id', communityId)
     .eq('slug', slug)
@@ -371,7 +376,6 @@ function DetailsCard({ data, onChange }: { data: Loaded; onChange: () => void })
     description: event.description ?? '',
     organizer: event.organizer ?? '',
     attendance: event.expected_attendance ? String(event.expected_attendance) : '',
-    suggestedAmount: event.suggested_amount ? String(event.suggested_amount) : '',
     fundRule: event.fund_rule as FundRule,
     fundRuleNote: event.fund_rule_note ?? '',
   }));
@@ -403,7 +407,6 @@ function DetailsCard({ data, onChange }: { data: Loaded; onChange: () => void })
         organizer: values.organizer ?? null,
         description: values.description ?? null,
         expected_attendance: values.expected_attendance ?? null,
-        suggested_amount: values.suggested_amount ?? null,
         // No fund_rule here: it is fixed when the event is created.
       })
       .eq('id', event.id);
@@ -443,34 +446,39 @@ async function syncFundTarget(eventId: string) {
   await supabase.from('events').update({ fund_target: total }).eq('id', eventId);
 }
 
+/**
+ * The budget as vendors and their services, each with what is set aside for
+ * it. New vendors and services are typed below, in the same editor as a new
+ * event's, and saved together; "Add a service" on a vendor starts one there
+ * with the vendor already named.
+ */
 function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) {
   const { activeCommunity, user } = useAuth();
   const invalidate = useInvalidate(onChange);
   const currency = activeCommunity?.currency ?? 'INR';
   const { event } = data;
-  const [category, setCategory] = useState('');
-  const [vendor, setVendor] = useState('');
-  const [amount, setAmount] = useState('');
+  const [drafts, setDrafts] = useState<DraftBudgetLine[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const locked = event.status === 'completed' || event.status === 'cancelled';
   const total = data.budget.reduce((sum, line) => sum + Number(line.amount), 0);
 
-  const add = async () => {
-    const value = Number.parseFloat(amount.replace(/[^0-9.]/g, ''));
-    if (!category.trim()) {
-      setError('Enter the type, like Food or Sound.');
+  const save = async () => {
+    const problem = budgetProblem(drafts);
+    if (problem) {
+      setError(problem);
       return;
     }
-    if (!Number.isFinite(value) || value <= 0) {
-      setError('Enter an amount.');
+    const filled = filledBudgetLines(drafts);
+    if (!filled.length) {
+      setError('Add a service and its budget.');
       return;
     }
     if (!activeCommunity) return;
     setBusy('add');
     setError(null);
     const rows = await budgetLineRows(
-      [{ key: 'new', category, vendor, amount }],
+      filled,
       event.id,
       activeCommunity.id,
       user?.id ?? null,
@@ -484,9 +492,7 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
     }
     await syncFundTarget(event.id);
     setBusy(null);
-    setCategory('');
-    setVendor('');
-    setAmount('');
+    setDrafts([]);
     await invalidate();
   };
 
@@ -506,61 +512,81 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
     <Card style={{ gap: spacing.md }}>
       <Heading>Budget · {formatMoney(total, currency)}</Heading>
       {data.budget.length ? (
-        data.budget.map((line) => (
-          <View
-            key={line.id}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}
-          >
-            <View style={{ flex: 1 }}>
-              <Body>{budgetLineLabel(line)}</Body>
-              <Caption>{formatMoney(Number(line.amount), currency)}</Caption>
+        vendorGroups(data.budget).map((group) => (
+          <View key={group.key || 'none'} style={{ gap: spacing.sm }}>
+            <View>
+              <Body>{group.vendor ?? NO_VENDOR}</Body>
+              <Caption>
+                {group.lines.length} {group.lines.length === 1 ? 'service' : 'services'} ·{' '}
+                {formatMoney(
+                  group.lines.reduce((sum, line) => sum + Number(line.amount), 0),
+                  currency,
+                )}
+              </Caption>
             </View>
-            {!locked ? (
-              <View style={{ width: 100 }}>
-                <Button
-                  label="Remove"
-                  variant="secondary"
-                  onPress={() => void remove(line.id)}
-                  loading={busy === line.id}
-                />
+            {group.lines.map((line) => (
+              <View
+                key={line.id}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing.md,
+                  paddingLeft: spacing.md,
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Body muted>{line.category}</Body>
+                  <Caption>{formatMoney(Number(line.amount), currency)}</Caption>
+                </View>
+                {!locked ? (
+                  <View style={{ width: 100 }}>
+                    <Button
+                      label="Remove"
+                      variant="secondary"
+                      onPress={() => void remove(line.id)}
+                      loading={busy === line.id}
+                    />
+                  </View>
+                ) : null}
               </View>
+            ))}
+            {!locked ? (
+              <Button
+                label={`+ Add a service${group.vendor ? ` from ${group.vendor}` : ''}`}
+                variant="secondary"
+                onPress={() =>
+                  setDrafts((current) => [
+                    ...current,
+                    newBudgetLine({ group: `vendor:${group.key}`, vendor: group.vendor ?? '' }),
+                  ])
+                }
+              />
             ) : null}
           </View>
         ))
       ) : (
-        <Body muted>No budget lines yet.</Body>
+        <Body muted>No vendors in the budget yet.</Body>
       )}
       {!locked ? (
         <View style={{ gap: spacing.sm }}>
-          <SuggestInput
-            kind="budget_category"
-            label="Type"
-            value={category}
-            onChangeText={setCategory}
-            placeholder="Food"
-          />
-          <SuggestInput
-            kind="vendor"
-            label="Vendor"
-            value={vendor}
-            onChangeText={setVendor}
-            placeholder="Tesla"
-          />
-          <Input
-            label={`Amount (${currency})`}
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="decimal-pad"
-            placeholder="600000"
-          />
-          <ErrorText message={error} />
-          <Button
-            label="Add budget line"
-            variant="secondary"
-            onPress={() => void add()}
-            loading={busy === 'add'}
-          />
-          <Caption>The overall budget is the sum of the lines.</Caption>
+          {drafts.length ? (
+            <>
+              <BudgetLinesEditor lines={drafts} onChange={setDrafts} currency={currency} />
+              <ErrorText message={error} />
+              <Button
+                label="Save to the budget"
+                onPress={() => void save()}
+                loading={busy === 'add'}
+              />
+            </>
+          ) : (
+            <Button
+              label="+ Add a vendor"
+              variant="secondary"
+              onPress={() => setDrafts([newBudgetLine()])}
+            />
+          )}
+          <Caption>The overall budget is the sum of the services.</Caption>
         </View>
       ) : null}
     </Card>

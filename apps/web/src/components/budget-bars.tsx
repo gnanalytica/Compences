@@ -88,7 +88,7 @@ export function BudgetBars({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-ink-muted text-sm">Tap one to see its line items and bills.</p>
+        <p className="text-ink-muted text-sm">Open a bar to see its line items and bills.</p>
         <div
           role="group"
           aria-label="Show the budget by"

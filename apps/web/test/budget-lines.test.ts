@@ -38,9 +38,17 @@ describe('the forms', () => {
     expect(at('label="Remarks"')).toBeGreaterThan(at('bucket="bills"'));
   });
 
-  it('choose the service for you when the vendor has only one', () => {
+  it('choose the service for you when the vendor has only one, on both apps', () => {
     const forms = read(...EVENTS, '[event]', 'forms.tsx');
     expect(forms).toContain('next?.lines.length === 1 ? next.lines[0]!.id');
+    const phoneBill = readFileSync(
+      join(SRC, '..', '..', 'mobile', 'app', 'admin', 'bill.tsx'),
+      'utf8',
+    );
+    expect(phoneBill).toContain('group.lines.length === 1 ? group.lines[0]!.id');
+    expect(phoneBill.indexOf('<Body>Vendor</Body>')).toBeLessThan(
+      phoneBill.indexOf('<Body>Service</Body>'),
+    );
   });
 
   it('build the budget as vendors, each with their services and a budget for each', () => {
@@ -55,8 +63,13 @@ describe('the forms', () => {
     expect(wizard).toContain('Add a service');
   });
 
-  it('no longer ask for a suggested amount per flat', () => {
+  it('no longer ask for a suggested amount per flat, on either app', () => {
+    const phone = (...parts: string[]) =>
+      readFileSync(join(SRC, '..', '..', 'mobile', ...parts), 'utf8');
     for (const source of [
+      phone('src', 'components', 'event-form.tsx'),
+      phone('app', 'admin', 'event', '[slug].tsx'),
+      phone('app', 'contribute.tsx'),
       read(...EVENTS, 'new', 'create-event-form.tsx'),
       read(...EVENTS, '[event]', 'forms.tsx'),
       read(...EVENTS, 'actions.ts'),

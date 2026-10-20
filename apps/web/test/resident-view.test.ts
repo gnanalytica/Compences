@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * How a resident gets around, pinned on both apps so neither drifts back: the
- * budget read line by line against its own plan, Contribute one press away
+ * budget read by vendor or by service against its own plan, Contribute one press away
  * from anywhere, and a member's own payments kept with the rest of the money.
  */
 const ROOT = join(import.meta.dirname, '..', '..');
@@ -15,22 +15,39 @@ const webEvent = () => read(...WEB, 'events', '[event]', 'page.tsx');
 const phoneEvent = () => read('mobile', 'app', 'event', '[slug].tsx');
 
 describe('the budget', () => {
-  it('draws every line against its own plan, on both apps', () => {
+  const webChart = () => read('web', 'src', 'components', 'budget-bars.tsx');
+  const phoneChart = () => read('mobile', 'src', 'components', 'budget-chart.tsx');
+
+  it('is drawn the same way on both apps, by vendor or by service', () => {
     expect(webEvent()).toContain('<BudgetBars');
-    expect(read('web', 'src', 'components', 'budget-bars.tsx')).toContain('budgetBar(');
-    expect(phoneEvent()).toContain('budgetBar(line.planned, line.approved)');
+    expect(phoneEvent()).toContain('<BudgetChart');
+    for (const source of [webChart(), phoneChart()]) {
+      expect(source).toContain('groupBudget(lines, bills, view)');
+      expect(source).toContain("'By vendor'");
+      expect(source).toContain("'By service'");
+    }
+  });
+
+  it('leads with the whole budget as a ring, each share filled as far as it is spent', () => {
+    for (const source of [webChart(), phoneChart()]) {
+      expect(source).toContain('budgetArcs(groups)');
+      expect(source).toContain('{formatMoney(bar.over, currency)} over');
+    }
+  });
+
+  it('opens each bar into its line items and the bills behind them', () => {
+    expect(webChart()).toContain('aria-expanded={open}');
+    expect(phoneChart()).toContain('accessibilityState={{ expanded: open }}');
+  });
+
+  it('no longer repeats every line in a list under the bars', () => {
+    expect(webEvent()).not.toContain('BudgetLineRow');
+    expect(phoneEvent()).not.toContain('budgetBar(line.planned, line.approved)');
   });
 
   it('never sizes a line against the biggest one again', () => {
     expect(webEvent()).not.toContain('largest');
-    expect(read('web', 'src', 'components', 'budget-bars.tsx')).not.toContain('largest');
-  });
-
-  it('leads with the whole budget as one bar, and says by how much a line went over', () => {
-    for (const source of [read('web', 'src', 'components', 'budget-bars.tsx'), phoneEvent()]) {
-      expect(source).toContain('budgetTotal(');
-      expect(source).toContain('over`');
-    }
+    expect(webChart()).not.toContain('largest');
   });
 });
 

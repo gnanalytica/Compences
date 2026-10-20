@@ -8,7 +8,8 @@ import {
   type FundRule,
   FUND_RULE_LABEL,
 } from '@compences/core';
-import { spacing } from '../lib/theme';
+import { radius, spacing } from '../lib/theme';
+import { useTheme } from '../lib/use-theme';
 import { Body, Button, Caption, Input } from './ui';
 import { DateField } from './date-field';
 import { Chip, ChipRow, Disclosure } from './admin-ui';
@@ -37,8 +38,6 @@ export type EventDetails = {
   description: string;
   organizer: string;
   attendance: string;
-  /** What each flat is asked for. Empty means "whatever people give". */
-  suggestedAmount: string;
   fundRule: FundRule;
   fundRuleNote: string;
 };
@@ -61,7 +60,6 @@ export const emptyDetails = (organizer = ''): EventDetails => ({
   description: '',
   organizer,
   attendance: '',
-  suggestedAmount: '',
   fundRule: DEFAULT_FUND_RULE,
   fundRuleNote: '',
 });
@@ -87,7 +85,6 @@ export function validateDetails(
     description: details.description.trim() || undefined,
     expected_attendance: details.attendance.trim() || undefined,
     fund_target: fundTarget,
-    suggested_amount: details.suggestedAmount.trim() || null,
     fund_rule: details.fundRule,
     fund_rule_note: details.fundRuleNote.trim() || undefined,
   });
@@ -101,7 +98,6 @@ export function validateDetails(
           ? issue.message
           : 'Pick an end date on or after the start date, or clear it.',
       expected_attendance: 'Expected attendance should be a whole number.',
-      suggested_amount: 'Enter an amount greater than zero, or leave it blank.',
     };
     return { error: friendly[field] ?? issue?.message ?? 'Check the event details.' };
   }
@@ -211,18 +207,6 @@ export function DetailsFields({
           keyboardType="number-pad"
           placeholder="250"
         />
-        <View style={{ gap: spacing.xs }}>
-          <Input
-            label="Suggested per flat"
-            value={details.suggestedAmount}
-            onChangeText={(value) => set('suggestedAmount', value.replace(/[^0-9]/g, ''))}
-            keyboardType="number-pad"
-            placeholder="2100"
-          />
-          <Caption>
-            Selected by default when residents contribute. Leave empty to accept any amount.
-          </Caption>
-        </View>
         {fundRuleLocked ? (
           <View style={{ gap: spacing.xs }}>
             <Body>
@@ -272,12 +256,26 @@ export function FundRuleFields({
   );
 }
 
-export type DraftBudgetLine = { key: string; category: string; vendor: string; amount: string };
+/**
+ * One service of one vendor, as typed. Lines with the same `group` belong to
+ * the same vendor block and carry its name, so a vendor's name is typed once.
+ */
+export type DraftBudgetLine = {
+  key: string;
+  group: string;
+  category: string;
+  vendor: string;
+  amount: string;
+};
 
-export const newBudgetLine = (): DraftBudgetLine => ({
-  key: Math.random().toString(36).slice(2),
+const draftKey = () => Math.random().toString(36).slice(2);
+
+/** A blank service, for a new vendor or for one already being typed. */
+export const newBudgetLine = (vendor?: { group: string; vendor: string }): DraftBudgetLine => ({
+  key: draftKey(),
+  group: vendor?.group ?? draftKey(),
   category: '',
-  vendor: '',
+  vendor: vendor?.vendor ?? '',
   amount: '',
 });
 
@@ -287,10 +285,10 @@ export const lineAmount = (line: { amount: string }) => {
 };
 
 /**
- * The event's budget: a row per Type, Vendor and Amount (Food · Tesla · 6L).
- * Nothing is predefined. Type and vendor are typed, with the society's earlier
- * ones offered underneath, and a type may repeat across rows. The rows add up
- * to the fund target.
+ * The event's budget as vendors, the services each provides, and what is set
+ * aside for each service. Nothing is predefined: vendors and services are
+ * typed, with the society's earlier ones offered underneath. A vendor may be
+ * left blank until one is chosen. The services add up to the fund target.
  */
 export function BudgetLinesEditor({
   lines,
@@ -301,51 +299,96 @@ export function BudgetLinesEditor({
   onChange: (next: DraftBudgetLine[]) => void;
   currency: string;
 }) {
+  const { colors } = useTheme();
   const total = lines.reduce((sum, line) => sum + lineAmount(line), 0);
   const update = (key: string, patch: Partial<DraftBudgetLine>) =>
     onChange(lines.map((line) => (line.key === key ? { ...line, ...patch } : line)));
+  const groups = [...new Set(lines.map((line) => line.group))].map((group) => ({
+    group,
+    lines: lines.filter((line) => line.group === group),
+  }));
 
   return (
     <View style={{ gap: spacing.lg }}>
-      {lines.map((line, index) => (
-        <View key={line.key} style={{ gap: spacing.sm }}>
-          <Caption>Line {index + 1}</Caption>
-          <SuggestInput
-            kind="budget_category"
-            label="Type"
-            value={line.category}
-            onChangeText={(category) => update(line.key, { category })}
-            placeholder="Food"
-          />
-          <SuggestInput
-            kind="vendor"
-            label="Vendor"
-            value={line.vendor}
-            onChangeText={(vendor) => update(line.key, { vendor })}
-            placeholder="Tesla"
-          />
-          <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-end' }}>
-            <View style={{ flex: 1 }}>
-              <Input
-                label={`Amount (${currency})`}
-                value={line.amount}
-                onChangeText={(amount) => update(line.key, { amount })}
-                keyboardType="decimal-pad"
-                placeholder="600000"
-              />
-            </View>
-            <View style={{ width: 110 }}>
-              <Button
-                label="Remove"
-                variant="secondary"
-                onPress={() => onChange(lines.filter((item) => item.key !== line.key))}
-              />
-            </View>
+      {groups.map(({ group, lines: services }, index) => {
+        const vendor = services[0]?.vendor ?? '';
+        return (
+          <View
+            key={group}
+            style={{
+              gap: spacing.sm,
+              padding: spacing.md,
+              borderRadius: radius.md,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <SuggestInput
+              kind="vendor"
+              label={`Vendor ${index + 1}`}
+              value={vendor}
+              onChangeText={(next) =>
+                onChange(
+                  lines.map((line) => (line.group === group ? { ...line, vendor: next } : line)),
+                )
+              }
+              placeholder="Sri Lakshmi Tents, or leave blank for now"
+            />
+            {services.map((line, serviceIndex) => (
+              <View
+                key={line.key}
+                style={{
+                  gap: spacing.sm,
+                  paddingLeft: spacing.md,
+                  borderLeftWidth: 2,
+                  borderLeftColor: colors.border,
+                }}
+              >
+                <SuggestInput
+                  kind="budget_category"
+                  label="Service"
+                  value={line.category}
+                  onChangeText={(category) => update(line.key, { category })}
+                  placeholder={serviceIndex === 0 ? 'Pandal and stage' : 'Lighting'}
+                />
+                <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-end' }}>
+                  <View style={{ flex: 1 }}>
+                    <Input
+                      label={`Budget (${currency})`}
+                      value={line.amount}
+                      onChangeText={(amount) => update(line.key, { amount })}
+                      keyboardType="decimal-pad"
+                      placeholder="60000"
+                    />
+                  </View>
+                  <View style={{ width: 110 }}>
+                    <Button
+                      label="Remove"
+                      variant="secondary"
+                      onPress={() => onChange(lines.filter((item) => item.key !== line.key))}
+                    />
+                  </View>
+                </View>
+              </View>
+            ))}
+            <Button
+              label="+ Add a service"
+              variant="secondary"
+              onPress={() => {
+                const last = services.at(-1);
+                const at = last ? lines.indexOf(last) + 1 : lines.length;
+                onChange([
+                  ...lines.slice(0, at),
+                  newBudgetLine({ group, vendor }),
+                  ...lines.slice(at),
+                ]);
+              }}
+            />
           </View>
-        </View>
-      ))}
+        );
+      })}
       <Button
-        label="+ Add budget line"
+        label="+ Add a vendor"
         variant="secondary"
         onPress={() => onChange([...lines, newBudgetLine()])}
       />
@@ -360,7 +403,7 @@ export function budgetProblem(lines: DraftBudgetLine[]): string | null {
   for (const line of lines) {
     const amount = lineAmount(line);
     if (!line.category.trim() && (amount > 0 || line.vendor.trim())) {
-      return 'Give every budget line a type.';
+      return 'Name every service, such as Food or Decoration.';
     }
     if (line.amount.trim() && amount <= 0) return 'Budget amounts must be more than zero.';
   }

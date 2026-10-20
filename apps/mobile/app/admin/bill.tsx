@@ -4,12 +4,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   COPY,
+  NO_VENDOR,
   billPath,
-  budgetLineLabel,
   can,
   formatDate,
   formatMoney,
   overLineBy,
+  vendorGroups,
 } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import { supabase } from '../../src/lib/supabase';
@@ -169,6 +170,14 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
 
   const { data: lines, loading: loadingLines } = useLineBalances(eventId);
   const line = (lines ?? []).find((item) => item.id === lineId) ?? null;
+  // Vendor first, then which of their services: one budget line each.
+  const vendors = vendorGroups(lines ?? []);
+  const [pickedVendor, setPickedVendor] = useState<string | null>(null);
+  const vendorKey =
+    pickedVendor ?? vendors.find((group) => group.lines.some((item) => item.id === lineId))?.key;
+  const vendor = vendors.find((group) => group.key === vendorKey) ?? null;
+  // A service with no vendor chosen yet: whoever was actually paid.
+  const [paidTo, setPaidTo] = useState(existing?.vendor ?? '');
   const legacy = existing != null && existing.budget_line_id == null && !line;
   // An approved bill is already taken off its line, so editing it must not
   // count it twice.
@@ -187,7 +196,11 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
     // The committee approves a bill on everybody's behalf, and cannot without
     // knowing which line of the budget and which vendor it is for.
     if (!line && !legacy) {
-      setError('Pick the budget line this bill is paid from.');
+      setError(vendor ? 'Pick the service this bill is for.' : 'Pick the vendor this bill is for.');
+      return;
+    }
+    if (line && !line.vendor && !paidTo.trim()) {
+      setError('No vendor has been chosen for this service yet, so say who was paid.');
       return;
     }
     if (value <= 0) {
@@ -239,7 +252,7 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
       category: line ? line.category : (existing?.category ?? null),
       category_id: line ? line.categoryId : (existing?.category_id ?? null),
       amount: value,
-      vendor: line ? line.vendor : (existing?.vendor ?? null),
+      vendor: line ? (line.vendor ?? paidTo.trim()) : (existing?.vendor ?? null),
       vendor_id: line ? line.vendorId : (existing?.vendor_id ?? null),
       method,
       spent_on: spentOn,
@@ -338,6 +351,7 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
                       onPress={() => {
                         setEventId(event.id);
                         setLineId(null);
+                        setPickedVendor(null);
                       }}
                     />
                   ))}
@@ -347,15 +361,19 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
               )}
             </View>
             <View style={{ gap: spacing.sm }}>
-              <Body>Budget line</Body>
-              {lines?.length ? (
+              <Body>Vendor</Body>
+              {vendors.length ? (
                 <ChipRow>
-                  {lines.map((item) => (
+                  {vendors.map((group) => (
                     <Chip
-                      key={item.id}
-                      label={budgetLineLabel(item)}
-                      selected={lineId === item.id}
-                      onPress={() => setLineId(item.id)}
+                      key={group.key || 'none'}
+                      label={group.vendor ?? NO_VENDOR}
+                      selected={vendorKey === group.key}
+                      onPress={() => {
+                        setPickedVendor(group.key);
+                        // One service: nothing to choose.
+                        setLineId(group.lines.length === 1 ? group.lines[0]!.id : null);
+                      }}
                     />
                   ))}
                 </ChipRow>
@@ -363,20 +381,43 @@ function Form({ events, existing }: { events: EventOption[]; existing: Existing 
                 <Caption>Loading…</Caption>
               ) : (
                 <Caption>
-                  This event has no budget lines yet. Add them from Manage → the event.
+                  This event has no budget yet. Add vendors from Manage → the event.
                 </Caption>
               )}
+              {vendor ? (
+                <>
+                  <Body>Service</Body>
+                  <ChipRow>
+                    {vendor.lines.map((item) => (
+                      <Chip
+                        key={item.id}
+                        label={item.category}
+                        selected={lineId === item.id}
+                        onPress={() => setLineId(item.id)}
+                      />
+                    ))}
+                  </ChipRow>
+                </>
+              ) : null}
               {line ? <LineSummary line={line} currency={currency} /> : null}
+              {line && !line.vendor ? (
+                <Input
+                  label="Who was paid"
+                  value={paidTo}
+                  onChangeText={setPaidTo}
+                  placeholder="No vendor has been chosen for this service yet"
+                />
+              ) : null}
               {legacy ? (
                 <Caption>
                   {[existing?.category, existing?.vendor].filter(Boolean).join(' · ') ||
-                    'Not tied to a budget line'}{' '}
-                  · raised before budget lines. Pick a line to move it onto one.
+                    'Not tied to the budget'}{' '}
+                  · raised before the budget named vendors. Pick one to move it onto the budget.
                 </Caption>
               ) : null}
             </View>
             <Input
-              label={`Record (${currency})`}
+              label={`Amount billed (${currency})`}
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
