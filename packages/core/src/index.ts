@@ -1,5 +1,6 @@
 export * from './roles';
 export * from './events';
+export * from './budget';
 export * from './invite-codes';
 export * from './schemas';
 export * from './api-keys';

@@ -6,15 +6,18 @@ import {
   SURPLUS_ANSWERS,
   SURPLUS_ANSWER_DETAIL,
   SURPLUS_ANSWER_LABEL,
+  NO_VENDOR,
   budgetLineLabel,
   formatDate,
   formatMoney,
   overLineBy,
   todayIn,
+  vendorGroups,
   type SurplusAnswer,
 } from '@compences/core';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
+import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -25,6 +28,7 @@ import { SuggestionList } from '@/components/suggestion-list';
 import {
   addActivity,
   addBudgetLine,
+  addVendorServices,
   allocateSurplus,
   closeEvent,
   correctExpense,
@@ -146,7 +150,6 @@ export function EventDetailsForm({
     organizer: string | null;
     description: string | null;
     whatsapp_group_url: string | null;
-    suggested_amount: number | null;
   };
 }) {
   const [state, action] = useActionState<ActionState, FormData>(updateEventDetails, EMPTY_STATE);
@@ -223,25 +226,6 @@ export function EventDetailsForm({
           />
         )}
       </Field>
-      <Field
-        label="Suggested per flat"
-        htmlFor="ev-suggested"
-        error={state.fieldErrors?.suggested_amount}
-        hint="Pre-filled on the contribute screen. Leave empty to take whatever people give."
-      >
-        {(control) => (
-          <Input
-            {...control}
-            name="suggested_amount"
-            type="number"
-            min={1}
-            step="1"
-            defaultValue={event.suggested_amount ?? ''}
-            placeholder="₹"
-            className="max-w-40"
-          />
-        )}
-      </Field>
       <Field label="Description" htmlFor="ev-desc">
         {(control) => (
           <Textarea {...control} name="description" defaultValue={event.description ?? ''} />
@@ -253,7 +237,75 @@ export function EventDetailsForm({
   );
 }
 
-export function AddBudgetLineForm({
+/**
+ * Adds one more service to a vendor already in the budget: a row in the same
+ * columns as the services above it, so it reads as the next line of the list.
+ */
+export function AddServiceForm({
+  slug,
+  eventSlug,
+  vendor,
+  formKey,
+  rowClassName,
+}: {
+  slug: string;
+  eventSlug: string;
+  /** The vendor's name, or null for the services waiting on a vendor. */
+  vendor: string | null;
+  /** Unique per vendor, for the fields' ids. */
+  formKey: string;
+  /** The grid the service rows above use. */
+  rowClassName: string;
+}) {
+  const { state, action, ref } = useResettingAction(addBudgetLine);
+  const errors = [state.fieldErrors?.category, state.fieldErrors?.amount].filter(Boolean);
+  return (
+    <form ref={ref} action={action} className="space-y-1.5">
+      <Hidden slug={slug} eventSlug={eventSlug} />
+      <input type="hidden" name="vendor" value={vendor ?? ''} />
+      <div className={rowClassName}>
+        <label className="sr-only" htmlFor={`as-type-${formKey}`}>
+          Another service{vendor ? ` from ${vendor}` : ''}
+        </label>
+        <Input
+          id={`as-type-${formKey}`}
+          name="category"
+          list="budget-types"
+          placeholder="Another service"
+          maxLength={80}
+          autoComplete="off"
+          required
+        />
+        <label className="sr-only" htmlFor={`as-amount-${formKey}`}>
+          Its budget
+        </label>
+        <Input
+          id={`as-amount-${formKey}`}
+          name="amount"
+          type="number"
+          min={1}
+          step="1"
+          placeholder="₹"
+          required
+        />
+        <div className="col-span-2 flex justify-end sm:col-span-1">
+          <Submit label="Add service" busy="Adding…" variant="secondary" />
+        </div>
+      </div>
+      {errors.length ? <p className="text-danger text-sm">{errors.join(' ')}</p> : null}
+      <Feedback state={state} />
+    </form>
+  );
+}
+
+type ServiceRow = { key: number; type: string; amount: string };
+
+/**
+ * A new vendor and the services they provide, each with its own budget. The
+ * services post as rows, so a vendor doing the pandal, the stage and the
+ * lighting is added in one go.
+ */
+export function AddVendorForm({
   slug,
   eventSlug,
   pickers,
@@ -262,53 +314,123 @@ export function AddBudgetLineForm({
   eventSlug: string;
   pickers: Pickers;
 }) {
-  const { state, action, ref } = useResettingAction(addBudgetLine);
+  const { state, action, ref, version } = useResettingAction(addVendorServices);
   return (
-    <form ref={ref} action={action} className="flex flex-wrap items-end gap-2">
+    <form ref={ref} action={action} className="space-y-4">
       <Hidden slug={slug} eventSlug={eventSlug} />
-      <SuggestionList id="bl-types" items={pickers.budget_category} />
-      <SuggestionList id="bl-vendors" items={pickers.vendor} />
-      <div className="min-w-36 flex-1">
-        <Field label="Type" htmlFor="bl-type" error={state.fieldErrors?.category}>
-          {(control) => (
-            <Input
-              {...control}
-              name="category"
-              list="bl-types"
-              placeholder="Food"
-              maxLength={80}
-              autoComplete="off"
-              required
-            />
-          )}
-        </Field>
-      </div>
-      <div className="min-w-36 flex-1">
-        <Field label="Vendor" htmlFor="bl-vendor" error={state.fieldErrors?.vendor}>
-          {(control) => (
-            <Input
-              {...control}
-              name="vendor"
-              list="bl-vendors"
-              placeholder="Tesla"
-              maxLength={80}
-              autoComplete="off"
-            />
-          )}
-        </Field>
-      </div>
-      <div className="w-36">
-        <Field label="Amount (₹)" htmlFor="bl-amount" error={state.fieldErrors?.amount}>
-          {(control) => (
-            <Input {...control} name="amount" type="number" min={1} step="1" required />
-          )}
-        </Field>
-      </div>
-      <Submit label="Add line" busy="Adding…" />
-      <div className="basis-full">
-        <Feedback state={state} />
-      </div>
+      <SuggestionList id="av-vendors" items={pickers.vendor} />
+      <Field
+        label="Vendor"
+        htmlFor="av-vendor"
+        error={state.fieldErrors?.vendor}
+        hint="Leave it blank if you haven’t chosen one yet."
+      >
+        {(control) => (
+          <Input
+            {...control}
+            name="vendor"
+            list="av-vendors"
+            placeholder="Sri Lakshmi Tents"
+            maxLength={80}
+            autoComplete="off"
+          />
+        )}
+      </Field>
+      <ServiceRows key={version} idPrefix="av" />
+      <Feedback state={state} />
+      <Submit label="Add vendor" busy="Adding…" />
     </form>
+  );
+}
+
+/**
+ * Service and budget rows for one vendor, posted as `budget_type` and
+ * `budget_amount`. One blank row to start; a row left empty is ignored.
+ */
+export function ServiceRows({
+  idPrefix,
+  vendor,
+}: {
+  idPrefix: string;
+  /** When set, posted beside every row as `budget_vendor`. */
+  vendor?: string;
+}) {
+  const [rows, setRows] = useState<ServiceRow[]>([{ key: 0, type: '', amount: '' }]);
+  const [nextKey, setNextKey] = useState(1);
+  const total = rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
+  const patch = (key: number, change: Partial<ServiceRow>) =>
+    setRows((current) => current.map((row) => (row.key === key ? { ...row, ...change } : row)));
+
+  return (
+    <div className="space-y-2">
+      <div className="text-ink-muted flex gap-2 text-xs">
+        <span className="flex-1">Service</span>
+        <span className="w-32">Budget (₹)</span>
+        <span className="w-8" aria-hidden="true" />
+      </div>
+      {rows.map((row, index) => (
+        <div key={row.key} className="flex items-center gap-2">
+          {vendor !== undefined ? (
+            <input type="hidden" name="budget_vendor" value={vendor} />
+          ) : null}
+          <label className="sr-only" htmlFor={`${idPrefix}-type-${row.key}`}>
+            Service {index + 1}
+          </label>
+          <Input
+            id={`${idPrefix}-type-${row.key}`}
+            name="budget_type"
+            list="budget-types"
+            value={row.type}
+            onChange={(event) => patch(row.key, { type: event.target.value })}
+            placeholder={index === 0 ? 'Pandal and stage' : 'Lighting'}
+            maxLength={80}
+            autoComplete="off"
+            className="min-w-0 flex-1"
+          />
+          <label className="sr-only" htmlFor={`${idPrefix}-amt-${row.key}`}>
+            Budget for service {index + 1}
+          </label>
+          <Input
+            id={`${idPrefix}-amt-${row.key}`}
+            name="budget_amount"
+            type="number"
+            min={0}
+            step="1"
+            value={row.amount}
+            onChange={(event) => patch(row.key, { amount: event.target.value })}
+            placeholder="₹"
+            required={Boolean(row.type.trim())}
+            className="w-32"
+          />
+          <button
+            type="button"
+            onClick={() => setRows((current) => current.filter((r) => r.key !== row.key))}
+            className="text-ink-subtle hover:text-ink w-8 p-1.5 disabled:opacity-30"
+            aria-label={`Remove service ${index + 1}`}
+            disabled={rows.length === 1}
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+      ))}
+      <div className="flex items-center justify-between gap-3">
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setRows((current) => [...current, { key: nextKey, type: '', amount: '' }]);
+            setNextKey((key) => key + 1);
+          }}
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          Add a service
+        </Button>
+        {total > 0 ? (
+          <span className="text-ink-muted text-sm tabular-nums">{formatMoney(total)} in all</span>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -592,11 +714,12 @@ export function lineFigures(
 }
 
 /**
- * The first half of the bill form: which budget line it is paid from, what
- * that line has left, and how much this bill is for. The amount starts empty —
- * the line's balance is information, not a suggestion. Going past what is left
- * warns but does not stop the bill, since real spending runs over and the
- * committee decides.
+ * The first half of the bill form: the vendor, then which of their services
+ * the bill is for (one budget line each), what that service has left, and how
+ * much this bill is for. A vendor with one service has it chosen for you. The
+ * amount starts empty — the line's balance is information, not a suggestion.
+ * Going past what is left warns but does not stop the bill, since real
+ * spending runs over and the committee decides.
  */
 function BillLineFields({
   lines,
@@ -610,8 +733,14 @@ function BillLineFields({
   errors: Record<string, string> | undefined;
 }) {
   const id = expense?.id ?? 'new';
+  const vendors = vendorGroups(lines);
+  const startingLine = lines.find((entry) => entry.id === expense?.budget_line_id);
+  const [vendorKey, setVendorKey] = useState(
+    startingLine ? (vendors.find((v) => v.lines.includes(startingLine))?.key ?? null) : null,
+  );
   const [lineId, setLineId] = useState(expense?.budget_line_id ?? '');
   const [amount, setAmount] = useState(expense ? String(expense.amount) : '');
+  const vendor = vendors.find((entry) => entry.key === vendorKey);
   const line = lines.find((entry) => entry.id === lineId);
   // A bill already approved against this line is counted in what the line has
   // spent; the correction replaces it, so it is not held against itself.
@@ -621,49 +750,71 @@ function BillLineFields({
   // A bill from before bills drew on a line has none, and may stay without.
   const legacy = Boolean(expense) && !expense?.budget_line_id;
 
+  const chooseVendor = (key: string) => {
+    const next = vendors.find((entry) => entry.key === key);
+    setVendorKey(next ? key : null);
+    // One service: nothing to choose.
+    setLineId(next?.lines.length === 1 ? next.lines[0]!.id : '');
+  };
+
   return (
     <>
-      <Field
-        label="Budget line"
-        htmlFor={`ex-line-${id}`}
-        error={errors?.budget_line_id}
-        hint={
-          lines.length
-            ? undefined
-            : 'This event has no budget lines yet. Add one on the Budget tab first.'
-        }
-        required={!legacy}
-      >
-        {(control) => (
-          <Select
-            {...control}
-            name="budget_line_id"
-            value={lineId}
-            onChange={(event) => setLineId(event.target.value)}
-            required={!legacy}
-          >
-            <option value="">{legacy ? 'Not in the budget' : 'Choose a budget line'}</option>
-            {lines.map((entry) => (
-              <option key={entry.id} value={entry.id}>
-                {budgetLineLabel(entry)}
-              </option>
-            ))}
-          </Select>
-        )}
-      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field
+          label="Vendor"
+          htmlFor={`ex-vendor-pick-${id}`}
+          error={errors?.budget_line_id}
+          hint={
+            lines.length
+              ? undefined
+              : 'This event has no budget yet. Add a vendor on the Budget tab first.'
+          }
+          required={!legacy}
+        >
+          {(control) => (
+            <Select
+              {...control}
+              value={vendorKey ?? ''}
+              onChange={(event) => chooseVendor(event.target.value)}
+              required={!legacy}
+            >
+              <option value="">{legacy ? 'Not in the budget' : 'Choose a vendor'}</option>
+              {vendors.map((entry) => (
+                <option key={entry.key || 'none'} value={entry.key}>
+                  {entry.vendor ?? NO_VENDOR}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <Field label="Service" htmlFor={`ex-line-${id}`} required={!legacy}>
+          {(control) => (
+            <Select
+              {...control}
+              name="budget_line_id"
+              value={lineId}
+              onChange={(event) => setLineId(event.target.value)}
+              disabled={!vendor}
+              required={!legacy}
+            >
+              <option value="">{vendor ? 'Choose a service' : 'Choose a vendor first'}</option>
+              {vendor?.lines.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.category}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+      </div>
       {line ? (
         <div className="bg-surface-sunken space-y-2 rounded-lg px-4 py-3 text-sm">
-          {line.vendor ? (
-            <p>
-              <span className="text-ink-muted">Vendor </span>
-              <span className="text-ink font-medium">{line.vendor}</span>
-            </p>
-          ) : (
+          {line.vendor ? null : (
             <Field
-              label="Vendor"
+              label="Who was paid"
               htmlFor={`ex-vendor-${id}`}
               error={errors?.vendor}
-              hint="This line names no vendor, so say who was paid."
+              hint="No vendor has been chosen for this service yet, so say who was paid."
               required
             >
               {(control) => (
@@ -677,11 +828,14 @@ function BillLineFields({
               )}
             </Field>
           )}
-          <p className="text-ink-muted">{lineFigures(line, currency)}</p>
+          <p className="text-ink-muted">
+            <span className="text-ink font-medium">{budgetLineLabel(line)}</span> ·{' '}
+            {lineFigures(line, currency)}
+          </p>
         </div>
-      ) : legacy ? (
+      ) : legacy && !vendor ? (
         <Field
-          label="Vendor"
+          label="Who was paid"
           htmlFor={`ex-vendor-${id}`}
           error={errors?.vendor}
           hint="Not in the budget."
@@ -698,7 +852,7 @@ function BillLineFields({
           )}
         </Field>
       ) : null}
-      <Field label="Record amount (₹)" htmlFor={`ex-amount-${id}`} error={errors?.amount} required>
+      <Field label="Amount billed (₹)" htmlFor={`ex-amount-${id}`} error={errors?.amount} required>
         {(control) => (
           <Input
             {...control}

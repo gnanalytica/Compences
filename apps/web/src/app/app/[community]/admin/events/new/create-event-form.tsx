@@ -129,21 +129,19 @@ function Rail({
   );
 }
 
-type Line = { key: number; type: string; vendor: string; amount: string };
+type Service = { key: number; type: string; amount: string };
+type VendorDraft = { key: number; name: string; services: Service[] };
 type ActivityRow = { key: number; typeId: string; name: string; emoji: string };
 
 export function CreateEventForm({
   slug,
   pickers,
   societyName,
-  flatCount,
   today,
 }: {
   slug: string;
   pickers: Pickers;
   societyName: string;
-  /** How many flats the society has, for the per-flat hint. Zero if none yet. */
-  flatCount: number;
   /** The society's own today, so a December wizard offers January's Sankranti. */
   today: string;
 }) {
@@ -156,12 +154,26 @@ export function CreateEventForm({
   // Kept only to warn under the date. Cleared the moment somebody edits either
   // field, because the warning is about the date we filled in, not theirs.
   const [picked, setPicked] = useState<FestivalDraft | null>(null);
-  // No predefined rows: one blank to type into, which is ignored if left empty.
-  // Each row keeps a stable key so removing one does not shuffle the others.
-  const [lines, setLines] = useState<Line[]>([{ key: 0, type: '', vendor: '', amount: '' }]);
+  // No predefined vendors: one blank vendor with one blank service to type
+  // into, ignored if left empty. Every vendor and service keeps a stable key so
+  // removing one does not shuffle the others.
+  const [vendors, setVendors] = useState<VendorDraft[]>([
+    { key: 0, name: '', services: [{ key: 1, type: '', amount: '' }] },
+  ]);
   const [activities, setActivities] = useState<ActivityRow[]>([]);
-  const [nextKey, setNextKey] = useState(1);
-  const total = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
+  const [nextKey, setNextKey] = useState(2);
+  const services = vendors.flatMap((vendor) => vendor.services);
+  const total = services.reduce((sum, service) => sum + Number(service.amount || 0), 0);
+  const budgeted = services.filter((service) => Number(service.amount) > 0).length;
+  /** Reserves `count` fresh keys and returns the first. */
+  const takeKeys = (count: number) => {
+    setNextKey((key) => key + count);
+    return nextKey;
+  };
+  const patchVendor = (key: number, change: (vendor: VendorDraft) => VendorDraft) =>
+    setVendors((current) =>
+      current.map((vendor) => (vendor.key === key ? change(vendor) : vendor)),
+    );
 
   const form = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(0);
@@ -216,7 +228,6 @@ export function CreateEventForm({
         event_type: labelOf(pickers.event_type, read('event_type_id')),
         description: read('description'),
         organizer: read('organizer') || societyName,
-        suggested_amount: read('suggested_amount'),
         fund_rule: read('fund_rule') || DEFAULT_FUND_RULE,
       });
     }
@@ -378,123 +389,147 @@ export function CreateEventForm({
         <Card>
           <CardHeader
             title={STEPS[1].title}
-            description={`What you plan to spend, as type, vendor and amount. The total, ${formatMoney(total)}, becomes the fund target.`}
+            description={`Each vendor, the services they provide and what you set aside for each. The total, ${formatMoney(total)}, becomes the fund target.`}
           />
-          <CardBody className="space-y-2">
+          <CardBody className="space-y-4">
             <SuggestionList id="budget-types" items={pickers.budget_category} />
             <SuggestionList id="budget-vendors" items={pickers.vendor} />
-            {lines.map((line) => {
-              const patch = (change: Partial<Line>) =>
-                setLines((current) =>
-                  current.map((l) => (l.key === line.key ? { ...l, ...change } : l)),
-                );
-              return (
-                <div key={line.key} className="flex flex-wrap items-end gap-2">
-                  <div className="min-w-32 flex-1">
+            {vendors.map((vendor, vendorIndex) => (
+              <fieldset
+                key={vendor.key}
+                className="border-border-base space-y-3 rounded-xl border p-4"
+              >
+                <legend className="sr-only">Vendor {vendorIndex + 1}</legend>
+                <div className="flex items-end gap-2">
+                  <div className="min-w-0 flex-1">
                     <label
                       className="text-ink-muted mb-1 block text-xs"
-                      htmlFor={`bl-type-${line.key}`}
-                    >
-                      Type
-                    </label>
-                    <Input
-                      id={`bl-type-${line.key}`}
-                      name="budget_type"
-                      list="budget-types"
-                      value={line.type}
-                      onChange={(event) => patch({ type: event.target.value })}
-                      placeholder="Food"
-                      maxLength={80}
-                      autoComplete="off"
-                    />
-                  </div>
-                  <div className="min-w-32 flex-1">
-                    <label
-                      className="text-ink-muted mb-1 block text-xs"
-                      htmlFor={`bl-vendor-${line.key}`}
+                      htmlFor={`bv-name-${vendor.key}`}
                     >
                       Vendor
                     </label>
                     <Input
-                      id={`bl-vendor-${line.key}`}
-                      name="budget_vendor"
+                      id={`bv-name-${vendor.key}`}
                       list="budget-vendors"
-                      value={line.vendor}
-                      onChange={(event) => patch({ vendor: event.target.value })}
-                      placeholder="Tesla"
+                      value={vendor.name}
+                      onChange={(event) =>
+                        patchVendor(vendor.key, (v) => ({ ...v, name: event.target.value }))
+                      }
+                      placeholder="Sri Lakshmi Tents, or leave blank for now"
                       maxLength={80}
                       autoComplete="off"
                     />
                   </div>
-                  <div className="w-32">
-                    <label
-                      className="text-ink-muted mb-1 block text-xs"
-                      htmlFor={`bl-amt-${line.key}`}
-                    >
-                      Amount (₹)
-                    </label>
-                    <Input
-                      id={`bl-amt-${line.key}`}
-                      name="budget_amount"
-                      type="number"
-                      min={0}
-                      value={line.amount}
-                      onChange={(event) => patch({ amount: event.target.value })}
-                      placeholder="₹"
-                      required={Boolean(line.type.trim())}
-                    />
-                  </div>
                   <button
                     type="button"
-                    onClick={() => setLines((current) => current.filter((l) => l.key !== line.key))}
+                    onClick={() =>
+                      setVendors((current) => current.filter((v) => v.key !== vendor.key))
+                    }
                     className="text-ink-subtle hover:text-ink mb-1 p-1.5"
-                    aria-label="Remove this budget line"
+                    aria-label={`Remove ${vendor.name.trim() || `vendor ${vendorIndex + 1}`}`}
                   >
                     <X className="size-4" aria-hidden="true" />
                   </button>
                 </div>
-              );
-            })}
+                <div className="border-border-base space-y-2 border-l-2 pl-3">
+                  {vendor.services.map((service, serviceIndex) => {
+                    const patch = (change: Partial<Service>) =>
+                      patchVendor(vendor.key, (v) => ({
+                        ...v,
+                        services: v.services.map((sv) =>
+                          sv.key === service.key ? { ...sv, ...change } : sv,
+                        ),
+                      }));
+                    return (
+                      <div key={service.key} className="flex items-end gap-2">
+                        {/* Every service posts its vendor beside it, so the rows
+                            line up on the server as Type, Vendor, Amount. */}
+                        <input type="hidden" name="budget_vendor" value={vendor.name} />
+                        <div className="min-w-0 flex-1">
+                          <label
+                            className="text-ink-muted mb-1 block text-xs"
+                            htmlFor={`bl-type-${service.key}`}
+                          >
+                            Service
+                          </label>
+                          <Input
+                            id={`bl-type-${service.key}`}
+                            name="budget_type"
+                            list="budget-types"
+                            value={service.type}
+                            onChange={(event) => patch({ type: event.target.value })}
+                            placeholder={serviceIndex === 0 ? 'Pandal and stage' : 'Lighting'}
+                            maxLength={80}
+                            autoComplete="off"
+                          />
+                        </div>
+                        <div className="w-32">
+                          <label
+                            className="text-ink-muted mb-1 block text-xs"
+                            htmlFor={`bl-amt-${service.key}`}
+                          >
+                            Budget (₹)
+                          </label>
+                          <Input
+                            id={`bl-amt-${service.key}`}
+                            name="budget_amount"
+                            type="number"
+                            min={0}
+                            value={service.amount}
+                            onChange={(event) => patch({ amount: event.target.value })}
+                            placeholder="₹"
+                            required={Boolean(service.type.trim())}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            patchVendor(vendor.key, (v) => ({
+                              ...v,
+                              services: v.services.filter((sv) => sv.key !== service.key),
+                            }))
+                          }
+                          className="text-ink-subtle hover:text-ink mb-1 p-1.5"
+                          aria-label={`Remove service ${serviceIndex + 1}`}
+                        >
+                          <X className="size-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const key = takeKeys(1);
+                      patchVendor(vendor.key, (v) => ({
+                        ...v,
+                        services: [...v.services, { key, type: '', amount: '' }],
+                      }));
+                    }}
+                  >
+                    <Plus className="size-4" aria-hidden="true" />
+                    Add a service
+                  </Button>
+                </div>
+              </fieldset>
+            ))}
             <Button
               type="button"
               size="sm"
-              variant="ghost"
+              variant="secondary"
               onClick={() => {
-                setLines((current) => [
+                const key = takeKeys(2);
+                setVendors((current) => [
                   ...current,
-                  { key: nextKey, type: '', vendor: '', amount: '' },
+                  { key, name: '', services: [{ key: key + 1, type: '', amount: '' }] },
                 ]);
-                setNextKey((key) => key + 1);
               }}
             >
               <Plus className="size-4" aria-hidden="true" />
-              Add a line
+              Add a vendor
             </Button>
-
-            <div className="border-border-base mt-4 border-t pt-4">
-              <Field
-                label="Suggested per flat"
-                htmlFor="suggested_amount"
-                error={state.fieldErrors?.suggested_amount}
-                hint={
-                  flatCount > 0 && total > 0
-                    ? `${formatMoney(total)} across ${flatCount} flats is about ${formatMoney(Math.ceil(total / flatCount))} each. Leave empty to take whatever people give.`
-                    : 'Pre-filled on the contribute screen. Leave empty to take whatever people give.'
-                }
-              >
-                {(control) => (
-                  <Input
-                    {...control}
-                    name="suggested_amount"
-                    type="number"
-                    min={1}
-                    step="1"
-                    placeholder="₹"
-                    className="w-40"
-                  />
-                )}
-              </Field>
-            </div>
           </CardBody>
         </Card>
       </div>
@@ -595,14 +630,9 @@ export function CreateEventForm({
             {summary.venue ? <Row label="Venue">{summary.venue}</Row> : null}
             <Row label="Organised by">{summary.organizer}</Row>
             <Row label="Budget">
-              {lines.filter((line) => Number(line.amount) > 0).length
-                ? `${formatMoney(total)} across ${lines.filter((line) => Number(line.amount) > 0).length} lines`
+              {budgeted
+                ? `${formatMoney(total)} across ${budgeted} ${budgeted === 1 ? 'service' : 'services'}`
                 : 'Nothing budgeted yet'}
-            </Row>
-            <Row label="Suggested per flat">
-              {Number(summary.suggested_amount) > 0
-                ? formatMoney(Number(summary.suggested_amount))
-                : 'Whatever people give'}
             </Row>
             <Row label="Activities">
               {activities.filter((row) => row.name.trim()).length

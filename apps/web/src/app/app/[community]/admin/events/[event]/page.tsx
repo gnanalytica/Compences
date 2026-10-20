@@ -35,11 +35,10 @@ import {
 import { getSupabase } from '@/lib/supabase/server';
 import { activeItems, getCatalogue } from '@/lib/catalogue';
 import { CarriedIn } from '@/components/carried-in';
-import { SuggestionList } from '@/components/suggestion-list';
 import { PageBody, PageHeader } from '@/components/page-header';
+import { BudgetEditor } from './budget-editor';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Button, ButtonLink } from '@/components/ui/button';
-import { Input } from '@/components/ui/field';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
@@ -56,7 +55,7 @@ import { BillLink, StoredFileLink } from '@/components/bill-link';
 import { AuditTrail } from '@/components/audit-trail';
 import {
   AddActivityForm,
-  AddBudgetLineForm,
+  AddVendorForm,
   AllocateSurplusForm,
   CloseEventForm,
   EditActivityForm,
@@ -69,7 +68,7 @@ import {
   type BillLine,
   type Pickers,
 } from './forms';
-import { removeBudgetLine, setEventStatus, updateActivity, updateBudgetLine } from '../actions';
+import { setEventStatus, updateActivity } from '../actions';
 import { EventTabs, eventTabsFor } from '@/components/event-tabs';
 
 export default async function ManageEventPage(
@@ -382,100 +381,31 @@ export default async function ManageEventPage(
             <Card>
               <CardHeader
                 title="Budget"
-                description={`The fund target is the total of these lines: ${formatMoney(
+                description={`Each vendor, the services they provide and what is set aside for each. The total, ${formatMoney(
                   stats.fundTarget,
                   community.currency,
-                )}.`}
+                )}, is the fund target.`}
               />
-              {budget.length ? (
-                <ul className="divide-border-base divide-y">
-                  <SuggestionList id="budget-types" items={pickers.budget_category} />
-                  <SuggestionList id="budget-vendors" items={pickers.vendor} />
-                  {budget.map((line) => (
-                    <li key={line.id} className="px-5 py-3">
-                      <form action={updateBudgetLine} className="flex flex-wrap items-center gap-2">
-                        <input type="hidden" name="slug" value={slug} />
-                        <input type="hidden" name="event" value={event.slug} />
-                        <input type="hidden" name="line_id" value={line.id} />
-                        <label className="sr-only" htmlFor={`type-${line.id}`}>
-                          Type
-                        </label>
-                        <Input
-                          id={`type-${line.id}`}
-                          name="category"
-                          list="budget-types"
-                          defaultValue={line.category}
-                          className="min-w-32 flex-1"
-                          maxLength={80}
-                          autoComplete="off"
-                          disabled={closed}
-                          required
-                        />
-                        <label className="sr-only" htmlFor={`vendor-${line.id}`}>
-                          Vendor
-                        </label>
-                        <Input
-                          id={`vendor-${line.id}`}
-                          name="vendor"
-                          list="budget-vendors"
-                          defaultValue={line.vendor ?? ''}
-                          placeholder="Vendor"
-                          className="min-w-32 flex-1"
-                          maxLength={80}
-                          autoComplete="off"
-                          disabled={closed}
-                        />
-                        <label className="sr-only" htmlFor={`amt-${line.id}`}>
-                          Amount
-                        </label>
-                        <Input
-                          id={`amt-${line.id}`}
-                          name="amount"
-                          type="number"
-                          min={1}
-                          defaultValue={line.planned}
-                          className="w-32"
-                          disabled={closed}
-                        />
-                        <span className="text-ink-subtle w-full text-xs sm:w-auto">
-                          Paid {formatMoney(line.approved, community.currency)} ·{' '}
-                          {formatMoney(line.remaining, community.currency)} left
-                          {line.pending > 0
-                            ? ` · ${formatMoney(line.pending, community.currency)} pending`
-                            : ''}
-                        </span>
-                        {!closed ? (
-                          <>
-                            <Button type="submit" size="sm" variant="secondary">
-                              Save
-                            </Button>
-                            <Button
-                              type="submit"
-                              size="sm"
-                              variant="ghost"
-                              formAction={removeBudgetLine}
-                            >
-                              Remove
-                            </Button>
-                          </>
-                        ) : null}
-                      </form>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <EmptyState
-                  icon={<Wallet className="size-6" />}
-                  title="No budget yet"
-                  description="Add what you plan to spend: a type, a vendor and an amount for each."
-                />
-              )}
-              {!closed ? (
-                <CardBody className="border-border-base border-t">
-                  <AddBudgetLineForm slug={slug} eventSlug={event.slug} pickers={pickers} />
-                </CardBody>
-              ) : null}
+              <BudgetEditor
+                slug={slug}
+                eventSlug={event.slug}
+                lines={budget}
+                currency={community.currency}
+                closed={closed}
+                pickers={pickers}
+              />
             </Card>
+            {!closed ? (
+              <Card>
+                <CardHeader
+                  title="Add a vendor"
+                  description="Who you are hiring and each service they provide, with its own budget."
+                />
+                <CardBody>
+                  <AddVendorForm slug={slug} eventSlug={event.slug} pickers={pickers} />
+                </CardBody>
+              </Card>
+            ) : null}
           </div>
         ) : null}
 

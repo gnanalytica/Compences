@@ -101,6 +101,13 @@
   --shadow-float: 0 1px 2px oklch(0.3 0.03 70 / 0.06), 0 18px 40px -20px oklch(0.3 0.05 70 / 0.4);
   /* What a motif draws a flame, a star or a lantern in. */
   --motif-light: #ffd98a;
+  /* The budget's groups, one colour each (BUDGET_SERIES in @compences/core). */
+  --series-1: oklch(0.52 0.1 165);
+  --series-2: oklch(0.6 0.12 70);
+  --series-3: oklch(0.52 0.12 250);
+  --series-4: oklch(0.55 0.14 15);
+  --series-5: oklch(0.5 0.12 300);
+  --series-6: oklch(0.56 0.09 205);
 
   @variant dark {
     --surface: oklch(0.165 0.006 70);
@@ -122,6 +129,12 @@
     --info: oklch(0.73 0.1 250);
     --shadow-card: 0 1px 0 oklch(1 0 0 / 0.03) inset, 0 16px 32px -20px oklch(0 0 0 / 0.8);
     --shadow-float: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 20px 44px -18px oklch(0 0 0 / 0.9);
+    --series-1: oklch(0.76 0.1 165);
+    --series-2: oklch(0.8 0.12 75);
+    --series-3: oklch(0.74 0.1 250);
+    --series-4: oklch(0.74 0.12 15);
+    --series-5: oklch(0.74 0.1 300);
+    --series-6: oklch(0.78 0.08 205);
   }
 }
 

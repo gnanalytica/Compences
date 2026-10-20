@@ -7,7 +7,6 @@ import {
   COPY,
   contributionPresets,
   formatMoney,
-  isSuggestedAmount,
   unitLabel,
   upiNote,
   upiPayUri,
@@ -82,7 +81,6 @@ export function ContributeForm({
   eventName,
   currency,
   suggested,
-  askedPerFlat,
   upi,
   flatLabel,
   flats,
@@ -94,8 +92,6 @@ export function ContributeForm({
   currency: string;
   /** Pre-filled from a link like ?amount=2000. */
   suggested: number | null;
-  /** What the committee asks each flat for, if they named a figure. */
-  askedPerFlat: number | null;
   upi: { vpa: string; payeeName: string };
   flatLabel: string | null;
   /**
@@ -108,11 +104,10 @@ export function ContributeForm({
   proofFolder: string;
 }) {
   const [state, action] = useActionState(contribute, initial);
-  // A link's ?amount= wins, then the figure the committee asked for. Landing on
-  // the screen with the right number already chosen is the whole point of
-  // having asked for one.
-  const presets = contributionPresets(askedPerFlat);
-  const opening = suggested ?? askedPerFlat;
+  // A link's ?amount= lands on the screen already chosen; otherwise nothing is,
+  // and the resident gives what they choose.
+  const presets = contributionPresets(null);
+  const opening = suggested;
   const [amount, setAmount] = useState<number | null>(opening);
   const [custom, setCustom] = useState(
     opening && !presets.includes(opening) ? String(opening) : '',
@@ -268,11 +263,6 @@ export function ContributeForm({
                 }
               >
                 {formatMoney(preset, currency)}
-                {/* Named so nobody has to guess which of two numbers the
-                    society actually asked for. */}
-                {isSuggestedAmount(preset, askedPerFlat) ? (
-                  <span className="text-ink-subtle block text-xs font-normal">Suggested</span>
-                ) : null}
               </button>
             ))}
             <div className="col-span-2 sm:col-span-1">

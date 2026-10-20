@@ -1,47 +1,17 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { budgetVsSpent } from '../src/lib/events';
 import { tidyLabel } from '../src/lib/catalogue';
 
 /**
- * A budget is rows of Type | Vendor | Amount, typed freely with the society's
- * own words offered back; a bill is paid out of one of those rows.
+ * A budget is vendors and the services each provides, with a budget for each
+ * service, typed freely with the society's own words offered back; a bill names
+ * the vendor and the service it is paid out of. The grouping itself is tested
+ * in @compences/core (test/budget.test.ts).
  */
 const SRC = join(import.meta.dirname, '..', 'src');
 const read = (...parts: string[]) => readFileSync(join(SRC, ...parts), 'utf8');
 const EVENTS = ['app', 'app', '[community]', 'admin', 'events'];
-
-describe('the budget against what was spent', () => {
-  const lines = [
-    { id: 'a', category: 'Food', vendor: 'Tesla', amount: 600000 },
-    { id: 'b', category: 'Food', vendor: 'Mavericks', amount: 200000 },
-  ];
-
-  it('gives each line its own row, even when the type repeats', () => {
-    const rows = budgetVsSpent(lines, []);
-    expect(rows.map((row) => row.label)).toEqual(['Food · Tesla', 'Food · Mavericks']);
-    expect(rows.map((row) => row.planned)).toEqual([600000, 200000]);
-  });
-
-  it('counts only approved bills, against the line they were paid from', () => {
-    const rows = budgetVsSpent(lines, [
-      { budget_line_id: 'a', category: 'Food', amount: 100000, status: 'approved' },
-      { budget_line_id: 'a', category: 'Food', amount: 50000, status: 'pending' },
-      { budget_line_id: 'b', category: 'Food', amount: 25000, status: 'approved' },
-    ]);
-    expect(rows.map((row) => row.spent)).toEqual([100000, 25000]);
-  });
-
-  it('still shows a bill with no line, grouped by its category', () => {
-    const rows = budgetVsSpent(lines, [
-      { budget_line_id: null, category: 'Sound', amount: 4000, status: 'approved' },
-      { category: 'sound', amount: 1000, status: 'approved' },
-    ]);
-    const loose = rows.find((row) => row.planned === 0);
-    expect(loose).toMatchObject({ label: 'Sound', spent: 5000 });
-  });
-});
 
 describe('typed words', () => {
   it('are tidied the way the catalogue compares them', () => {
@@ -58,13 +28,43 @@ describe('the forms', () => {
     expect(form).not.toContain('pickers.budget_category\n      .slice');
   });
 
-  it('pick a budget line first on a bill, then amount, then the bill, then remarks', () => {
+  it('pick the vendor, then their service, then the amount billed, then the bill, then remarks', () => {
     const forms = read(...EVENTS, '[event]', 'forms.tsx');
     const at = (text: string) => forms.indexOf(text);
-    expect(at('name="budget_line_id"')).toBeGreaterThan(-1);
-    expect(at('Record amount')).toBeGreaterThan(at('name="budget_line_id"'));
-    expect(at('bucket="bills"')).toBeGreaterThan(at('Record amount'));
+    expect(at('label="Vendor"')).toBeGreaterThan(-1);
+    expect(at('name="budget_line_id"')).toBeGreaterThan(at('label="Vendor"'));
+    expect(at('Amount billed')).toBeGreaterThan(at('name="budget_line_id"'));
+    expect(at('bucket="bills"')).toBeGreaterThan(at('Amount billed'));
     expect(at('label="Remarks"')).toBeGreaterThan(at('bucket="bills"'));
+  });
+
+  it('choose the service for you when the vendor has only one', () => {
+    const forms = read(...EVENTS, '[event]', 'forms.tsx');
+    expect(forms).toContain('next?.lines.length === 1 ? next.lines[0]!.id');
+  });
+
+  it('build the budget as vendors, each with their services and a budget for each', () => {
+    const page = read(...EVENTS, '[event]', 'page.tsx');
+    const editor = read(...EVENTS, '[event]', 'budget-editor.tsx');
+    expect(page).toContain('<BudgetEditor');
+    expect(page).toContain('<AddVendorForm');
+    expect(editor).toContain('vendorGroups(lines)');
+    expect(editor).toContain('<AddServiceForm');
+    const wizard = read(...EVENTS, 'new', 'create-event-form.tsx');
+    expect(wizard).toContain('Add a vendor');
+    expect(wizard).toContain('Add a service');
+  });
+
+  it('no longer ask for a suggested amount per flat', () => {
+    for (const source of [
+      read(...EVENTS, 'new', 'create-event-form.tsx'),
+      read(...EVENTS, '[event]', 'forms.tsx'),
+      read(...EVENTS, 'actions.ts'),
+      read('app', 'app', '[community]', 'events', '[event]', 'contribute', 'contribute-form.tsx'),
+    ]) {
+      expect(source).not.toContain('suggested_amount');
+      expect(source).not.toMatch(/per flat/i);
+    }
   });
 
   it('warn about going over a line without blocking the bill', () => {

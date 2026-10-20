@@ -109,7 +109,6 @@ export default async function ContributePage(
               eventName={event.name}
               currency={community.currency}
               suggested={Number.isFinite(suggested) && suggested > 0 ? suggested : null}
-              askedPerFlat={event.suggested_amount ? Number(event.suggested_amount) : null}
               upi={{ vpa: community.upi_vpa, payeeName: community.upi_payee_name }}
               flatLabel={flat.data ? unitLabel(flat.data) : null}
               flats={allFlats.data ?? null}

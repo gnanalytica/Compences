@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import { budgetLineLabel, festivalFor, normalizeStats, overLineBy } from '@compences/core';
+import { festivalFor, normalizeStats, overLineBy } from '@compences/core';
 import { getCatalogue } from './catalogue';
 import { getSupabase } from './supabase/server';
 import { rowsOf } from './rows';
@@ -20,7 +20,7 @@ import { rowsOf } from './rows';
 // select text, and concatenating with `+` widens it to `string`, which
 // collapses the result to an error type.
 const EVENT_FIELDS =
-  'id, slug, emoji, name, kind, starts_on, ends_on, venue, venue_id, event_type_id, organizer, description, status, expected_attendance, fund_target, suggested_amount, fund_rule, fund_rule_note, whatsapp_group_url, published_at, closed_at, closing_summary, created_by, created_at';
+  'id, slug, emoji, name, kind, starts_on, ends_on, venue, venue_id, event_type_id, organizer, description, status, expected_attendance, fund_target, fund_rule, fund_rule_note, whatsapp_group_url, published_at, closed_at, closing_summary, created_by, created_at';
 
 export const getEvent = cache(async (communityId: string, slug: string) => {
   const supabase = await getSupabase();
@@ -365,55 +365,6 @@ export async function getBillOverruns(expenseIds: string[]): Promise<Map<string,
     if (over > 0) overruns.set(bill.id, over);
   }
   return overruns;
-}
-
-/** Normalises a budget or expense category so "Decoration" and "decoration" line up. */
-export function categoryKey(value: string | null | undefined): string {
-  return (value ?? '').trim().toLowerCase() || 'other';
-}
-
-/**
- * Planned against actually spent, one row per budget line. Only approved
- * expenses count as spent. A bill with no line behind it (one filed before
- * bills drew on a line, or whose line was removed) still appears, grouped by
- * its category and marked as not in the budget.
- */
-export function budgetVsSpent(
-  lines: { id: string; category: string; vendor?: string | null; amount: number | string }[],
-  expenses: {
-    budget_line_id?: string | null;
-    category: string | null;
-    amount: number | string;
-    status: string;
-  }[],
-) {
-  const rows = new Map<string, { key: string; label: string; planned: number; spent: number }>();
-  for (const line of lines) {
-    rows.set(line.id, {
-      key: line.id,
-      label: budgetLineLabel(line),
-      planned: Number(line.amount),
-      spent: 0,
-    });
-  }
-  for (const expense of expenses) {
-    if (expense.status !== 'approved') continue;
-    const line = expense.budget_line_id ? rows.get(expense.budget_line_id) : undefined;
-    if (line) {
-      line.spent += Number(expense.amount);
-      continue;
-    }
-    const key = `unplanned:${categoryKey(expense.category)}`;
-    const row = rows.get(key) ?? {
-      key,
-      label: expense.category?.trim() || 'Other',
-      planned: 0,
-      spent: 0,
-    };
-    row.spent += Number(expense.amount);
-    rows.set(key, row);
-  }
-  return [...rows.values()];
 }
 
 /** Who has registered for each activity, and the signed-in member's own registrations. */
