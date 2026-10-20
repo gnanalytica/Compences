@@ -54,6 +54,7 @@ import {
 } from '../../../src/components/ui';
 import { Chip, ChipRow, ErrorText } from '../../../src/components/admin-ui';
 import { DateField } from '../../../src/components/date-field';
+import { SuggestInput, findOrCreateCatalogueItem } from '../../../src/components/catalogue-ui';
 import {
   ActivityTypeChips,
   BudgetLinesEditor,
@@ -61,6 +62,7 @@ import {
   budgetProblem,
   DetailsFields,
   filledBudgetLines,
+  lineAmount,
   newBudgetLine,
   validateDetails,
   type DraftBudgetLine,
@@ -460,6 +462,11 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
   const [drafts, setDrafts] = useState<DraftBudgetLine[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // One thing changes at a time: a service's name and budget, or a vendor's name.
+  const [editing, setEditing] = useState<{ id: string; category: string; amount: string } | null>(
+    null,
+  );
+  const [renaming, setRenaming] = useState<{ key: string; to: string } | null>(null);
   const locked = event.status === 'completed' || event.status === 'cancelled';
   const total = data.budget.reduce((sum, line) => sum + Number(line.amount), 0);
 
@@ -508,48 +515,211 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
     await invalidate();
   };
 
+  /** A service's name and budget, as the web's Save on a budget row. */
+  const saveService = async () => {
+    if (!editing || !activeCommunity) return;
+    const amount = lineAmount(editing);
+    if (!editing.category.trim()) {
+      setError('Name the service, such as Food or Decoration.');
+      return;
+    }
+    if (amount <= 0) {
+      setError('Enter a budget above zero.');
+      return;
+    }
+    setBusy(editing.id);
+    setError(null);
+    const category = await findOrCreateCatalogueItem(
+      activeCommunity.id,
+      user?.id ?? null,
+      'budget_category',
+      editing.category,
+    );
+    const { error: updateError } = await supabase
+      .from('budget_lines')
+      .update({
+        category: category?.label ?? editing.category.trim(),
+        category_id: category?.id ?? null,
+        amount,
+      })
+      .eq('id', editing.id)
+      .eq('event_id', event.id);
+    if (!updateError) await syncFundTarget(event.id);
+    setBusy(null);
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+    setEditing(null);
+    await invalidate();
+  };
+
+  /**
+   * Renames a vendor on every service of theirs in this event, or names the
+   * vendor for the services that had none. Bills already filed keep the name
+   * they were filed under.
+   */
+  const renameVendor = async (vendor: string | null) => {
+    if (!renaming || !activeCommunity) return;
+    const to = renaming.to.trim();
+    if (!to) {
+      setError('Type the vendor’s name.');
+      return;
+    }
+    setBusy(`vendor:${renaming.key}`);
+    setError(null);
+    const item = await findOrCreateCatalogueItem(
+      activeCommunity.id,
+      user?.id ?? null,
+      'vendor',
+      to,
+    );
+    const lines = supabase
+      .from('budget_lines')
+      .update({ vendor: item?.label ?? to, vendor_id: item?.id ?? null })
+      .eq('event_id', event.id);
+    const { error: updateError } = await (vendor
+      ? lines.ilike(
+          'vendor',
+          vendor.replace(/[\\%_]/g, (char) => `\\${char}`),
+        )
+      : lines.is('vendor', null));
+    setBusy(null);
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+    setRenaming(null);
+    await invalidate();
+  };
+
   return (
     <Card style={{ gap: spacing.md }}>
       <Heading>Budget · {formatMoney(total, currency)}</Heading>
       {data.budget.length ? (
         vendorGroups(data.budget).map((group) => (
           <View key={group.key || 'none'} style={{ gap: spacing.sm }}>
-            <View>
-              <Body>{group.vendor ?? NO_VENDOR}</Body>
-              <Caption>
-                {group.lines.length} {group.lines.length === 1 ? 'service' : 'services'} ·{' '}
-                {formatMoney(
-                  group.lines.reduce((sum, line) => sum + Number(line.amount), 0),
-                  currency,
-                )}
-              </Caption>
-            </View>
-            {group.lines.map((line) => (
-              <View
-                key={line.id}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing.md,
-                  paddingLeft: spacing.md,
-                }}
-              >
+            {renaming?.key === group.key ? (
+              <View style={{ gap: spacing.sm }}>
+                <SuggestInput
+                  kind="vendor"
+                  label="Vendor"
+                  value={renaming.to}
+                  onChangeText={(to) => setRenaming({ key: group.key, to })}
+                  placeholder="Sri Lakshmi Tents"
+                />
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                  <View style={{ flex: 1 }}>
+                    <Button
+                      label="Save"
+                      onPress={() => void renameVendor(group.vendor)}
+                      loading={busy === `vendor:${group.key}`}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Button label="Cancel" variant="secondary" onPress={() => setRenaming(null)} />
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
                 <View style={{ flex: 1 }}>
-                  <Body muted>{line.category}</Body>
-                  <Caption>{formatMoney(Number(line.amount), currency)}</Caption>
+                  <Body>{group.vendor ?? NO_VENDOR}</Body>
+                  <Caption>
+                    {group.lines.length} {group.lines.length === 1 ? 'service' : 'services'} ·{' '}
+                    {formatMoney(
+                      group.lines.reduce((sum, line) => sum + Number(line.amount), 0),
+                      currency,
+                    )}
+                  </Caption>
                 </View>
                 {!locked ? (
-                  <View style={{ width: 100 }}>
+                  <View style={{ width: 120 }}>
                     <Button
-                      label="Remove"
+                      label={group.vendor ? 'Rename' : 'Name vendor'}
                       variant="secondary"
-                      onPress={() => void remove(line.id)}
-                      loading={busy === line.id}
+                      onPress={() => {
+                        setEditing(null);
+                        setRenaming({ key: group.key, to: group.vendor ?? '' });
+                      }}
                     />
                   </View>
                 ) : null}
               </View>
-            ))}
+            )}
+            {group.lines.map((line) =>
+              editing?.id === line.id ? (
+                <View key={line.id} style={{ gap: spacing.sm, paddingLeft: spacing.md }}>
+                  <SuggestInput
+                    kind="budget_category"
+                    label="Service"
+                    value={editing.category}
+                    onChangeText={(category) => setEditing({ ...editing, category })}
+                    placeholder="Lighting"
+                  />
+                  <Input
+                    label={`Budget (${currency})`}
+                    value={editing.amount}
+                    onChangeText={(amount) => setEditing({ ...editing, amount })}
+                    keyboardType="decimal-pad"
+                    placeholder="18000"
+                  />
+                  <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                    <View style={{ flex: 1 }}>
+                      <Button
+                        label="Save"
+                        onPress={() => void saveService()}
+                        loading={busy === line.id}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Button label="Cancel" variant="secondary" onPress={() => setEditing(null)} />
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <View
+                  key={line.id}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing.sm,
+                    paddingLeft: spacing.md,
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Body muted>{line.category}</Body>
+                    <Caption>{formatMoney(Number(line.amount), currency)}</Caption>
+                  </View>
+                  {!locked ? (
+                    <>
+                      <View style={{ width: 80 }}>
+                        <Button
+                          label="Edit"
+                          variant="secondary"
+                          onPress={() => {
+                            setRenaming(null);
+                            setEditing({
+                              id: line.id,
+                              category: line.category,
+                              amount: String(Number(line.amount)),
+                            });
+                          }}
+                        />
+                      </View>
+                      <View style={{ width: 96 }}>
+                        <Button
+                          label="Remove"
+                          variant="secondary"
+                          onPress={() => void remove(line.id)}
+                          loading={busy === line.id}
+                        />
+                      </View>
+                    </>
+                  ) : null}
+                </View>
+              ),
+            )}
             {!locked ? (
               <Button
                 label={`+ Add a service${group.vendor ? ` from ${group.vendor}` : ''}`}
@@ -572,7 +742,6 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
           {drafts.length ? (
             <>
               <BudgetLinesEditor lines={drafts} onChange={setDrafts} currency={currency} />
-              <ErrorText message={error} />
               <Button
                 label="Save to the budget"
                 onPress={() => void save()}
@@ -586,6 +755,7 @@ function BudgetCard({ data, onChange }: { data: Loaded; onChange: () => void }) 
               onPress={() => setDrafts([newBudgetLine()])}
             />
           )}
+          <ErrorText message={error} />
           <Caption>The overall budget is the sum of the services.</Caption>
         </View>
       ) : null}
