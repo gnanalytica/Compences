@@ -20,6 +20,8 @@ export const LEGAL = {
    * put their name here once one is designated.
    */
   grievanceOfficer: 'Grievance Officer',
+  grievanceOfficerName: 'Sandeep Pvn',
+  grievancePhone: '+91 99808 56880',
   effectiveDate: '26 October 2026',
   courts: 'Bengaluru, Karnataka',
 } as const;

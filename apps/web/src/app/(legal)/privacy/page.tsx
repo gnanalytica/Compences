@@ -378,10 +378,11 @@ export default function PrivacyPage() {
       <LegalSection id="contact" title="Contact and grievances">
         <p>
           Questions, requests and grievances about your personal data go to our{' '}
-          {LEGAL.grievanceOfficer} at {LEGAL.operator}: <ContactLink />. We acknowledge every
-          request, and resolve grievances within the time the DPDP Act and its rules allow — at most
-          90 days. If you are not satisfied with our answer, you can complain to the Data Protection
-          Board of India.
+          {LEGAL.grievanceOfficer}, <Strong>{LEGAL.grievanceOfficerName}</Strong> ({LEGAL.operator}
+          ), at <ContactLink /> or by phone on {LEGAL.grievancePhone}. We acknowledge every request,
+          and resolve grievances within the time the DPDP Act and its rules allow — at most 90 days.
+          If you are not satisfied with our answer, you can complain to the Data Protection Board of
+          India.
         </p>
       </LegalSection>
     </LegalDocument>

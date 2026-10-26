@@ -289,8 +289,9 @@ export default function TermsPage() {
           If something on {LEGAL.product} breaks these terms or the law — for example content that
           is defamatory, harassing, impersonates someone or shares someone’s personal data without a
           reason — or you have any other complaint about the service, write to our{' '}
-          {LEGAL.grievanceOfficer} at {LEGAL.operator}: <ContactLink />. Tell us what the content
-          is, where it appears and why it is a problem.
+          {LEGAL.grievanceOfficer}, <Strong>{LEGAL.grievanceOfficerName}</Strong> ({LEGAL.operator}
+          ), at <ContactLink /> or call {LEGAL.grievancePhone}. Tell us what the content is, where
+          it appears and why it is a problem.
         </p>
         <p>
           We acknowledge complaints within 24 hours and resolve them within 15 days, as the
