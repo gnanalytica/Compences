@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.compences.app",
       "sha256_cert_fingerprints": [
-        "96:96:23:51:85:E8:55:AE:E7:79:E4:C7:8C:B0:00:CB:2F:06:B3:DB:DE:E5:EE:4D:2D:73:08:A7:74:04:64:2B"
+        "96:96:23:51:85:E8:55:AE:E7:79:E4:C7:8C:B0:00:CB:2F:06:B3:DB:DE:E5:EE:4D:2D:73:08:A7:74:04:64:2B",
+        "21:E4:FC:DB:E4:46:D4:09:C5:EC:DD:F7:CE:BE:7A:7F:5F:62:6D:CB:43:5C:96:7E:A1:AC:88:1F:BE:76:FE:30"
       ]
     }
   }

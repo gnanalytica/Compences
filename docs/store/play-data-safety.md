@@ -76,11 +76,11 @@ own definition says so; the Privacy Policy lists them anyway.
 
 ### App info and performance
 
-| Data type                  | Collected | Required or optional | Purposes          | Note                                                                                                                              |
-| -------------------------- | --------- | -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Crash logs                 | Yes       | Optional             | App functionality | Sentry, only when a DSN is configured. **Answer "Data is not linked to your identity"** — see the scrubbing in `observability.ts` |
-| Diagnostics                | Yes       | Optional             | App functionality | The app version sent with a push token, and nothing else                                                                          |
-| Other app performance data | No        | —                    | —                 | No traces; `tracesSampleRate: 0`                                                                                                  |
+| Data type                  | Collected | Required or optional | Purposes                                                                                        | Note                                                                                                                              |
+| -------------------------- | --------- | -------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Crash logs                 | Yes       | Optional             | App functionality, **Analytics** (Google's definition of Analytics includes diagnosing crashes) | Sentry, only when a DSN is configured. **Answer "Data is not linked to your identity"** — see the scrubbing in `observability.ts` |
+| Diagnostics                | Yes       | Optional             | App functionality                                                                               | The app version sent with a push token, and nothing else                                                                          |
+| Other app performance data | No        | —                    | —                                                                                               | No traces; `tracesSampleRate: 0`                                                                                                  |
 
 ### Device or other IDs
 
