@@ -74,8 +74,9 @@ export default function TermsPage() {
         <LegalList>
           <li>You must be at least 18 years old and able to enter a binding contract.</li>
           <li>
-            Sign in with your own Google account or email address, keep access to it secure, and do
-            not share your account. You are responsible for activity under your account.
+            Sign in with your own Google or Apple account or email address, keep access to it
+            secure, and do not share your account. You are responsible for activity under your
+            account.
           </li>
           <li>
             Give accurate information — including your name and the flat or unit you live in — and
@@ -185,8 +186,9 @@ export default function TermsPage() {
             follow WhatsApp’s terms. You can stop bot messages at any time by sending STOP.
           </li>
           <li>
-            Signing in with Google is subject to Google’s terms. Push notifications are delivered
-            through Expo, Apple Push Notification service and Google’s Firebase Cloud Messaging.
+            Signing in with Google or Apple is subject to their terms. Push notifications are
+            delivered through Expo, Apple Push Notification service and Google’s Firebase Cloud
+            Messaging.
           </li>
           <li>
             If a community connects other software or an AI assistant using an API key, that

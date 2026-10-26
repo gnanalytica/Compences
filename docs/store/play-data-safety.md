@@ -43,12 +43,12 @@ own definition says so; the Privacy Policy lists them anyway.
 
 ### Financial info
 
-| Data type            | Collected | Required or optional | Purposes          | Note                                                                                 |
-| -------------------- | --------- | -------------------- | ----------------- | ------------------------------------------------------------------------------------ |
-| User payment info    | **No**    | —                    | —                 | There is no payment gateway. The app never sees a card number, UPI PIN or bank login |
-| Purchase history     | No        | —                    | —                 | Nothing is bought in the app                                                         |
-| Credit score         | No        | —                    | —                 | —                                                                                    |
-| Other financial info | Yes       | Optional             | App functionality | Contribution amounts, the UPI reference you type in, and society expenses            |
+| Data type            | Collected | Required or optional | Purposes          | Note                                                                                                                                                                                       |
+| -------------------- | --------- | -------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| User payment info    | **No**    | —                    | —                 | There is no payment gateway. The app never sees a card number, UPI PIN or bank login                                                                                                       |
+| Purchase history     | No        | —                    | —                 | Nothing is bought in the app                                                                                                                                                               |
+| Credit score         | No        | —                    | —                 | —                                                                                                                                                                                          |
+| Other financial info | Yes       | Optional             | App functionality | Contribution amounts, the UPI reference you type in, society expenses, and imported bank-statement lines (date, amount, narration, payer name as printed, last four digits of the account) |
 
 ### Photos and videos
 

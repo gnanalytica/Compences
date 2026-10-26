@@ -10,6 +10,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.compences.app",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -165,6 +166,7 @@
       "expo-router",
       "expo-web-browser",
       "expo-secure-store",
+      "expo-apple-authentication",
       [
         "expo-notifications",
         {

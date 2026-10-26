@@ -146,6 +146,27 @@ export type Database = {
           }
         ]
       }
+      apple_refresh_tokens: {
+        Row: {
+          user_id: string
+          refresh_token: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          refresh_token: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          refresh_token?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       announcement_reads: {
         Row: {
           announcement_id: string
