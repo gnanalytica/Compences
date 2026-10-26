@@ -31,6 +31,17 @@ Four documents, in the order they depend on each other:
 - **Crash reporting with no personal data in it**, which is what makes the
   "not linked to identity" answer on both forms true rather than hopeful.
 - **`ITSAppUsesNonExemptEncryption: false`**, and it is accurate.
+- **Privacy Policy and Terms linked inside the app** — on the sign-in screen
+  and at the foot of Me. Both stores want them in the app, not only on the
+  listing.
+- **iPhone only** (`ios.supportsTablet: false`). The app is portrait and laid
+  out for a phone; claiming iPad would mean iPad screenshots and an iPad
+  layout review. It still runs on an iPad in iPhone mode.
+- **Push end to end.** The database writes a notification row,
+  `pg_net` calls `/api/webhooks/push-dispatch`, which sends through Expo's
+  push service to APNs (iOS) and Firebase Cloud Messaging (Android). Firebase
+  is there for FCM only: `google-services.json` and nothing else — no Firebase
+  SDK, no Analytics.
 
 ## What still needs a person
 
@@ -44,6 +55,41 @@ Not oversights — none of these can live in a repository.
 | 4   | `SENTRY_DSN` / `EXPO_PUBLIC_SENTRY_DSN` set in the deploy environments | Nothing — both apps run inert without one, by design |
 | 5   | Apple Team ID, for iOS universal links                                 | iOS deep links only                                  |
 | 6   | A legal review of the Privacy Policy and Terms                         | Judgement call; they are drafts                      |
+| 7   | **Sign in with Apple** on iOS — see below                              | App Store review (Guideline 4.8)                     |
+| 8   | A way for the reviewers to get in — see below                          | Both stores' review                                  |
+| 9   | FCM V1 service-account key uploaded to EAS                             | Android pushes (tokens register, sends fail)         |
+| 10  | Apple Developer account, APNs key and iOS signing in EAS               | Any iOS build; iOS pushes                            |
+| 11  | A first `production` (AAB) Android build, and the Play app created     | Play submission — only APKs have been built so far   |
+| 12  | The Grievance Officer's name in `LEGAL.grievanceOfficer`               | IT Rules 2021 ask for a named person                 |
+| 13  | Restrict the Android API key in `google-services.json` to the app      | Nothing; it is public by design, but scope it        |
+
+### 7 and 8, the two that will bounce an iOS submission
+
+**Sign in with Apple.** The only sign-in the app offers is Google (email links
+are switched off in `src/lib/sign-in-options.ts`). Guideline 4.8 requires an
+app that uses a third-party login to also offer one that collects only name
+and email and lets the person hide their email — in practice, Sign in with
+Apple. Re-enabling email links does not meet the "hide my email" part. It
+needs `expo-apple-authentication`, `ios.usesAppleSignIn: true`, the Apple
+provider turned on in Supabase, and — because Apple requires it on account
+deletion — revoking the Apple token in `delete_my_account`'s flow.
+
+**Reviewer access.** Both stores need credentials that reach the inside of the
+app. With Google-only sign-in that means a dedicated Google account, which
+Google often challenges on a new device, and the account must already be an
+approved member of a demo society. Create that society (`pnpm db:seed`
+against production, or `pnpm society:create`), approve the reviewer account
+in it, and put the credentials in App Review Information and Play's App
+access section.
+
+### The DPDP Rules timeline
+
+The Digital Personal Data Protection Rules, 2025 phase in until May 2027. The
+policy already covers notice, consent withdrawal, the 90-day grievance window
+and breach reporting. One obligation is not met by the stack today: keeping
+access logs for **one year** (Rule 6). Supabase and Vercel keep days, not a
+year. Before May 2027, drain logs somewhere that keeps them (a Vercel log
+drain, Supabase log export) — `audit_log` already keeps the in-app actions.
 
 ### 5, in a little more detail
 

@@ -75,35 +75,51 @@ export default function PrivacyPage() {
 
       <LegalSection id="data-we-collect" title="Data we collect">
         <p>
-          <Strong>When you sign in.</Strong> You can sign in with Google or with a one-time link
-          sent to your email address. With Google, we receive only your name, email address and
-          profile photo — we do not ask for access to your Gmail, contacts, calendar or files. With
-          an email link, we receive your email address.
+          <Strong>When you sign in.</Strong> You sign in with Google, or — where we offer it — with
+          a one-time link sent to your email address. With Google, we receive only your name, email
+          address and profile photo — we do not ask for access to your Gmail, contacts, calendar or
+          files. With an email link, we receive your email address.
         </p>
         <p>
-          <Strong>Your profile.</Strong> Your name, email address, phone number (if you add one),
-          profile photo and preferred language.
+          <Strong>Your profile.</Strong> Your name, email address, phone number, profile photo and
+          preferred language. We ask for your phone number when you start a society or ask to join
+          one, so that its committee and staff can reach you; it is not shown to other residents.
         </p>
         <p>
           <Strong>Your community membership.</Strong> The communities you ask to join or belong to,
           your role (for example resident or admin), the flat or unit you live in and who else is
-          recorded as living there, your join requests and their approval, and invite codes you
-          create, redeem or try.
+          recorded as living there, your join requests and their approval, requests to record that
+          you moved in or out, and invite codes you create, redeem or try.
         </p>
         <p>
-          <Strong>What you do in your community.</Strong> Announcements you post or read, votes you
-          cast in polls, event tasks assigned to you, activities you sign up to perform in,
-          volunteer roles you take on, and activity ideas you suggest or show interest in. When you
-          sign up for an activity, organisers may ask for details such as the type of performance,
-          age group, experience and any special requirements — share only what they need.
+          <Strong>What you do in your community.</Strong> Announcements you post or read, comments
+          and reactions you leave, votes you cast in polls, event tasks assigned to you, activities
+          you sign up to perform in, volunteer roles you take on, and activity ideas you suggest or
+          show interest in. When you sign up for an activity, organisers may ask for details such as
+          the type of performance, age group, experience and any special requirements — share only
+          what they need.
         </p>
         <p>
           <Strong>Money records.</Strong> Contributions to an event fund — the amount, the payment
           method you used (such as UPI), a payment reference and a receipt number — and expenses
-          filed by admins, with the vendor, amount, who requested and approved it, and a reference
-          to the bill. {LEGAL.product} <Strong>records</Strong> payments; it does not currently
+          filed by admins, with the vendor or person paid, amount, who requested and approved it,
+          and the bill. {LEGAL.product} <Strong>records</Strong> payments; it does not currently
           process card, UPI or bank payments itself, and we never receive your card number, UPI PIN
           or bank login.
+        </p>
+        <p>
+          <Strong>Photos and files you upload.</Strong> Pictures or PDFs of bills, and screenshots
+          of payments — for example the UPI screenshot you attach when you report a contribution, or
+          the transfer an admin attaches when the society pays someone back. The app asks for access
+          to your camera or photos only when you choose to attach one, and uploads only the file you
+          pick.
+        </p>
+        <p>
+          <Strong>Bank statement lines.</Strong> A community’s admins may import their society’s
+          bank statement to check contributions against it. The statement file is read on the
+          admin’s device and only its lines are stored — date, amount, the bank’s description,
+          reference and the name of the other party, which may be yours if you paid the society. We
+          store only the last four digits of the society’s account number.
         </p>
         <p>
           <Strong>WhatsApp.</Strong> If you use the {LEGAL.product} WhatsApp bot, we store your
@@ -166,13 +182,19 @@ export default function PrivacyPage() {
             number of households that contributed, and approved expenses with the vendor and bill.
           </li>
           <li>
-            The amount <Strong>you</Strong> contributed is visible to you and your community’s
-            admins, not to other residents.
+            The amount <Strong>you</Strong> contributed, and any payment screenshot you attach, is
+            visible to you and your community’s admins, not to other residents.
+          </li>
+          <li>
+            Money the society spends is shown to every member with who was paid and the bill or
+            transfer screenshot behind it. If the society pays <Strong>you</Strong> — for example to
+            reimburse something you bought — your name appears on that line.
           </li>
           <li>Your ballot in a poll is readable only by you; others see the results.</li>
           <li>
-            Admins can see member details, join requests, all contributions and expenses under
-            review, and the audit trail for their community.
+            Admins can see member details including phone numbers, join requests, all contributions
+            and expenses under review, imported bank statement lines, and the audit trail for their
+            community.
           </li>
         </LegalList>
       </LegalSection>
@@ -192,7 +214,10 @@ export default function PrivacyPage() {
           </li>
           <li>
             <Strong>Expo</Strong> — building the mobile apps and delivering push notifications,
-            which also pass through Apple’s and Google’s notification services.
+            which then pass through Apple Push Notification service on iPhone and Google’s Firebase
+            Cloud Messaging on Android. They receive your device’s push token and the notification’s
+            title and text. We use Firebase only to deliver notifications — not Firebase Analytics
+            or any other tracking.
           </li>
           <li>
             <Strong>Meta (WhatsApp Business Platform)</Strong> — carrying messages between you and
@@ -241,14 +266,15 @@ export default function PrivacyPage() {
         </p>
         <LegalList>
           <li>
-            your profile, community memberships, flat assignments, join requests, votes, sign-ups,
-            WhatsApp link, notification tokens and notifications are deleted;
+            your profile, community memberships, flat assignments, join and move requests, votes,
+            sign-ups, comments and reactions, WhatsApp link, notification tokens and notifications
+            are deleted;
           </li>
           <li>
             contributions, expenses and audit entries you were part of are{' '}
             <Strong>kept but no longer linked to your account</Strong>, because a community’s ledger
             has to keep adding up. A contribution can remain associated with the flat it was made
-            for;
+            for, along with the payment screenshot that proves it;
           </li>
           <li>
             messages exchanged with the WhatsApp bot are kept as operational records with your phone
@@ -270,8 +296,10 @@ export default function PrivacyPage() {
           access to production systems is limited.
         </p>
         <p>
-          No system is perfectly secure. If a personal data breach affects you, we will notify you
-          and the Data Protection Board of India as the DPDP Act requires.
+          No system is perfectly secure. If a personal data breach affects you, we will tell you
+          without delay — what happened, what it may mean for you and what you can do — and report
+          it to the Data Protection Board of India within the time the DPDP Act and its rules
+          require.
         </p>
       </LegalSection>
 
@@ -290,9 +318,10 @@ export default function PrivacyPage() {
             records described above;
           </li>
           <li>
-            <Strong>withdraw consent</Strong> at any time, for example by turning off notifications,
-            opting out of WhatsApp by messaging STOP, or deleting your account. Withdrawal does not
-            affect processing that already happened;
+            <Strong>withdraw consent</Strong> at any time, as easily as you gave it — for example by
+            turning off notifications in your phone’s settings, opting out of WhatsApp by messaging
+            STOP, or deleting your account. Withdrawal does not affect processing that already
+            happened;
           </li>
           <li>
             <Strong>nominate</Strong> someone to exercise these rights on your behalf if you die or
@@ -337,9 +366,11 @@ export default function PrivacyPage() {
 
       <LegalSection id="contact" title="Contact and grievances">
         <p>
-          Questions, requests and grievances about your personal data go to our grievance contact at{' '}
-          {LEGAL.operator}: <ContactLink />. We aim to acknowledge requests promptly and resolve
-          grievances within the time the DPDP Act and its rules require.
+          Questions, requests and grievances about your personal data go to our{' '}
+          {LEGAL.grievanceOfficer} at {LEGAL.operator}: <ContactLink />. We acknowledge every
+          request, and resolve grievances within the time the DPDP Act and its rules allow — at most
+          90 days. If you are not satisfied with our answer, you can complain to the Data Protection
+          Board of India.
         </p>
       </LegalSection>
     </LegalDocument>

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../src/lib/auth';
 import { EMAIL_SIGN_IN_ENABLED } from '../src/lib/sign-in-options';
 import { Body, Button, Caption, Input, Screen, Title } from '../src/components/ui';
+import { LegalLinks } from '../src/components/legal-links';
 import { spacing } from '../src/lib/theme';
 import { useTheme } from '../src/lib/use-theme';
 
@@ -127,6 +128,8 @@ export default function SignIn() {
               {error}
             </Text>
           ) : null}
+
+          <LegalLinks intro="By continuing you agree to our Terms and acknowledge our Privacy Policy." />
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>

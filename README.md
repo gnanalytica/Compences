@@ -123,8 +123,9 @@ https://<your-project-ref>.supabase.co/auth/v1/callback
 ```
 
 Then under **Authentication → URL Configuration**, add your site URL and
-`http://localhost:3000/**` to the redirect allow-list. Email magic links work
-with no extra setup, as a fallback for residents without a Google account.
+`http://localhost:3000/**` to the redirect allow-list. Email magic links are
+built but switched off (`EMAIL_SIGN_IN_ENABLED` in each app's
+`lib/sign-in-options.ts`); turning them on needs no Supabase setup.
 
 ### 4. Configure and run
 
@@ -241,9 +242,20 @@ cd apps/mobile
 pnpm dlx eas-cli build --platform ios      # or android
 ```
 
-Set `extra.eas.projectId` in `app.json` to your own EAS project first. The
-bundle identifier and package name are `com.compences.app`; change them to
-something you own before submitting to either store.
+The app is linked to the `gnanalytica/compences` EAS project, with bundle
+identifier and package name `com.compences.app`. Two manual EAS workflows live
+in `apps/mobile/.eas/workflows/`: a production build for both stores (iOS is
+switched off until signing is set up) and an installable production APK.
+
+Push notifications need credentials that live in EAS, not here: an FCM V1
+service-account key for Android, and an APNs key for iOS. Without them the app
+still registers devices, and every send fails with an error recorded on the
+notification row. The web app needs `NOTIFICATIONS_DISPATCH_SECRET` (and,
+optionally, `EXPO_ACCESS_TOKEN`); the database needs the same URL and secret
+in `app.push_dispatch_config`.
+
+What the stores still need before submission is listed in
+[`docs/store/README.md`](docs/store/README.md).
 
 ---
 
@@ -277,9 +289,5 @@ node scripts/gen-db-types.mjs "postgresql://postgres@127.0.0.1:55432/compences_t
 - **Payments** are recorded, not collected. There is no gateway integration —
   `contributions.gateway_payload` is there for when you add one, and the flow
   already writes a receipt number the contributor can quote.
-- **Push notifications** register a device token but nothing sends to it yet;
-  the sending side wants a scheduled job or an edge function.
-- **Bill uploads** store a path on the expense, but the Supabase Storage bucket
-  and the upload widget are not wired up — today an admin pastes the path.
 - **Closing an event** publishes the report and freezes the ledger, but there is
   no PDF export yet.

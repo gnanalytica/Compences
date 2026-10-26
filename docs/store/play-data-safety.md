@@ -37,7 +37,7 @@ own definition says so; the Privacy Policy lists them anyway.
 | Name          | Yes       | Required             | App functionality, Account management | `profiles.full_name`                                                                     |
 | Email address | Yes       | Required             | App functionality, Account management | It is the sign-in                                                                        |
 | User IDs      | Yes       | Required             | App functionality, Account management | `auth.users.id`                                                                          |
-| Phone number  | Yes       | Optional             | App functionality                     | So the committee can reach you                                                           |
+| Phone number  | Yes       | **Required**         | App functionality                     | So the committee can reach you                                                           |
 | Address       | Yes       | Required             | App functionality                     | Your society and flat. Not a street address, but it is where you live, so it is declared |
 | Other info    | No        | —                    | —                                     | —                                                                                        |
 

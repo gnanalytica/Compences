@@ -19,18 +19,20 @@ worse problem than one that was never filed.
 | ----------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------- |
 | Name                          | `profiles.full_name`                                                          | Your neighbours need to know who is on the list | Required                                       |
 | Email address                 | `profiles.email`, `auth.users`                                                | It is how you sign in                           | Required                                       |
-| Phone number                  | `profiles.phone`, `join_requests.claimed_phone`                               | So staff and the committee can reach you        | Optional                                       |
+| Phone number                  | `profiles.phone`, `join_requests.claimed_phone`                               | So staff and the committee can reach you        | Required — asked when founding or joining      |
 | Profile photo                 | `profiles.avatar_url` (from Google, if you sign in with it)                   | Shown beside your name                          | Optional                                       |
 | Which society, which flat     | `memberships`, `unit_occupants`, `units`                                      | The whole product; also who may read what       | Required                                       |
 | Join requests                 | `join_requests`                                                               | The admin approves or declines                  | Required to join that way                      |
+| Move-in / move-out requests   | `unit_change_requests`                                                        | The admin records who lives where               | Optional                                       |
 | Invite codes tried            | `invite_code_attempts.code_tried`                                             | Rate-limits brute force                         | Required                                       |
 | Contributions                 | `contributions` — amount, UPI reference, receipt number                       | The society ledger                              | Optional (you need not contribute)             |
 | Expenses you filed            | `expenses` — vendor, amount, bill                                             | The society ledger                              | Staff and committee only                       |
 | Bills and payment screenshots | `storage.bills`, `storage.payment-proofs` (both private)                      | Proof behind a ledger line                      | Optional                                       |
 | Votes, sign-ups, volunteering | `poll_votes`, `suggestion_votes`, `activity_participants`, `event_volunteers` | Taking part                                     | Optional                                       |
-| Things you wrote              | `activity_suggestions`, `comments`, `announcements`                           | Taking part                                     | Optional                                       |
+| Things you wrote              | `activity_suggestions`, `comments`, `comment_reactions`, `announcements`      | Taking part                                     | Optional                                       |
 | Push notification token       | `device_push_tokens.token`, plus platform and app version                     | Sending you a notification                      | Optional — declining notifications stores none |
 | WhatsApp number and messages  | `whatsapp_links`, `whatsapp_messages`                                         | Only if you use the WhatsApp bot                | Optional                                       |
+| Bank statement lines          | `bank_transactions` — date, amount, narration, counterparty name (staff only) | Matching contributions to the bank              | Admin imports; the CSV itself is not stored    |
 | Audit trail                   | `audit_log` — the fields that moved, and who moved them                       | So a ledger cannot be quietly corrected         | Required                                       |
 
 ## Collected, and **not** linked to you
@@ -70,14 +72,14 @@ Checked, rather than assumed:
 
 ## Who else sees it
 
-| Processor                | What reaches them                                    | Where                             |
-| ------------------------ | ---------------------------------------------------- | --------------------------------- |
-| Supabase                 | Everything above except crash reports                | Database in Mumbai (`ap-south-1`) |
-| Vercel                   | Web requests and routine server logs                 | Regional                          |
-| Expo, Apple, Google      | Push tokens and the notification text                | Regional                          |
-| Meta (WhatsApp Business) | Your WhatsApp number and bot messages, if you use it | Regional                          |
-| Google                   | Name, email, photo — only if you sign in with Google | Regional                          |
-| Sentry                   | Crash reports, scrubbed as above                     | Only when a DSN is configured     |
+| Processor                                             | What reaches them                                                       | Where                             |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------- |
+| Supabase                                              | Everything above except crash reports                                   | Database in Mumbai (`ap-south-1`) |
+| Vercel                                                | Web requests and routine server logs                                    | Regional                          |
+| Expo, Apple (APNs), Google (Firebase Cloud Messaging) | Push tokens and the notification text — FCM only, no Firebase Analytics | Regional                          |
+| Meta (WhatsApp Business)                              | Your WhatsApp number and bot messages, if you use it                    | Regional                          |
+| Google                                                | Name, email, photo — only if you sign in with Google                    | Regional                          |
+| Sentry                                                | Crash reports, scrubbed as above                                        | Only when a DSN is configured     |
 
 Nothing is sold, and nothing is shared for advertising.
 

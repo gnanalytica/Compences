@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "scheme": "compences",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.compences.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
