@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../src/lib/auth';
 import { EMAIL_SIGN_IN_ENABLED } from '../src/lib/sign-in-options';
@@ -10,14 +11,21 @@ import { spacing } from '../src/lib/theme';
 import { useTheme } from '../src/lib/use-theme';
 
 export default function SignIn() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { signInWithGoogle, signInWithEmail, user, loading } = useAuth();
+  const { signInWithGoogle, signInWithApple, signInWithEmail, user, loading } = useAuth();
 
   const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState<'google' | 'email' | null>(null);
+  const [busy, setBusy] = useState<'google' | 'apple' | 'email' | null>(null);
+  const [appleAvailable, setAppleAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+
+  // Apple's sheet exists on iOS only; the button must follow Apple's own design.
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    void AppleAuthentication.isAvailableAsync().then(setAppleAvailable);
+  }, []);
 
   // Once a session exists, let the index route pick sign-in, join or the tabs.
   if (user && !loading) return <Redirect href="/" />;
@@ -26,6 +34,14 @@ export default function SignIn() {
     setBusy('google');
     setError(null);
     const result = await signInWithGoogle();
+    if (result.error) setError(result.error);
+    setBusy(null);
+  };
+
+  const handleApple = async () => {
+    setBusy('apple');
+    setError(null);
+    const result = await signInWithApple();
     if (result.error) setError(result.error);
     setBusy(null);
   };
@@ -91,6 +107,22 @@ export default function SignIn() {
                 loading={busy === 'google'}
                 disabled={busy !== null}
               />
+
+              {appleAvailable ? (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                  buttonStyle={
+                    isDark
+                      ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                      : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                  }
+                  cornerRadius={12}
+                  style={{ height: 48, opacity: busy !== null ? 0.5 : 1 }}
+                  onPress={() => {
+                    if (busy === null) void handleApple();
+                  }}
+                />
+              ) : null}
 
               {EMAIL_SIGN_IN_ENABLED ? (
                 <>

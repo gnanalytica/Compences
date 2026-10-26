@@ -75,10 +75,14 @@ export default function PrivacyPage() {
 
       <LegalSection id="data-we-collect" title="Data we collect">
         <p>
-          <Strong>When you sign in.</Strong> You sign in with Google, or — where we offer it — with
-          a one-time link sent to your email address. With Google, we receive only your name, email
-          address and profile photo — we do not ask for access to your Gmail, contacts, calendar or
-          files. With an email link, we receive your email address.
+          <Strong>When you sign in.</Strong> You sign in with Google, with Apple on iPhone, or —
+          where we offer it — with a one-time link sent to your email address. With Google, we
+          receive only your name, email address and profile photo — we do not ask for access to your
+          Gmail, contacts, calendar or files. With Apple, we receive your name and an email address;
+          if you choose Apple’s “Hide My Email”, that is a private relay address that forwards to
+          you. Apple shares your name only the first time. We also keep a token Apple issues for
+          your sign-in, only so that we can revoke it when you delete your account. With an email
+          link, we receive your email address.
         </p>
         <p>
           <Strong>Your profile.</Strong> Your name, email address, phone number, profile photo and
@@ -225,6 +229,10 @@ export default function PrivacyPage() {
           </li>
           <li>
             <Strong>Google</Strong> — if you choose to sign in with Google.
+          </li>
+          <li>
+            <Strong>Apple</Strong> — if you choose to sign in with Apple, and to revoke that sign-in
+            when you delete your account.
           </li>
           <li>
             <Strong>Sentry</Strong> — receiving the crash reports described above, which carry no

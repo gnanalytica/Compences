@@ -60,3 +60,7 @@ Thumbs.db
 video/public/captures/
 video/public/score-*.wav
 video/out/
+
+# oh-my-claudecode session state
+.omc/
+**/.omc/

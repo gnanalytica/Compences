@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import { makeRedirectUri } from 'expo-auth-session';
 import type { Session, User } from '@supabase/supabase-js';
 import type { Tables } from '@compences/supabase';
@@ -14,6 +16,7 @@ import {
   type ViewMode,
 } from '@compences/core';
 import { supabase } from './supabase';
+import { SITE_URL } from './site';
 
 /**
  * Session and community context for the whole app.
@@ -79,6 +82,8 @@ type AuthValue = {
   /** False once the stored session has been read from disk. */
   loading: boolean;
   signInWithGoogle: () => Promise<{ error?: string }>;
+  /** iOS only: Apple's native sheet, exchanged for a session with a nonce. */
+  signInWithApple: () => Promise<{ error?: string }>;
   signInWithEmail: (email: string) => Promise<{ error?: string; sent?: boolean }>;
   signOut: () => Promise<void>;
   setActiveCommunity: (communityId: string) => void;
@@ -196,6 +201,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return completeSignIn(code);
   }, []);
 
+  const signInWithApple = useCallback(async () => {
+    try {
+      // Apple hashes nothing for us: it gets the SHA-256 of a random nonce and
+      // Supabase gets the raw one, so a stolen identity token cannot be replayed.
+      const rawNonce = Crypto.randomUUID();
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce,
+      );
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+      if (!credential.identityToken) return { error: 'Apple did not return a sign-in token.' };
+
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+        nonce: rawNonce,
+      });
+      if (error) return { error: error.message };
+
+      // Apple shares the name once, on the first sign-in only, and not through
+      // the token. The profile trigger already ran with no name, so write it
+      // here while it is still available.
+      const name = [credential.fullName?.givenName, credential.fullName?.familyName]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      if (name && data.user) {
+        await supabase.from('profiles').update({ full_name: name }).eq('id', data.user.id);
+      }
+      // Let the server keep Apple's refresh token so deleting the account can
+      // revoke it. Best-effort: the person is already signed in.
+      if (credential.authorizationCode && data.session) {
+        void fetch(`${SITE_URL}/api/account/apple/link`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${data.session.access_token}`,
+          },
+          body: JSON.stringify({ authorizationCode: credential.authorizationCode }),
+        }).catch(() => {});
+      }
+      return {};
+    } catch (error) {
+      // Dismissing the Apple sheet is a choice, not a failure.
+      if ((error as { code?: string }).code === 'ERR_REQUEST_CANCELED') return {};
+      return { error: 'Could not sign in with Apple.' };
+    }
+  }, []);
+
   const signInWithEmail = useCallback(async (email: string) => {
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
@@ -235,6 +295,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       welcomedAt: active ? (active.welcomed_at ?? null) : null,
       loading,
       signInWithGoogle,
+      signInWithApple,
       signInWithEmail,
       signOut,
       setActiveCommunity: setActiveId,
@@ -249,6 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setViewMode,
     loading,
     signInWithGoogle,
+    signInWithApple,
     signInWithEmail,
     signOut,
     refresh,

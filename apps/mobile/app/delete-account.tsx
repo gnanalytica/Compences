@@ -11,6 +11,7 @@ import {
 } from '@compences/core';
 import { useAuth } from '../src/lib/auth';
 import { supabase } from '../src/lib/supabase';
+import { SITE_URL } from '../src/lib/site';
 import { reportHandled } from '../src/lib/observability';
 import { Body, Button, Caption, Card, Heading, Input, Screen, Title } from '../src/components/ui';
 import { ErrorText } from '../src/components/admin-ui';
@@ -30,7 +31,7 @@ import { spacing } from '../src/lib/theme';
  */
 export default function DeleteAccount() {
   const router = useRouter();
-  const { signOut } = useAuth();
+  const { signOut, session } = useAuth();
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,17 @@ export default function DeleteAccount() {
   const remove = async () => {
     setError(null);
     setBusy(true);
+
+    // Apple asks that the token it issued at sign-in be revoked with the
+    // account. The server does that, and must do it first: its record goes
+    // with the account. Whatever it answers, the deletion goes ahead.
+    if (session) {
+      await fetch(`${SITE_URL}/api/account/apple/revoke`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${session.access_token}` },
+      }).catch(() => {});
+    }
+
     const { data, error: rpcError } = await supabase.rpc('delete_my_account');
     setBusy(false);
 

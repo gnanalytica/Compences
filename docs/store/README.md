@@ -55,7 +55,7 @@ Not oversights — none of these can live in a repository.
 | 4   | `SENTRY_DSN` / `EXPO_PUBLIC_SENTRY_DSN` set in the deploy environments | Nothing — both apps run inert without one, by design |
 | 5   | Apple Team ID, for iOS universal links                                 | iOS deep links only                                  |
 | 6   | A legal review of the Privacy Policy and Terms                         | Judgement call; they are drafts                      |
-| 7   | **Sign in with Apple** on iOS — see below                              | App Store review (Guideline 4.8)                     |
+| 7   | **Sign in with Apple**: Apple key in the web env, Supabase provider on | App Store review (Guideline 4.8) — code is done      |
 | 8   | A way for the reviewers to get in — see below                          | Both stores' review                                  |
 | 9   | FCM V1 service-account key uploaded to EAS                             | Android pushes (tokens register, sends fail)         |
 | 10  | Apple Developer account, APNs key and iOS signing in EAS               | Any iOS build; iOS pushes                            |
@@ -69,10 +69,12 @@ Not oversights — none of these can live in a repository.
 are switched off in `src/lib/sign-in-options.ts`). Guideline 4.8 requires an
 app that uses a third-party login to also offer one that collects only name
 and email and lets the person hide their email — in practice, Sign in with
-Apple. Re-enabling email links does not meet the "hide my email" part. It
-needs `expo-apple-authentication`, `ios.usesAppleSignIn: true`, the Apple
-provider turned on in Supabase, and — because Apple requires it on account
-deletion — revoking the Apple token in `delete_my_account`'s flow.
+Apple. The code is in: `expo-apple-authentication` and `ios.usesAppleSignIn`
+in the app, and token revocation on deletion (`apps/web/src/lib/apple.ts`, see
+`app-store-privacy.md`). What is left is configuration: the Sign in with Apple
+capability on the App ID, the Apple provider in Supabase with
+`com.compences.app` as an authorised client ID, and `APPLE_TEAM_ID`,
+`APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` on the web deployment.
 
 **Reviewer access.** Both stores need credentials that reach the inside of the
 app. With Google-only sign-in that means a dedicated Google account, which

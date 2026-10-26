@@ -86,11 +86,22 @@ TestFlight or App Store upload naming any reason it still wants.
 
 - **Account deletion (5.1.1(v))** — in-app at Me → Delete account, and at
   `https://compences.com/delete-account`.
-- **Sign in with Apple (4.8)** — required when an app offers a third-party
-  social login as the _only_ other option. Compences offers Google **and** a
-  plain email link, which is a first-party, equivalent option, so 4.8 is met
-  without adding Apple sign-in. If Google ever becomes the only route, this
-  changes.
+- **Sign in with Apple (4.8)** — required, because Google is the only other
+  sign-in (email links are switched off in `sign-in-options.ts`). Implemented
+  natively with `expo-apple-authentication` and `signInWithIdToken`, with a
+  nonce; the button shows on iOS only. Needs the Apple provider enabled in
+  Supabase (Services ID / bundle ID `com.compences.app` as an authorised client
+  ID) and the Sign in with Apple capability on the App ID (`usesAppleSignIn`
+  in `app.json` adds the entitlement).
+- **Revoking Apple tokens on deletion (5.1.1(v))** — done in code. At Apple
+  sign-in the phone posts the sheet's authorization code to
+  `/api/account/apple/link`; the server exchanges it and keeps the refresh
+  token in `apple_refresh_tokens` (service-role only). Deleting the account
+  calls `/api/account/apple/revoke` (phone) or `revokeAppleToken` (web) first,
+  which revokes it at Apple. It needs `APPLE_TEAM_ID`, `APPLE_KEY_ID` and
+  `APPLE_PRIVATE_KEY` set on the web deployment; unset, revocation silently
+  does nothing. Accounts created before this shipped have no stored token.
+  If Apple is unreachable the deletion still goes ahead.
 - **Age rating** — 18+. The Terms require it and the Privacy Policy says so.
 - **`ITSAppUsesNonExemptEncryption: false`** — already set in `app.json`. True:
   the app uses HTTPS and nothing else.

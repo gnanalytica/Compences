@@ -13,6 +13,7 @@ import {
   uuid,
 } from '@compences/core';
 import { requireCommunity, requireUser } from '@/lib/auth';
+import { revokeAppleToken } from '@/lib/apple';
 import { getSupabase } from '@/lib/supabase/server';
 import { EMPTY_STATE, fieldErrors, friendlyDbError, type ActionState } from '@/lib/action-state';
 
@@ -89,11 +90,15 @@ export async function unlinkWhatsApp(formData: FormData): Promise<void> {
  * and the check is the actual guard.
  */
 export async function deleteAccount(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireUser();
+  const user = await requireUser();
 
   if (!isDeleteConfirmed(String(formData.get('confirm') ?? ''))) {
     return { fieldErrors: { confirm: `Type ${DELETE_ACCOUNT_CONFIRMATION} to confirm.` } };
   }
+
+  // The Apple token row cascades away with the account, so revoke it first.
+  // Apple being unreachable must not stand in the way of a deletion.
+  await revokeAppleToken(user.id);
 
   const supabase = await getSupabase();
   const { data, error } = await supabase.rpc('delete_my_account');
