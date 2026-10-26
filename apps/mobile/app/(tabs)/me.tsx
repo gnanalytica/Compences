@@ -17,6 +17,7 @@ import {
 import { LinkRow } from '../../src/components/admin-ui';
 import { ViewSwitchCard } from '../../src/components/view-switch';
 import { AppearanceCard } from '../../src/components/appearance-card';
+import { LegalLinks } from '../../src/components/legal-links';
 import { useUnreadCount } from '../../src/lib/notifications';
 import { minTapTarget, spacing } from '../../src/lib/theme';
 
@@ -194,6 +195,7 @@ export default function Me() {
         >
           <Caption>Delete account</Caption>
         </Pressable>
+        <LegalLinks />
         <View style={{ alignItems: 'center', paddingTop: spacing.md }}>
           <Caption>Compences · A Gnanalytica product</Caption>
         </View>

@@ -22,17 +22,17 @@ Tracking Transparency; there is nothing to ask for.
 
 ### Data Linked to You — used for App Functionality
 
-| Apple category | Type                 | What it actually is                                     |
-| -------------- | -------------------- | ------------------------------------------------------- |
-| Contact Info   | Name                 | `profiles.full_name`                                    |
-| Contact Info   | Email Address        | The sign-in address                                     |
-| Contact Info   | Phone Number         | Optional; so the committee can reach you                |
-| Contact Info   | Physical Address     | Your society and flat                                   |
-| Identifiers    | User ID              | `auth.users.id`                                         |
-| Identifiers    | Device ID            | The push notification token, if you allow notifications |
-| Financial Info | Other Financial Info | Contribution amounts and the UPI reference you type in  |
-| User Content   | Photos or Videos     | Bills and payment screenshots                           |
-| User Content   | Other User Content   | Suggestions, comments, announcements, votes, sign-ups   |
+| Apple category | Type                 | What it actually is                                            |
+| -------------- | -------------------- | -------------------------------------------------------------- |
+| Contact Info   | Name                 | `profiles.full_name`                                           |
+| Contact Info   | Email Address        | The sign-in address                                            |
+| Contact Info   | Phone Number         | Asked when founding or joining; so the committee can reach you |
+| Contact Info   | Physical Address     | Your society and flat                                          |
+| Identifiers    | User ID              | `auth.users.id`                                                |
+| Identifiers    | Device ID            | The push notification token, if you allow notifications        |
+| Financial Info | Other Financial Info | Contribution amounts and the UPI reference you type in         |
+| User Content   | Photos or Videos     | Bills and payment screenshots                                  |
+| User Content   | Other User Content   | Suggestions, comments, announcements, votes, sign-ups          |
 
 Tick **App Functionality** as the purpose for every one of them, and nothing
 else. Do not tick Analytics: the app has no analytics.

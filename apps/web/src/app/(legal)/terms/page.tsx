@@ -28,6 +28,7 @@ const SECTIONS = [
   { id: 'indemnity', title: 'Indemnity' },
   { id: 'law', title: 'Governing law and disputes' },
   { id: 'general', title: 'General' },
+  { id: 'grievances', title: 'Grievances and reporting content' },
   { id: 'contact', title: 'Contact' },
 ];
 
@@ -98,6 +99,10 @@ export default function TermsPage() {
           <li>
             keep the community’s records accurate, and handle residents’ personal data only for the
             community’s legitimate purposes and in line with applicable law;
+          </li>
+          <li>
+            upload only bills, payment screenshots and bank statements that belong to the society,
+            and remember that bills and proofs of society spending are shown to every member;
           </li>
           <li>
             manage API keys responsibly, granting only the access needed and revoking keys that are
@@ -181,7 +186,7 @@ export default function TermsPage() {
           </li>
           <li>
             Signing in with Google is subject to Google’s terms. Push notifications are delivered
-            through Expo, Apple and Google.
+            through Expo, Apple Push Notification service and Google’s Firebase Cloud Messaging.
           </li>
           <li>
             If a community connects other software or an AI assistant using an API key, that
@@ -274,6 +279,26 @@ export default function TermsPage() {
           enforce a right straight away, we have not given it up. You may not transfer your rights
           under these terms; we may transfer ours as part of a reorganisation, merger or sale of the
           service.
+        </p>
+      </LegalSection>
+
+      <LegalSection id="grievances" title="Grievances and reporting content">
+        <p>
+          If something on {LEGAL.product} breaks these terms or the law — for example content that
+          is defamatory, harassing, impersonates someone or shares someone’s personal data without a
+          reason — or you have any other complaint about the service, write to our{' '}
+          {LEGAL.grievanceOfficer} at {LEGAL.operator}: <ContactLink />. Tell us what the content
+          is, where it appears and why it is a problem.
+        </p>
+        <p>
+          We acknowledge complaints within 24 hours and resolve them within 15 days, as the
+          Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021
+          require, and act faster where those rules ask us to. Complaints about your personal data
+          are handled as described in the{' '}
+          <Link href="/privacy#contact" className="text-accent underline underline-offset-4">
+            Privacy Policy
+          </Link>
+          .
         </p>
       </LegalSection>
 
