@@ -228,7 +228,10 @@ export default function PrivacyPage() {
             the WhatsApp bot.
           </li>
           <li>
-            <Strong>Google</Strong> — if you choose to sign in with Google.
+            <Strong>Google</Strong> — if you choose to sign in with Google, and through Google Play,
+            which distributes the Android app. If we invite you to test a pre-release version, the
+            Google account email you give us is added to a Google Play tester list for that purpose
+            only.
           </li>
           <li>
             <Strong>Apple</Strong> — if you choose to sign in with Apple, and to revoke that sign-in
