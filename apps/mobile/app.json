@@ -123,7 +123,7 @@
       "package": "com.compences.app",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#0F766E",
+        "backgroundColor": "#FDF8EA",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -170,7 +170,7 @@
       [
         "expo-notifications",
         {
-          "color": "#0F766E"
+          "color": "#C98A00"
         }
       ],
       [
@@ -179,7 +179,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#0F766E"
+          "backgroundColor": "#FDF8EA"
         }
       ],
       [
