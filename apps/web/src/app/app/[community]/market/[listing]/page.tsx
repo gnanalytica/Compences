@@ -324,6 +324,9 @@ export default async function ListingPage(props: PageProps<'/app/[community]/mar
                   {mine ? 'Your review' : 'Bought from them? Tell your neighbours.'}
                 </p>
                 <ReviewForm
+                  // A fresh form once the review it was showing is deleted,
+                  // rather than stars still lit for a review that is gone.
+                  key={mine?.id ?? 'new'}
                   slug={slug}
                   listingId={listing.id}
                   rating={mine?.rating}

@@ -307,7 +307,9 @@ function OwnRow({
             <p className="text-danger mt-1 text-xs">
               {listing.removedReason
                 ? `Why: ${listing.removedReason}`
-                : 'Ask the committee if you would like it back.'}
+                : showSeller
+                  ? 'No reason was given.'
+                  : 'Ask the committee if you would like it back.'}
             </p>
           ) : expired ? (
             <p className="text-warning mt-1 text-xs">

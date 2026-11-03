@@ -71,6 +71,9 @@ export async function saveListing(_prev: ActionState, formData: FormData): Promi
     return { error: 'That photo could not be attached. Please upload it again.' };
   }
 
+  // Always the seller's flat as it is today, or none: the update policy
+  // checks unit_id against the flats they live in now, so carrying over the
+  // one saved on a listing from before a move would refuse the whole edit.
   const askedUnit = String(formData.get('unit_id') ?? '').trim();
   const unitId = askedUnit
     ? context.unitIds.includes(askedUnit)
@@ -244,9 +247,14 @@ export async function restoreListing(formData: FormData): Promise<void> {
 }
 
 /**
- * A neighbour's stars and a few words. One each: writing again replaces what
- * you wrote, which the unique constraint turns into this upsert. The seller
- * is told about a new review by the database, not here.
+ * A neighbour's stars and a few words. One each: writing again changes what
+ * you wrote rather than adding another. The seller is told about a new review
+ * by the database, not here.
+ *
+ * A first review is an insert and a changed one an update, never an upsert:
+ * Postgres checks an upsert against the insert policy as well, which wants
+ * the listing on the board, so a review of a listing since paused could not
+ * be corrected through one.
  */
 export async function saveReview(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const slug = String(formData.get('slug') ?? '');
@@ -260,28 +268,44 @@ export async function saveReview(_prev: ActionState, formData: FormData): Promis
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
 
   const supabase = await getSupabase();
-  const { data: listing } = await supabase
-    .from('listings')
-    .select('id, membership_id, status')
-    .eq('id', parsed.data.listing_id)
-    .eq('community_id', context.community.id)
-    .maybeSingle();
+  const [{ data: listing }, { data: existing }] = await Promise.all([
+    supabase
+      .from('listings')
+      .select('id, membership_id, status')
+      .eq('id', parsed.data.listing_id)
+      .eq('community_id', context.community.id)
+      .maybeSingle(),
+    supabase
+      .from('listing_reviews')
+      .select('id')
+      .eq('listing_id', parsed.data.listing_id)
+      .eq('membership_id', context.membership.id)
+      .maybeSingle(),
+  ]);
   if (!listing) return { error: 'That listing no longer exists.' };
   if (listing.membership_id === context.membership.id) {
     return { error: 'You can’t review your own listing.' };
   }
+
+  if (existing) {
+    const { error } = await supabase
+      .from('listing_reviews')
+      .update({ rating: parsed.data.rating, body: parsed.data.body })
+      .eq('id', existing.id)
+      .eq('membership_id', context.membership.id);
+    if (error) return { error: friendlyDbError(error) };
+    revalidateListing(slug, parsed.data.listing_id);
+    return { ...EMPTY_STATE, success: 'Your review is updated.' };
+  }
+
   if (listing.status !== 'active') {
     return { error: 'This listing is not on the board right now, so it can’t be reviewed.' };
   }
-
-  const { error } = await supabase.from('listing_reviews').upsert(
-    {
-      ...parsed.data,
-      community_id: context.community.id,
-      membership_id: context.membership.id,
-    },
-    { onConflict: 'listing_id,membership_id' },
-  );
+  const { error } = await supabase.from('listing_reviews').insert({
+    ...parsed.data,
+    community_id: context.community.id,
+    membership_id: context.membership.id,
+  });
   if (error) return { error: friendlyDbError(error) };
 
   revalidateListing(slug, parsed.data.listing_id);
