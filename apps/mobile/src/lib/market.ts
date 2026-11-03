@@ -109,19 +109,21 @@ function toListing(row: ListingRow, ratings: Map<string, Rating>, urls: Map<stri
 }
 
 /**
- * The stars for these listings, from the listing_ratings view. The view has
- * no society column to filter on; it counts only reviews the reader could
- * see, so asking for it by listing is both the filter and the bound.
+ * The stars for these listings, from the listing_ratings view. It counts only
+ * reviews the reader could see; asking by listing is both filter and bound.
  */
-async function fetchRatings(listingIds: string[]): Promise<Map<string, Rating>> {
+async function fetchRatings(
+  listingIds: string[],
+  communityId?: string,
+): Promise<Map<string, Rating>> {
   const ratings = new Map<string, Rating>();
   if (!listingIds.length) return ratings;
   // A long `in` list becomes a long URL. Past a couple of hundred it is
-  // cheaper to take every rating the reader may see and pick from it.
+  // cheaper to take the whole society's ratings and pick from them.
   const query = supabase.from('listing_ratings').select('listing_id, review_count, average_rating');
-  const { data } = await (listingIds.length <= 150
+  const { data } = await (listingIds.length <= 150 || !communityId
     ? query.in('listing_id', listingIds)
-    : query.limit(5000));
+    : query.eq('community_id', communityId).limit(5000));
   for (const row of data ?? []) {
     if (!row.listing_id) continue;
     ratings.set(row.listing_id, {
@@ -142,7 +144,10 @@ export async function fetchBoard(communityId: string): Promise<Listing[]> {
     .limit(500);
   const rows = (data ?? []) as ListingRow[];
   const [ratings, urls] = await Promise.all([
-    fetchRatings(rows.map((row) => row.id)),
+    fetchRatings(
+      rows.map((row) => row.id),
+      communityId,
+    ),
     storedFileUrls(
       'listing-photos',
       rows.flatMap((row) => (row.photo_path ? [row.photo_path] : [])),

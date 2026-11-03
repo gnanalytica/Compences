@@ -284,10 +284,11 @@ create policy listing_reviews_delete_staff
 create view public.listing_ratings
 with (security_invoker = true) as
 select r.listing_id,
+       r.community_id,
        count(*)::int                    as review_count,
        round(avg(r.rating)::numeric, 1) as average_rating
   from public.listing_reviews r
- group by r.listing_id;
+ group by r.listing_id, r.community_id;
 
 grant select on public.listing_ratings to authenticated, service_role;
 revoke all on public.listing_ratings from anon;

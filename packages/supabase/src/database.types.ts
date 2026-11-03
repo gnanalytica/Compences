@@ -2982,6 +2982,7 @@ export type Database = {
       listing_ratings: {
         Row: {
           listing_id: string | null
+          community_id: string | null
           review_count: number | null
           average_rating: number | null
         }
