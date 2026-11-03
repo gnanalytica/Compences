@@ -82,7 +82,7 @@ export function ReviewForm({
                   checked={chosen === n}
                   onChange={() => setChosen(n)}
                   className="sr-only"
-                  aria-invalid={state.fieldErrors?.rating ? true : undefined}
+                  aria-describedby={state.fieldErrors?.rating ? 'review-rating-error' : undefined}
                 />
                 <Star
                   className={cn(
@@ -100,7 +100,7 @@ export function ReviewForm({
           {lit ? <span className="text-ink-muted text-sm">{STAR_WORDS[lit]}</span> : null}
         </div>
         {state.fieldErrors?.rating ? (
-          <p role="alert" className="text-danger mt-1 text-xs">
+          <p id="review-rating-error" role="alert" className="text-danger mt-1 text-xs">
             {state.fieldErrors.rating}
           </p>
         ) : null}
