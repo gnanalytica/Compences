@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import {
   ArrowLeft,
+  ArrowRight,
   ArrowRightLeft,
   CalendarDays,
   Check,
@@ -42,6 +43,7 @@ import {
   requireEvent,
 } from '@/lib/events';
 import { getCatalogue } from '@/lib/catalogue';
+import { getEventVendors } from '@/lib/market';
 import { PageBody } from '@/components/page-header';
 import { FestivalHero, festivalVars } from '@/components/festival';
 import { RollingAmount } from '@/components/rolling-amount';
@@ -67,6 +69,7 @@ import { AuditTrail } from '@/components/audit-trail';
 import { SuggestionBoard } from '@/components/suggestion-board';
 import { CommentThread } from '@/components/comment-thread';
 import { WhatsappGroupLink } from '@/components/whatsapp-group-link';
+import { CategoryIcon, sellerLine } from '@/components/listing-bits';
 import { eventTabsFor } from '@/components/event-tabs';
 import { SectionBar } from '@/components/section-bar';
 import { cancelRegistration } from '../actions';
@@ -97,6 +100,7 @@ export default async function EventDetailPage(props: PageProps<'/app/[community]
     myPayments,
     carriedIn,
     movedFrom,
+    vendors,
   ] = await Promise.all([
     getEventStats(event.id),
     getBudgetLines(event.id),
@@ -115,6 +119,7 @@ export default async function EventDetailPage(props: PageProps<'/app/[community]
       .order('paid_at', { ascending: false }),
     getCarriedInto(event.id),
     getMovedFrom(event.id),
+    getEventVendors(event.id),
   ]);
 
   const base = `/app/${community.slug}`;
@@ -313,6 +318,48 @@ export default async function EventDetailPage(props: PageProps<'/app/[community]
                   </div>
                   <WhatsappGroupLink url={event.whatsapp_group_url} />
                 </CardBody>
+              </Card>
+            ) : null}
+
+            {/* Who the committee chose to supply it, each a link to their
+                listing — the way to order the snacks before the day. Only
+                what is on the board: staff can read a paused or taken-down
+                listing, and a resident following it would find nothing. */}
+            {vendors.some((vendor) => vendor.status === 'active') ? (
+              <Card>
+                <CardHeader
+                  title="Vendors"
+                  description="Neighbours supplying this event, from the society’s marketplace."
+                />
+                <ul className="divide-border-base divide-y">
+                  {vendors
+                    .filter((vendor) => vendor.status === 'active')
+                    .map((vendor) => (
+                      <li key={vendor.id}>
+                        <Link
+                          href={`${base}/market/${vendor.listingId}`}
+                          className="hover:bg-surface-sunken flex items-center gap-3 px-5 py-3 transition-colors"
+                        >
+                          <CategoryIcon
+                            category={vendor.category}
+                            className="text-ink-subtle shrink-0"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="text-ink block text-sm font-medium">
+                              {vendor.note ? `${vendor.note}: ${vendor.title}` : vendor.title}
+                            </span>
+                            <span className="text-ink-subtle mt-0.5 block text-xs">
+                              {sellerLine(vendor)}
+                            </span>
+                          </span>
+                          <ArrowRight
+                            className="text-ink-subtle size-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                        </Link>
+                      </li>
+                    ))}
+                </ul>
               </Card>
             ) : null}
           </section>

@@ -8,6 +8,7 @@ import {
   Scale,
   Settings2,
   SquareMenu,
+  Store,
   UserRound,
   Users,
   Wallet,
@@ -32,7 +33,7 @@ export type NavItem = {
 };
 
 /**
- * Residents see Home, Events, People, Money, Ideas and Me. Staff add a Manage
+ * Residents see Home, Events, People, Money, Ideas, Marketplace and Me. Staff add a Manage
  * group with their To do queue, events and the bank reconciliation; the
  * committee also gets Society settings. Notifications and personal settings
  * live in the profile menu.
@@ -55,6 +56,9 @@ export function navItems(slug: string): { section: string; items: NavItem[] }[] 
         { href: `${base}/people`, label: 'People', icon: Users },
         { href: `${base}/money`, label: 'Money', icon: Wallet, primary: true },
         { href: `${base}/suggest`, label: 'Ideas', icon: Lightbulb },
+        // Everyone may look; posting and reviewing are for residents and the
+        // committee, which the page decides, not the nav.
+        { href: `${base}/market`, label: 'Marketplace', icon: Store },
         { href: `${base}/me`, label: 'Me', icon: UserRound, primary: true },
       ],
     },

@@ -5,6 +5,12 @@ import { CheckCircle2, Loader2, Paperclip, X } from 'lucide-react';
 import { safeFileName, UPLOAD_MIME_TYPES } from '@compences/core';
 import { getBrowserSupabase } from '@/lib/supabase/browser';
 
+/**
+ * A listing's picture is a picture: the listing-photos bucket refuses a PDF,
+ * so the picker should not offer one only for the upload to fail after it.
+ */
+const IMAGE_MIME_TYPES = UPLOAD_MIME_TYPES.filter((type) => type.startsWith('image/'));
+
 type Status =
   | { kind: 'idle' }
   | { kind: 'uploading'; name: string }
@@ -27,8 +33,11 @@ export function FileUpload({
   defaultPath,
   onUploadingChange,
 }: {
-  bucket: 'bills' | 'payment-proofs';
-  /** `{community_id}/{event_id}` for bills, `{community_id}/{membership_id}` for proofs. */
+  bucket: 'bills' | 'payment-proofs' | 'listing-photos';
+  /**
+   * `{community_id}/{event_id}` for bills, `{community_id}/{membership_id}` for
+   * proofs and listing photos.
+   */
   folder: string;
   /** Name of the hidden input that carries the stored path. */
   name: string;
@@ -44,6 +53,8 @@ export function FileUpload({
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
 
   const setUploading = (uploading: boolean) => onUploadingChange?.(uploading);
+  const imagesOnly = bucket === 'listing-photos';
+  const accepted: readonly string[] = imagesOnly ? IMAGE_MIME_TYPES : UPLOAD_MIME_TYPES;
 
   // A file uploaded here but never saved is referenced by nothing, so drop it
   // when it is replaced or removed. The saved file (defaultPath) is left alone:
@@ -54,8 +65,13 @@ export function FileUpload({
   }
 
   async function upload(file: File) {
-    if (!(UPLOAD_MIME_TYPES as readonly string[]).includes(file.type)) {
-      setStatus({ kind: 'error', message: 'Attach a photo (JPG, PNG, WebP, HEIC) or a PDF.' });
+    if (!accepted.includes(file.type)) {
+      setStatus({
+        kind: 'error',
+        message: imagesOnly
+          ? 'Attach a photo (JPG, PNG, WebP, HEIC).'
+          : 'Attach a photo (JPG, PNG, WebP, HEIC) or a PDF.',
+      });
       return;
     }
     if (file.size > maxBytes) {
@@ -102,14 +118,20 @@ export function FileUpload({
           className="border-border-base bg-surface-raised text-ink hover:bg-surface-sunken inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium"
         >
           <Paperclip className="size-4" aria-hidden="true" />
-          {path ? 'Replace file' : 'Choose file or take a photo'}
+          {path
+            ? imagesOnly
+              ? 'Replace photo'
+              : 'Replace file'
+            : imagesOnly
+              ? 'Choose or take a photo'
+              : 'Choose file or take a photo'}
         </label>
         <input
           id={id}
           type="file"
           // No `capture`: forcing the camera would hide the option to pick a
           // PDF or an existing photo. Mobile browsers still offer the camera.
-          accept={UPLOAD_MIME_TYPES.join(',')}
+          accept={accepted.join(',')}
           className="sr-only"
           onChange={(event) => {
             const file = event.target.files?.[0];
@@ -129,7 +151,11 @@ export function FileUpload({
             {status.name} attached
           </span>
         ) : null}
-        {hasExisting ? <span className="text-ink-muted text-xs">A file is attached.</span> : null}
+        {hasExisting ? (
+          <span className="text-ink-muted text-xs">
+            {imagesOnly ? 'A photo is attached.' : 'A file is attached.'}
+          </span>
+        ) : null}
         {path && status.kind !== 'uploading' ? (
           <button
             type="button"

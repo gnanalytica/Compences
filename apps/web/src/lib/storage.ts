@@ -1,8 +1,8 @@
 import { getSupabase } from '@/lib/supabase/server';
 
-export type StorageBucket = 'bills' | 'payment-proofs';
+export type StorageBucket = 'bills' | 'payment-proofs' | 'listing-photos';
 
-/** How long a link to a bill or payment screenshot stays valid. */
+/** How long a link to a bill, payment screenshot or listing photo stays valid. */
 const SIGNED_URL_SECONDS = 300;
 
 /**
@@ -25,6 +25,40 @@ export async function fileUrl(
     .createSignedUrl(path, SIGNED_URL_SECONDS);
   if (error || !data?.signedUrl) return null;
   return data.signedUrl;
+}
+
+/**
+ * fileUrl for many files in one round trip, keyed by path. The marketplace
+ * board shows a photo on every card, and signing them one at a time would be
+ * a request per listing before the page could render.
+ *
+ * A path the viewer may not open, or that no longer exists, is simply absent
+ * from the result, and the card shows no picture.
+ */
+export async function fileUrls(
+  bucket: StorageBucket,
+  paths: (string | null | undefined)[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const stored: string[] = [];
+  for (const path of new Set(paths)) {
+    if (!path) continue;
+    if (/^https?:\/\//i.test(path)) out.set(path, path);
+    else stored.push(path);
+  }
+  if (!stored.length) return out;
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrls(stored, SIGNED_URL_SECONDS);
+  if (error) {
+    console.error(`[storage] could not sign ${stored.length} ${bucket} links`, error);
+    return out;
+  }
+  for (const entry of data ?? []) {
+    if (entry.path && entry.signedUrl && !entry.error) out.set(entry.path, entry.signedUrl);
+  }
+  return out;
 }
 
 /**

@@ -49,6 +49,7 @@ import {
   StatTile,
 } from '../../src/components/event-ui';
 import { Suggestions } from '../../src/components/suggestions';
+import { EventVendors } from '../../src/components/market-ui';
 import { ViewFileButton } from '../../src/components/file-ui';
 import { BudgetChart } from '../../src/components/budget-chart';
 import { SectionBar, useSectionScroll } from '../../src/components/section-scroll';
@@ -191,6 +192,7 @@ export default function EventDetail() {
             />
           ) : null}
           <About data={data} />
+          <EventVendors eventId={event.id} />
         </View>
 
         <View {...sectionProps('money')} style={{ gap: spacing.lg }}>

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, FileText, Receipt, Sparkles, Wallet } from 'lucide-react';
+import { ArrowLeft, FileText, Receipt, Sparkles, Store, Wallet } from 'lucide-react';
 import {
   COPY,
   budgetLineLabel,
@@ -9,6 +9,7 @@ import {
   formatMoney,
   fundBarSegments,
   inTheFund,
+  isListingCurrent,
   nextEditionName,
   overLineBy,
   practiceDatesLine,
@@ -33,6 +34,8 @@ import {
   requireEvent,
 } from '@/lib/events';
 import { getSupabase } from '@/lib/supabase/server';
+import { getEventVendors, getListings } from '@/lib/market';
+import { sellerLine } from '@/components/listing-bits';
 import { activeItems, getCatalogue } from '@/lib/catalogue';
 import { CarriedIn } from '@/components/carried-in';
 import { PageBody, PageHeader } from '@/components/page-header';
@@ -69,6 +72,8 @@ import {
   type Pickers,
 } from './forms';
 import { setEventStatus, updateActivity } from '../actions';
+import { removeEventVendor } from '../../../market/actions';
+import { AddEventVendorForm } from './event-vendor-form';
 import { EventTabs, eventTabsFor } from '@/components/event-tabs';
 
 export default async function ManageEventPage(
@@ -104,6 +109,8 @@ export default async function ManageEventPage(
     openEvents,
     carriedIn,
     directory,
+    vendors,
+    listings,
   ] = await Promise.all([
     getEventStats(event.id),
     getBudgetLines(event.id),
@@ -128,6 +135,10 @@ export default async function ManageEventPage(
     active === 'activities'
       ? supabase.rpc('society_people', { p_community_id: community.id })
       : null,
+    // Who supplies the event, and what on the marketplace could. The Vendors
+    // card is on the overview, so only there.
+    active === 'overview' ? getEventVendors(event.id) : [],
+    active === 'overview' ? getListings(community.id) : [],
   ]);
 
   // The database steps the separation-of-duties rule aside when there is
@@ -204,6 +215,19 @@ export default async function ManageEventPage(
     bill_url: expense.bill_url,
     spent_on: expense.spent_on,
   });
+  // What could be added: on the board today and not already a vendor here.
+  // The insert policy says "active" too; this also leaves out what has run
+  // past its date, which the policy cannot see.
+  const vendorOptions = listings
+    .filter(
+      (listing) =>
+        isListingCurrent(
+          { status: listing.status, available_until: listing.availableUntil },
+          today,
+        ) && !vendors.some((vendor) => vendor.listingId === listing.id),
+    )
+    .map((listing) => ({ id: listing.id, label: `${listing.title} · ${sellerLine(listing)}` }))
+    .sort((a, b) => a.label.localeCompare(b.label));
   const confirmedPayments = payments.filter((payment) => payment.status === 'succeeded');
   const waitingPayments = payments.filter((payment) => payment.status === 'pending');
   const flatsPaid = new Set(
@@ -339,6 +363,61 @@ export default async function ManageEventPage(
               <CardHeader title="Details" />
               <CardBody>
                 <EventDetailsForm slug={slug} event={event} pickers={pickers} />
+              </CardBody>
+            </Card>
+            <Card>
+              <CardHeader
+                title="Vendors"
+                description="Neighbours from the marketplace supplying this event. They are told, and residents see them on the event page."
+              />
+              {vendors.length ? (
+                <ul className="divide-border-base divide-y">
+                  {vendors.map((vendor) => (
+                    <li
+                      key={vendor.id}
+                      className="flex items-center justify-between gap-3 px-5 py-3"
+                    >
+                      <div className="min-w-0">
+                        <Link
+                          href={`${base}/market/${vendor.listingId}`}
+                          className="text-ink text-sm font-medium hover:underline"
+                        >
+                          {vendor.title}
+                        </Link>
+                        <p className="text-ink-subtle mt-0.5 text-xs">
+                          {[vendor.note, sellerLine(vendor)].filter(Boolean).join(' · ')}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {vendor.status !== 'active' ? (
+                          <Badge tone={vendor.status === 'removed' ? 'danger' : 'neutral'}>
+                            {vendor.status === 'removed' ? 'Taken down' : 'Paused'}
+                          </Badge>
+                        ) : null}
+                        <form action={removeEventVendor}>
+                          <input type="hidden" name="slug" value={slug} />
+                          <input type="hidden" name="event" value={event.slug} />
+                          <input type="hidden" name="vendor_id" value={vendor.id} />
+                          <Button type="submit" size="sm" variant="ghost">
+                            Remove
+                          </Button>
+                        </form>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <CardBody className={vendors.length ? 'border-border-base border-t' : undefined}>
+                {vendorOptions.length ? (
+                  <AddEventVendorForm slug={slug} eventSlug={event.slug} options={vendorOptions} />
+                ) : (
+                  <p className="text-ink-muted inline-flex items-center gap-2 text-sm">
+                    <Store className="size-4" aria-hidden="true" />
+                    {vendors.length
+                      ? 'Everything on the marketplace is already a vendor here.'
+                      : 'Nothing on the marketplace right now. Once residents post listings, you can pick vendors from them.'}
+                  </p>
+                )}
               </CardBody>
             </Card>
             {event.status === 'published' || event.status === 'draft' ? (
