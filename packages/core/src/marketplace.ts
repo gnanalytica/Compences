@@ -58,20 +58,6 @@ export const LISTING_CATEGORY_HINT: Record<ListingCategory, string> = {
   other: 'Anything that fits nowhere else',
 };
 
-export const LISTING_CATEGORY_EMOJI: Record<ListingCategory, string> = {
-  home_food: '🍲',
-  bakes: '🧁',
-  tuition: '📚',
-  music_dance: '🎶',
-  tailoring: '🧵',
-  home_decor: '🪴',
-  beauty_wellness: '💆',
-  professional: '💼',
-  festive: '🪔',
-  home_services: '🛠️',
-  other: '✨',
-};
-
 export function isListingCategory(value: unknown): value is ListingCategory {
   return typeof value === 'string' && (LISTING_CATEGORIES as readonly string[]).includes(value);
 }

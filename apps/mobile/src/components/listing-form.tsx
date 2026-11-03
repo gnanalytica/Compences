@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   LISTING_CATEGORIES,
-  LISTING_CATEGORY_EMOJI,
   LISTING_CATEGORY_HINT,
   LISTING_CATEGORY_LABEL,
   listingSchema,
@@ -156,7 +155,7 @@ export function ListingForm({
           {LISTING_CATEGORIES.map((option) => (
             <Chip
               key={option}
-              label={`${LISTING_CATEGORY_EMOJI[option]} ${LISTING_CATEGORY_LABEL[option]}`}
+              label={LISTING_CATEGORY_LABEL[option]}
               selected={category === option}
               onPress={() => setCategory(option)}
             />

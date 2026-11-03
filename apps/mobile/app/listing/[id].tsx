@@ -13,7 +13,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { MessageCircle, Phone } from 'lucide-react-native';
 import {
-  LISTING_CATEGORY_EMOJI,
   LISTING_CATEGORY_LABEL,
   can,
   formatDate,
@@ -123,9 +122,7 @@ export default function ListingScreen() {
         ) : null}
 
         <View style={{ gap: spacing.xs }}>
-          <Caption>
-            {LISTING_CATEGORY_EMOJI[listing.category]} {LISTING_CATEGORY_LABEL[listing.category]}
-          </Caption>
+          <Caption>{LISTING_CATEGORY_LABEL[listing.category]}</Caption>
           <Title>{listing.title}</Title>
           {listing.priceNote ? <Heading>{listing.priceNote}</Heading> : null}
           <View
@@ -192,10 +189,7 @@ export default function ListingScreen() {
                     opacity: pressed ? 0.7 : 1,
                   })}
                 >
-                  <Body>
-                    {vendor.event.emoji ? `${vendor.event.emoji} ` : ''}
-                    {vendor.event.name} ›
-                  </Body>
+                  <Body>{vendor.event.name} ›</Body>
                   <Caption>
                     {[vendor.note, formatDate(vendor.event.startsOn)].filter(Boolean).join(' · ')}
                   </Caption>

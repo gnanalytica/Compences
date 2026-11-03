@@ -3,7 +3,6 @@ import { RefreshControl, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   LISTING_CATEGORIES,
-  LISTING_CATEGORY_EMOJI,
   LISTING_CATEGORY_LABEL,
   can,
   type ListingCategory,
@@ -122,7 +121,7 @@ export default function Market() {
                 {present.map((option) => (
                   <Chip
                     key={option}
-                    label={`${LISTING_CATEGORY_EMOJI[option]} ${LISTING_CATEGORY_LABEL[option]}`}
+                    label={LISTING_CATEGORY_LABEL[option]}
                     selected={category === option}
                     onPress={() => setCategory(category === option ? null : option)}
                   />

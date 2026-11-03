@@ -2,9 +2,22 @@ import { useState, type ReactNode } from 'react';
 import { Alert, Image, Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { Star } from 'lucide-react-native';
 import {
-  LISTING_CATEGORY_EMOJI,
+  BookOpen,
+  Briefcase,
+  CakeSlice,
+  CookingPot,
+  Flower2,
+  Gift,
+  Music,
+  Scissors,
+  Shapes,
+  Sparkles,
+  Star,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react-native';
+import {
   LISTING_CATEGORY_LABEL,
   eventVendorSchema,
   formatDate,
@@ -38,7 +51,7 @@ import { Chip, ChipRow, ErrorText } from './admin-ui';
  * Manage page.
  */
 
-/** The photo when there is one; otherwise the category's emoji on a tile, so a card is never blank. */
+/** The photo when there is one; otherwise the category's line icon on a tile, so a card is never blank. */
 export function ListingThumb({
   uri,
   category,
@@ -78,9 +91,40 @@ export function ListingThumb({
         justifyContent: 'center',
       }}
     >
-      <Text style={{ fontSize: size * 0.45 }}>{LISTING_CATEGORY_EMOJI[category]}</Text>
+      <CategoryIcon category={category} size={size * 0.42} color={colors.inkSubtle} />
     </View>
   );
+}
+
+/**
+ * A line drawing for each kind of listing, the same ones the website uses.
+ * Not emoji: neither app shows any (see apps/web/test/premium-look.test.ts).
+ */
+export const LISTING_CATEGORY_ICON: Record<ListingCategory, LucideIcon> = {
+  home_food: CookingPot,
+  bakes: CakeSlice,
+  tuition: BookOpen,
+  music_dance: Music,
+  tailoring: Scissors,
+  home_decor: Flower2,
+  beauty_wellness: Sparkles,
+  professional: Briefcase,
+  festive: Gift,
+  home_services: Wrench,
+  other: Shapes,
+};
+
+export function CategoryIcon({
+  category,
+  size = 16,
+  color,
+}: {
+  category: ListingCategory;
+  size?: number;
+  color: string;
+}) {
+  const Icon = LISTING_CATEGORY_ICON[category];
+  return <Icon size={size} color={color} strokeWidth={1.6} />;
 }
 
 /** "★★★★☆ 4.3 · 12 reviews", or "No reviews yet". */
@@ -146,7 +190,7 @@ export function ListingCard({
             {showStatus ? <ListingStatusBadge listing={listing} /> : null}
           </View>
           <Caption>
-            {LISTING_CATEGORY_EMOJI[listing.category]} {LISTING_CATEGORY_LABEL[listing.category]}
+            {LISTING_CATEGORY_LABEL[listing.category]}
             {listing.priceNote ? ` · ${listing.priceNote}` : ''}
           </Caption>
           <Caption>{[listing.sellerName, listing.flat].filter(Boolean).join(' · ')}</Caption>
@@ -431,9 +475,7 @@ export function ManageVendorsCard({ eventId }: { eventId: string }) {
             {matches.map((listing) => (
               <Chip
                 key={listing.id}
-                label={`${LISTING_CATEGORY_EMOJI[listing.category]} ${listing.title}${
-                  listing.flat ? ` · ${listing.flat}` : ''
-                }`}
+                label={`${listing.title}${listing.flat ? ` · ${listing.flat}` : ''}`}
                 onPress={() => {
                   setPicked(listing);
                   setError(null);

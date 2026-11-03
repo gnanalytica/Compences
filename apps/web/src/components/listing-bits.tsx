@@ -29,10 +29,9 @@ import { Badge } from './ui/badge';
 /**
  * A line icon for each kind of listing.
  *
- * Core carries an emoji for each category too, and the phone's WhatsApp
- * messages may use them. The screens do not: neither app draws emoji (see
- * premium-look.test.ts), because every phone draws them differently and a
- * board of them reads as a chat rather than a noticeboard.
+ * Not emoji: neither app draws any (see premium-look.test.ts), because every
+ * phone draws them differently and a board of them reads as a chat rather
+ * than a noticeboard. The mobile app carries the same icons.
  */
 export const LISTING_CATEGORY_ICON: Record<ListingCategory, LucideIcon> = {
   home_food: CookingPot,

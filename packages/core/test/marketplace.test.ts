@@ -5,7 +5,6 @@ import { can } from '../src/roles';
 import { notificationAppRoute, notificationWebPath } from '../src/notifications';
 import {
   LISTING_CATEGORIES,
-  LISTING_CATEGORY_EMOJI,
   LISTING_CATEGORY_HINT,
   LISTING_CATEGORY_LABEL,
   formatRating,
@@ -26,11 +25,10 @@ const MIGRATION = join(
 );
 
 describe('marketplace categories', () => {
-  it('each have a label, a hint and an emoji', () => {
+  it('each have a label and a hint', () => {
     for (const category of LISTING_CATEGORIES) {
       expect(LISTING_CATEGORY_LABEL[category]).toBeTruthy();
       expect(LISTING_CATEGORY_HINT[category]).toBeTruthy();
-      expect(LISTING_CATEGORY_EMOJI[category]).toBeTruthy();
     }
   });
 
