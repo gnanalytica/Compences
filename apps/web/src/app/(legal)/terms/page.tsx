@@ -146,10 +146,40 @@ export default function TermsPage() {
         </LegalList>
       </LegalSection>
 
+      <LegalSection id="marketplace" title="The marketplace">
+        <p>
+          Members of a community can list things they make, teach or offer — home food, classes,
+          tailoring, festive goods, professional services — for other members to find, rate and
+          review.
+        </p>
+        <LegalList>
+          <li>
+            Any deal is between the buyer and the seller. {LEGAL.operator} and your community’s
+            committee are not a party to it, do not handle the payment, and do not check, endorse or
+            guarantee what is offered, its quality, its price or the seller.
+          </li>
+          <li>
+            Sellers are responsible for what they offer being lawful and safe, and for any licence,
+            registration or permission it needs — for example food safety registration for food, or
+            a licence to sell fireworks — and for any tax due on what they earn.
+          </li>
+          <li>
+            A listing shows the phone number you type on it to everyone in your community. Reviews
+            must be honest and about your own experience; do not review your own listing or ask
+            others to post reviews on your behalf.
+          </li>
+          <li>
+            Your community’s staff and committee may take down a listing or a review, and we may
+            remove anything that breaks these terms or the law.
+          </li>
+        </LegalList>
+      </LegalSection>
+
       <LegalSection id="acceptable-use" title="Acceptable use">
         <p>You agree not to:</p>
         <LegalList>
           <li>post false financial records, fake bills or misleading announcements;</li>
+          <li>post fake reviews, or list goods or services that are unlawful or unsafe;</li>
           <li>harass, threaten, defame or discriminate against anyone;</li>
           <li>
             share other people’s personal data without a legitimate reason, or collect data from
@@ -168,9 +198,9 @@ export default function TermsPage() {
       <LegalSection id="your-content" title="Your content">
         <p>
           You and your community keep ownership of what you add to {LEGAL.product} — announcements,
-          event details, records, bills and messages. You give {LEGAL.operator} a non-exclusive,
-          royalty-free licence to host, store, copy, display and process that content only as needed
-          to operate, secure and improve the service for you and your community.
+          event details, records, bills, listings, reviews and messages. You give {LEGAL.operator} a
+          non-exclusive, royalty-free licence to host, store, copy, display and process that content
+          only as needed to operate, secure and improve the service for you and your community.
         </p>
         <p>
           You are responsible for having the right to share what you post. We may remove content

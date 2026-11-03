@@ -46,7 +46,11 @@ Event
 ├── Activities       cultural acts residents sign up to perform in
 ├── Volunteer roles  jobs residents sign up to do
 ├── Expenses         vendor, amount, attached bill, approval trail
+├── Vendors          marketplace listings chosen to supply the event
 └── Closure          surplus rule → published transparency report
+
+Marketplace          what residents make, teach and sell each other —
+                     listings with a phone and a photo, star ratings, reviews
 ```
 
 ### Where the rules actually live
@@ -66,7 +70,9 @@ proves that
 - moving money between funds needs a resident vote that clears a threshold, and
   writes an audit row in the same transaction as the deciding vote;
 - one member, one vote — and a ballot is readable only by the person who cast it;
-- nothing leaks between societies.
+- nothing leaks between societies;
+- a marketplace listing shows the number its seller typed, never the private
+  one on their profile, and nobody reviews their own listing.
 
 Two places bypass RLS on purpose, both server-side only:
 
