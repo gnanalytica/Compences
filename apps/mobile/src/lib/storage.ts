@@ -3,22 +3,39 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as WebBrowser from 'expo-web-browser';
-import { UPLOAD_MIME_TYPES } from '@compences/core';
+import { UPLOAD_MIME_TYPES, safeFileName } from '@compences/core';
 import { supabase } from './supabase';
 
 /**
  * Bills and payment screenshots live in private Supabase Storage buckets.
  * Row-level security on storage.objects decides who may upload and read:
  * staff and committee upload bills, residents read a bill only once it is
- * approved, and a payment screenshot is visible to its owner and staff.
+ * approved, and a payment screenshot is visible to its owner and staff. A
+ * marketplace listing's picture is in a third, which every member may look at
+ * and only its seller writes to.
  */
 
-export type Bucket = 'bills' | 'payment-proofs';
+export type Bucket = 'bills' | 'payment-proofs' | 'listing-photos';
 
 export const MAX_BYTES: Record<Bucket, number> = {
   bills: 10 * 1024 * 1024,
   'payment-proofs': 5 * 1024 * 1024,
+  'listing-photos': 5 * 1024 * 1024,
 };
+
+/** What each bucket calls the thing it holds, for the line when it will not open. */
+const MISSING: Record<Bucket, string> = {
+  bills: 'Bill not available.',
+  'payment-proofs': 'Screenshot not available.',
+  'listing-photos': 'Photo not available.',
+};
+
+/**
+ * A listing's picture, in the seller's own folder, which is the only place the
+ * bucket's policy and the listings table will both accept it.
+ */
+export const listingPhotoPath = (communityId: string, membershipId: string, fileName: string) =>
+  `${communityId}/${membershipId}/${safeFileName(fileName)}`;
 
 export type PickedFile = {
   uri: string;
@@ -61,7 +78,7 @@ export async function pickFile(source: PickSource): Promise<PickedFile | { error
   if (source === 'camera') {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      return { error: 'Allow camera access in Settings to photograph a bill.' };
+      return { error: 'Allow camera access in Settings to take a photo.' };
     }
   }
 
@@ -89,6 +106,11 @@ export async function uploadFile(
   file: PickedFile,
 ): Promise<{ path: string } | { error: string }> {
   const mimeType = file.mimeType.toLowerCase();
+  // The listing-photos bucket takes pictures only: an ad is looked at, and a
+  // PDF would be a download nobody opens.
+  if (bucket === 'listing-photos' && !mimeType.startsWith('image/')) {
+    return { error: 'Attach a photo (JPG, PNG, WebP, HEIC).' };
+  }
   if (!ALLOWED.has(mimeType)) {
     return { error: 'Attach a photo (JPG, PNG, WebP, HEIC) or a PDF.' };
   }
@@ -132,9 +154,45 @@ export async function storedFileUrl(
   if (/^https?:\/\//i.test(value)) return { url: value };
   const { data, error } = await supabase.storage.from(bucket).createSignedUrl(value, 300);
   if (error || !data?.signedUrl) {
-    return { error: bucket === 'bills' ? 'Bill not available.' : 'Screenshot not available.' };
+    return { error: MISSING[bucket] };
   }
   return { url: data.signedUrl };
+}
+
+/**
+ * Short-lived links for many stored files at once, keyed by path: one round
+ * trip for a whole board of thumbnails rather than one per card. A path the
+ * viewer may not see, or that is gone, is simply missing from the map.
+ */
+export async function storedFileUrls(
+  bucket: Bucket,
+  paths: string[],
+  expiresIn = 3600,
+): Promise<Map<string, string>> {
+  const urls = new Map<string, string>();
+  const unique = [...new Set(paths.filter(Boolean))];
+  if (!unique.length) return urls;
+  const { data } = await supabase.storage.from(bucket).createSignedUrls(unique, expiresIn);
+  for (const row of data ?? []) {
+    if (row.path && row.signedUrl && !row.error) urls.set(row.path, row.signedUrl);
+  }
+  return urls;
+}
+
+/**
+ * Deletes stored files, best-effort. Used to tidy up a photo that was replaced
+ * or whose listing was deleted: a leftover file costs a little storage, which
+ * is not worth failing the thing the person actually asked for.
+ */
+export async function removeStoredFiles(bucket: Bucket, paths: (string | null | undefined)[]) {
+  const list = paths.filter(
+    (path): path is string => typeof path === 'string' && path !== '' && !/^https?:/i.test(path),
+  );
+  if (!list.length) return;
+  await supabase.storage
+    .from(bucket)
+    .remove(list)
+    .catch(() => undefined);
 }
 
 /**
@@ -149,7 +207,7 @@ export async function openStoredFile(bucket: Bucket, value: string): Promise<str
   }
   const { data, error } = await supabase.storage.from(bucket).createSignedUrl(value, 300);
   if (error || !data?.signedUrl) {
-    return bucket === 'bills' ? 'Bill not available.' : 'Screenshot not available.';
+    return MISSING[bucket];
   }
   await WebBrowser.openBrowserAsync(data.signedUrl);
   return null;

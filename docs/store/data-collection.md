@@ -30,6 +30,9 @@ worse problem than one that was never filed.
 | Bills and payment screenshots | `storage.bills`, `storage.payment-proofs` (both private)                      | Proof behind a ledger line                      | Optional                                       |
 | Votes, sign-ups, volunteering | `poll_votes`, `suggestion_votes`, `activity_participants`, `event_volunteers` | Taking part                                     | Optional                                       |
 | Things you wrote              | `activity_suggestions`, `comments`, `comment_reactions`, `announcements`      | Taking part                                     | Optional                                       |
+| Marketplace listings          | `listings` — title, details, price, flat, **a phone number you type**, photo  | Neighbours find what you sell or teach          | Optional (residents and committee only)        |
+| Marketplace reviews           | `listing_reviews` — star rating and text                                      | Neighbours rate what they bought                | Optional                                       |
+| Listing photos                | `storage.listing-photos` (private; readable by your society)                  | The picture on a listing                        | Optional                                       |
 | Apple sign-in token           | `apple_refresh_tokens` (service-role only)                                    | Revoked at Apple when you delete your account   | Only if you sign in with Apple                 |
 | Push notification token       | `device_push_tokens.token`, plus platform and app version                     | Sending you a notification                      | Optional — declining notifications stores none |
 | WhatsApp number and messages  | `whatsapp_links`, `whatsapp_messages`                                         | Only if you use the WhatsApp bot                | Optional                                       |

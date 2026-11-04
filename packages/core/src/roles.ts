@@ -70,6 +70,8 @@ export type Capability =
   | 'suggest'
   | 'campaigns:propose'
   | 'activities:register'
+  | 'marketplace:post'
+  | 'marketplace:review'
   // Staff and committee
   | 'events:manage'
   | 'budget:manage'
@@ -79,6 +81,7 @@ export type Capability =
   | 'payments:record'
   | 'joinrequests:review'
   | 'residents:remove'
+  | 'marketplace:moderate'
   // Committee only
   | 'expenses:approve'
   | 'campaigns:approve'
@@ -97,6 +100,9 @@ const CAPABILITIES: Record<Capability, Rule> = {
   suggest: 'participant',
   'campaigns:propose': 'participant',
   'activities:register': 'participant',
+  // Residents sell to residents. Staff run the society and do not trade on it.
+  'marketplace:post': 'participant',
+  'marketplace:review': 'participant',
 
   'events:manage': 'staff',
   'budget:manage': 'staff',
@@ -106,6 +112,7 @@ const CAPABILITIES: Record<Capability, Rule> = {
   'payments:record': 'staff',
   'joinrequests:review': 'staff',
   'residents:remove': 'staff',
+  'marketplace:moderate': 'staff',
 
   'expenses:approve': 'committee',
   'campaigns:approve': 'committee',

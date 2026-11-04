@@ -32,14 +32,14 @@ own definition says so; the Privacy Policy lists them anyway.
 
 ### Personal info
 
-| Data type     | Collected | Required or optional | Purposes                              | Note                                                                                     |
-| ------------- | --------- | -------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Name          | Yes       | Required             | App functionality, Account management | `profiles.full_name`                                                                     |
-| Email address | Yes       | Required             | App functionality, Account management | It is the sign-in                                                                        |
-| User IDs      | Yes       | Required             | App functionality, Account management | `auth.users.id`                                                                          |
-| Phone number  | Yes       | **Required**         | App functionality                     | So the committee can reach you                                                           |
-| Address       | Yes       | Required             | App functionality                     | Your society and flat. Not a street address, but it is where you live, so it is declared |
-| Other info    | No        | —                    | —                                     | —                                                                                        |
+| Data type     | Collected | Required or optional | Purposes                              | Note                                                                                           |
+| ------------- | --------- | -------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Name          | Yes       | Required             | App functionality, Account management | `profiles.full_name`                                                                           |
+| Email address | Yes       | Required             | App functionality, Account management | It is the sign-in                                                                              |
+| User IDs      | Yes       | Required             | App functionality, Account management | `auth.users.id`                                                                                |
+| Phone number  | Yes       | **Required**         | App functionality                     | So the committee can reach you; a marketplace listing also carries the number its seller types |
+| Address       | Yes       | Required             | App functionality                     | Your society and flat. Not a street address, but it is where you live, so it is declared       |
+| Other info    | No        | —                    | —                                     | —                                                                                              |
 
 ### Financial info
 
@@ -52,10 +52,10 @@ own definition says so; the Privacy Policy lists them anyway.
 
 ### Photos and videos
 
-| Data type | Collected | Required or optional | Purposes          | Note                                                |
-| --------- | --------- | -------------------- | ----------------- | --------------------------------------------------- |
-| Photos    | Yes       | Optional             | App functionality | Bills and payment screenshots, into private buckets |
-| Videos    | No        | —                    | —                 | —                                                   |
+| Data type | Collected | Required or optional | Purposes          | Note                                                                            |
+| --------- | --------- | -------------------- | ----------------- | ------------------------------------------------------------------------------- |
+| Photos    | Yes       | Optional             | App functionality | Bills, payment screenshots and marketplace listing photos, into private buckets |
+| Videos    | No        | —                    | —                 | —                                                                               |
 
 ### Messages
 
@@ -69,7 +69,7 @@ own definition says so; the Privacy Policy lists them anyway.
 | Data type                    | Collected | Required or optional | Purposes          | Note                                                                                                         |
 | ---------------------------- | --------- | -------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
 | App interactions             | **No**    | —                    | —                 | There is no analytics SDK. The audit trail records changes to the society's records, not your use of the app |
-| Other user-generated content | Yes       | Optional             | App functionality | Votes, activity sign-ups, volunteer roles                                                                    |
+| Other user-generated content | Yes       | Optional             | App functionality | Votes, activity sign-ups, volunteer roles, marketplace listings and reviews                                  |
 | In-app search history        | No        | —                    | —                 | —                                                                                                            |
 | Installed apps               | No        | —                    | —                 | —                                                                                                            |
 | Other actions                | No        | —                    | —                 | —                                                                                                            |

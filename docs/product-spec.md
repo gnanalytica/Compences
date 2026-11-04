@@ -278,6 +278,34 @@ committee act, so nobody left could fix it either. A society whose _only_
 member leaves is deleted with them — an empty society cannot be read or joined
 by anyone ever again.
 
+### The marketplace
+
+Residents run small businesses out of their flats — idly batter, jonna rotis,
+cakes, tuition, Hindi classes for children, tailoring and embroidery, music and
+dance lessons, Diwali crackers in season, a lawyer two floors down — and until
+now the only way to reach the society was a WhatsApp forward or a board by the
+office. The marketplace is that board, in the app.
+
+- **Who posts.** Residents and the committee, who live here too. Staff run the
+  society and do not trade on it. A listing says what it is (one of eleven
+  categories), a title, details, a free-text price ("₹60 a kg", "₹1,500 a
+  month"), an optional photo, and **a phone number the seller types on the
+  listing** — never the private one on their profile — with a WhatsApp button
+  if they want one. A seasonal offer can carry a last day and leaves the board
+  on its own after it.
+- **Who reviews.** Anybody who takes part, once per listing, never their own.
+  Changing your mind replaces your review. The board orders listings by their
+  rating weighed by how many reviews it rests on, so one five-star review does
+  not outrank thirty averaging 4.8.
+- **Moderation.** Staff and the committee can take a listing down with a
+  reason, which the seller is told, and only they can put it back. They can
+  delete a review. They cannot rewrite somebody's listing.
+- **Vendors for events.** Staff and the committee can name a listing as a
+  vendor for an event ("Snacks stall"). It shows on the event's page and the
+  seller is told.
+- **Not in it.** No payments, orders or delivery: the deal is between the two
+  neighbours. A new listing does not notify the whole society.
+
 ### Voting
 
 A resident suggests, the committee opens it for voting, everybody has their say,
@@ -350,7 +378,8 @@ events list · event detail · contribute (amount → payment → report) ·
 **money (every transaction the society has ever made)** · activities list ·
 activity detail · activity joined · suggest activity · volunteer list ·
 volunteer confirm · accounts · view bill · community feed · polls ·
-notifications · my activity
+notifications · my activity · **marketplace (board, listing, post a
+listing, reviews)**
 
 **Admin** — welcome · add flats · import preview · community created · invite
 residents · dashboard · create-event wizard · event management (overview,
