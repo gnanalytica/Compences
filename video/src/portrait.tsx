@@ -9,8 +9,9 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
-import { Diya, Petals, Rangoli, Toran, festive } from './festive';
+import { Petals, Rangoli, Toran, festive } from './festive';
 import { LogoSting } from './logo';
+import { Mark } from './mark';
 import { BAR_H, BottomBar, RESIDENT, SCREEN, STATUS_H, StatusBar, ramp, settle } from './screens';
 import { CHAPTERS, type Chapter, SHOTS, camera, chapterNow, timeline } from './story';
 import { color, displayFamily, fontFamily, sec } from './theme';
@@ -441,8 +442,16 @@ function Bookend({
         style={{ justifyContent: 'center', alignItems: 'center', fontFamily, padding: 86 }}
       >
         <div style={{ textAlign: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-            <Diya size={172} lit={sec(0.2)} />
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginBottom: 36,
+              opacity: entered,
+              transform: `scale(${0.94 + settle(frame, opening ? 0.1 : 0.3) * 0.06})`,
+            }}
+          >
+            <Mark size={148} />
           </div>
           <div
             style={{

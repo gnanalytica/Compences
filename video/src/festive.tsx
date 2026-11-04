@@ -188,39 +188,3 @@ export function Petals({ hold, count = 18 }: { hold: number; count?: number }) {
     </div>
   );
 }
-
-/** A lamp that catches, then settles into a slow flicker. */
-export function Diya({ size = 120, lit = 0 }: { size?: number; lit?: number }) {
-  const frame = useCurrentFrame();
-  const flicker = 0.88 + Math.sin(frame / 5.5) * 0.06 + Math.sin(frame / 2.3) * 0.04;
-  const glow = interpolate(frame, [lit, lit + sec(0.8)], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-    easing: Easing.out(Easing.cubic),
-  });
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100">
-      <defs>
-        <radialGradient id="diya-glow">
-          <stop offset="0%" stopColor={festive.accent} stopOpacity="0.55" />
-          <stop offset="100%" stopColor={festive.accent} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <circle cx="50" cy="42" r={34 * glow * flicker} fill="url(#diya-glow)" />
-      {/* The flame, drawn as a teardrop rather than a triangle. */}
-      <path
-        d="M50 22 Q 58 34 57 41 Q 56 50 50 50 Q 44 50 43 41 Q 42 34 50 22 Z"
-        fill={festive.accent}
-        style={{ opacity: glow, transform: `scaleY(${flicker})`, transformOrigin: '50px 50px' }}
-      />
-      <path
-        d="M50 33 Q 54 40 53 44 Q 52 48 50 48 Q 48 48 47 44 Q 46 40 50 33 Z"
-        fill="oklch(0.95 0.11 92)"
-        style={{ opacity: glow }}
-      />
-      {/* The lamp itself. */}
-      <path d="M26 52 Q 50 76 74 52 Q 50 60 26 52 Z" fill={festive.ribbon} />
-      <path d="M26 52 Q 50 58 74 52" stroke={festive.deep} strokeWidth="1.5" fill="none" />
-    </svg>
-  );
-}
