@@ -10,7 +10,8 @@ import {
   Easing,
 } from 'remotion';
 import { color, fontFamily, sec } from './theme';
-import { Diya, Petals, Rangoli, Toran, festive } from './festive';
+import { Petals, Rangoli, Toran, festive } from './festive';
+import { Mark } from './mark';
 
 /**
  * The parts every scene is built from.
@@ -446,8 +447,16 @@ export function Bookend({ headline, sub, hold }: { headline: string; sub: string
           style={{ justifyContent: 'center', alignItems: 'center', fontFamily, padding: 120 }}
         >
           <div style={{ textAlign: 'center' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
-              <Diya size={150} lit={sec(0.35)} />
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginBottom: 30,
+                opacity: entered,
+                transform: `scale(${0.965 + entered * 0.035})`,
+              }}
+            >
+              <Mark size={124} />
             </div>
             <div
               style={{

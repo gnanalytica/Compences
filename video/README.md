@@ -145,18 +145,20 @@ into the original. Alpha is each pixel's coverage of its ink, read on the
 channel where that ink is furthest from white; a generic colour-to-alpha leaves
 the navy at 95% and the festive ground shows through it.
 
-**Compences had no logo.** The mobile app's icon is still Expo's template, and
-the landing page sets the name in plain type. So the mark in `logo.tsx` is
-built from the product's own motif — a kolam, one line drawn around dots. The
-simplest kolam is a single line looped around two dots; half of that loop, stood
-on end, is an S. If Compences gets a real logo, `logo.tsx` is the one place to
-change.
+**Compences's mark** is the blue C with residents and a rupee wallet,
+`docs/brand/compences-mark.svg`. `src/mark.tsx` draws it the way the app icon
+does — on a navy tile, nudged 19/1024 right because the mark's own box is not
+centred in its viewBox — and the title cards, the covers and the close all take
+it from there, so the video cannot open on one mark and be shared under another.
+If the mark changes, `mark.tsx` is the one place to change.
 
-The sting is that one line doing three things. It draws as Compences's S on the
-festive ground; it turns flat and closes, and the two dots it was drawn around
-become the lobes of an infinity; then it _is_ Gnanalytica's loop. The ground
-goes to white on the way, because the navy was designed for white and all but
-disappears on the festive dark, and the red rise grows out of the crossing.
+The close opens where the video did: the mark and the name on the festive
+ground. The tile folds down into the point where Gnanalytica's loop crosses
+itself, and a line in the C's own blue draws out of that point round both
+lobes, darkening to Gnanalytica's navy as it goes; then it _is_ Gnanalytica's
+loop. The ground goes to white on the way, because the navy was designed for
+white and all but disappears on the festive dark, and the red rise grows out of
+the crossing.
 
 For that to work the drawn loop has to land _on_ the supplied artwork, not near
 it, or the crossfade shows two loops. It is Bernoulli's lemniscate, scaled in y,

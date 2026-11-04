@@ -1,5 +1,6 @@
 import { AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame } from 'remotion';
 import { Petals, Rangoli, Toran, festive } from './festive';
+import { Mark } from './mark';
 import { displayFamily, fontFamily, sec } from './theme';
 
 /**
@@ -7,14 +8,13 @@ import { displayFamily, fontFamily, sec } from './theme';
  *
  * Gnanalytica's logo is an infinity — a navy loop with a red arrow and three
  * bars rising out of its right-hand lobe (`brand/gnanalytica-logo.png`, as
- * supplied). Compences had no logo at all, so its mark here is built from the
- * product's own motif: a kolam, a single line drawn around dots. The simplest
- * kolam is one line looped around two dots, and half of that loop, stood on
- * end, is an S.
+ * supplied). Compences's is the blue C on a navy tile (`Mark`, from
+ * docs/brand/compences-mark.svg), the same one the title card opens on.
  *
- * So the sting is one line doing three things. It is drawn as Compences's S,
- * around two dots, on the festive ground. It turns flat and closes, and the
- * two dots it was drawn around become the two lobes of an infinity. Then it is
+ * So the sting opens where the video did: the mark and the name, on the
+ * festive ground. The tile folds down into the point where Gnanalytica's loop
+ * crosses itself, and a line in the C's own blue draws out of that point,
+ * round both lobes, darkening to Gnanalytica's navy as it goes. Then it is
  * Gnanalytica's loop — the ground has gone to white, because the navy was
  * designed for white and all but vanishes on the festive dark — and the red
  * rise grows out of it.
@@ -32,6 +32,8 @@ const STAGE = { width: 564, height: 322 };
 const LOOP = { cx: 281.25, cy: 187, a: 252.25, ys: 289.914, stroke: 33 };
 /** The two inks, from brand/split.mjs. */
 const NAVY = '#0c3852';
+/** The C's blue, from docs/brand/compences-mark.svg: the colour the line is drawn in. */
+const MARK_BLUE = '#2F6FEB';
 
 function lemniscate(t: number) {
   const d = 1 + Math.sin(t) ** 2;
@@ -42,23 +44,17 @@ function lemniscate(t: number) {
 }
 
 /**
- * The loop as one path, starting at its right-hand end.
- *
- * The first half by length — t from 0 to π — runs up over the right lobe,
- * through the crossing and down under the left one: turned a quarter clockwise
- * it is an S. That is why the S can simply keep drawing into the infinity.
+ * The loop as one path, starting and ending at its crossing (t = π/2), which
+ * is where the mark folds down to — so the line draws out of the mark rather
+ * than appearing beside it.
  */
 const PATH = (() => {
   const steps = 360;
-  const points = Array.from({ length: steps + 1 }, (_, i) => lemniscate((i / steps) * Math.PI * 2));
+  const points = Array.from({ length: steps + 1 }, (_, i) =>
+    lemniscate(Math.PI / 2 + (i / steps) * Math.PI * 2),
+  );
   return points.map((p, i) => `${i ? 'L' : 'M'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
 })();
-
-/** Where the two kolam dots sit: the middles of the two lobes. */
-const DOTS = [
-  { x: LOOP.cx - LOOP.a * 0.56, y: LOOP.cy },
-  { x: LOOP.cx + LOOP.a * 0.56, y: LOOP.cy },
-];
 
 type Layout = {
   /** Frame size. */
@@ -67,8 +63,9 @@ type Layout = {
   /** Where the loop's crossing lands, and how big the finished mark is. */
   at: { x: number; y: number };
   scale: number;
-  /** Where the S stands while it is still Compences's, and its wordmark. */
-  sAt: { x: number; y: number };
+  /** Where Compences's mark stands, how big, and its wordmark. */
+  markAt: { x: number; y: number };
+  markSize: number;
   word: { x: number; y: number; align: 'center' | 'left'; size: number };
   /** The type under Gnanalytica's mark. */
   endType: { by: number; name: number; url: number; size: number };
@@ -80,8 +77,9 @@ export const STING_LAYOUT: Record<'portrait' | 'landscape', Layout> = {
     height: 1920,
     at: { x: 540, y: 860 },
     scale: 1.55,
-    sAt: { x: 540, y: 700 },
-    word: { x: 540, y: 1060, align: 'center', size: 112 },
+    markAt: { x: 540, y: 760 },
+    markSize: 220,
+    word: { x: 540, y: 930, align: 'center', size: 112 },
     endType: { by: 470, name: 1112, url: 1250, size: 96 },
   },
   landscape: {
@@ -89,20 +87,21 @@ export const STING_LAYOUT: Record<'portrait' | 'landscape', Layout> = {
     height: 1080,
     at: { x: 960, y: 452 },
     scale: 1.34,
-    sAt: { x: 700, y: 520 },
-    word: { x: 900, y: 520, align: 'left', size: 120 },
+    markAt: { x: 625, y: 520 },
+    markSize: 190,
+    word: { x: 765, y: 520, align: 'left', size: 120 },
     endType: { by: 128, name: 668, url: 792, size: 88 },
   },
 };
 
 /** Durations, in seconds, from the start of the sting. */
 const T = {
-  draw: [0.15, 1.0],
+  markIn: [0.15, 0.85],
   wordIn: [0.55, 1.15],
-  wordOut: [2.05, 2.35],
-  turn: [2.1, 3.3],
-  dawn: [2.25, 3.35],
-  dotsOut: [2.7, 3.2],
+  wordOut: [1.8, 2.1],
+  fold: [2.0, 2.6],
+  draw: [2.5, 3.3],
+  dawn: [2.45, 3.45],
   comet: [3.3, 4.35],
   settle: [4.35, 4.7],
   rise: [4.55, 5.3],
@@ -121,16 +120,19 @@ export function LogoSting({ layout }: { layout: 'portrait' | 'landscape' }) {
       easing,
     });
 
+  // --- the mark ---------------------------------------------------------------
+  const markIn = span(T.markIn, Easing.out(Easing.cubic));
+  const fold = span(T.fold);
+  const markX = L.markAt.x + (L.at.x - L.markAt.x) * fold;
+  const markY = L.markAt.y + (L.at.y - L.markAt.y) * fold;
+  const markScale = (0.92 + 0.08 * markIn) * (1 - 0.88 * fold);
+  const markOpacity = markIn * (1 - span([T.fold[1] - 0.2, T.fold[1]]));
+
   // --- the line -------------------------------------------------------------
-  const drawn = 0.5 * span(T.draw, Easing.out(Easing.cubic)) + 0.5 * span(T.turn);
-  const turn = span(T.turn);
-  const rotation = 90 * (1 - turn);
-  const scale = L.scale * (0.62 + 0.38 * turn);
-  const x = L.sAt.x + (L.at.x - L.sAt.x) * turn;
-  const y = L.sAt.y + (L.at.y - L.sAt.y) * turn;
-  const navy = span([T.turn[0] + 0.1, T.turn[1] - 0.15]);
-  const stroke = `color-mix(in oklab, ${NAVY} ${Math.round(navy * 100)}%, ${festive.accent})`;
-  const dots = 1 - span(T.dotsOut);
+  const drawn = span(T.draw);
+  const scale = L.scale * (0.8 + 0.2 * span(T.draw, Easing.out(Easing.cubic)));
+  const navy = span([T.draw[0] + 0.1, T.draw[1]]);
+  const stroke = `color-mix(in oklab, ${NAVY} ${Math.round(navy * 100)}%, ${MARK_BLUE})`;
   const comet = span(T.comet, Easing.inOut(Easing.sin));
   const cometOn = Math.min(
     span([T.comet[0], T.comet[0] + 0.15]),
@@ -176,7 +178,7 @@ export function LogoSting({ layout }: { layout: 'portrait' | 'landscape' }) {
         }}
       />
 
-      {/* Compences's wordmark, while the line is still an S. */}
+      {/* Compences's wordmark, beside its mark. */}
       <div
         style={{
           position: 'absolute',
@@ -207,17 +209,17 @@ export function LogoSting({ layout }: { layout: 'portrait' | 'landscape' }) {
         </div>
       </div>
 
-      {/* The stage: the line, the dots, and Gnanalytica's two layers, all in
-          the supplied logo's own pixel space so they cannot drift apart. */}
+      {/* The stage: the line and Gnanalytica's two layers, all in the
+          supplied logo's own pixel space so they cannot drift apart. */}
       <div
         style={{
           position: 'absolute',
-          left: x - LOOP.cx,
-          top: y - LOOP.cy,
+          left: L.at.x - LOOP.cx,
+          top: L.at.y - LOOP.cy,
           width: STAGE.width,
           height: STAGE.height,
           transformOrigin: `${LOOP.cx}px ${LOOP.cy}px`,
-          transform: `scale(${scale}) rotate(${rotation}deg)`,
+          transform: `scale(${scale})`,
         }}
       >
         <svg
@@ -235,18 +237,9 @@ export function LogoSting({ layout }: { layout: 'portrait' | 'landscape' }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeDasharray={`${drawn * 1000} 1000`}
+            // A zero-length dash still paints its round cap as a dot.
+            opacity={drawn > 0 ? 1 : 0}
           />
-          {DOTS.map((dot) => (
-            <circle
-              key={dot.x}
-              cx={dot.x}
-              cy={dot.y}
-              r={15}
-              fill={festive.accent}
-              opacity={dots * span(T.draw)}
-              transform={`translate(${dot.x} ${dot.y}) scale(${0.4 + 0.6 * dots}) translate(${-dot.x} ${-dot.y})`}
-            />
-          ))}
           {/* Compences's marigold, flowing once round Gnanalytica's loop. */}
           <path
             d={PATH}
@@ -283,6 +276,19 @@ export function LogoSting({ layout }: { layout: 'portrait' | 'landscape' }) {
             WebkitMaskImage: `linear-gradient(45deg, #000 ${rise * 112 - 6}%, transparent ${rise * 112}%)`,
           }}
         />
+      </div>
+
+      {/* Compences's mark, folding down into the loop's crossing. */}
+      <div
+        style={{
+          position: 'absolute',
+          left: markX - L.markSize / 2,
+          top: markY - L.markSize / 2,
+          opacity: markOpacity,
+          transform: `scale(${markScale})`,
+        }}
+      >
+        <Mark size={L.markSize} />
       </div>
 
       {/* Who made it, and where to find it. */}
