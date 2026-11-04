@@ -39,6 +39,9 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             <Link href="/delete-account" className="underline underline-offset-4">
               Delete your account
             </Link>
+            <Link href="/support" className="underline underline-offset-4">
+              Support
+            </Link>
           </nav>
         </div>
       </footer>

@@ -30,6 +30,8 @@ const PUBLIC_PATHS = [
   // Putting it behind the session check would make the URL we file with Play
   // useless to exactly the people it is for.
   '/delete-account',
+  // The App Store listing's Support URL; reviewers open it signed out.
+  '/support',
   '/auth',
   '/api/webhooks',
   '/api/v1',
