@@ -1,7 +1,18 @@
 import type { NextConfig } from 'next';
 import { withSentryConfig } from '@sentry/nextjs/config';
 
-const nextConfig: NextConfig = {/* config options here */};
+const nextConfig: NextConfig = {
+  // iOS universal links. The file has no extension, so without this it goes
+  // out as application/octet-stream, which Apple's CDN can refuse to read.
+  async headers() {
+    return [
+      {
+        source: '/.well-known/apple-app-site-association',
+        headers: [{ key: 'Content-Type', value: 'application/json' }],
+      },
+    ];
+  },
+};
 
 /**
  * Sentry wraps the build to upload source maps, so a stack trace names a line
