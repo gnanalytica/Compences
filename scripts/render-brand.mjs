@@ -13,6 +13,7 @@
  *   apps/web/src/app/icon.png                        256, on navy
  *   apps/web/src/app/apple-icon.png                  180, on navy
  *   apps/web/src/components/brand-mark.png           128, on navy (the site's header mark)
+ *   docs/store/play-feature-graphic-1024x500.png  1024×500, the mark and the name on navy
  *
  * Change the SVG, run this, commit what it writes. It drives the Chromium that
  * Playwright installs, so it needs `playwright` resolvable (it is not a
@@ -34,6 +35,13 @@ const sharp = createRequire(
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = readFileSync(join(ROOT, 'docs/brand/compences-mark.svg'), 'utf8');
+/**
+ * Baloo 2, the landing page's display face, for the words on the feature
+ * graphic. The copy the video commits, so a render needs no network.
+ */
+const DISPLAY = readFileSync(join(ROOT, 'video/public/fonts/baloo2-latin.woff2')).toString(
+  'base64',
+);
 
 /** The navy the mark sits on, a touch lighter in the middle as in the renders. */
 const NAVY = { centre: '#16306B', edge: '#0A1736' };
@@ -63,7 +71,90 @@ const JOBS = [
   { out: 'apps/web/src/app/apple-icon.png', size: 180, scale: 1.0, background: true },
   { out: 'apps/web/src/components/brand-mark.png', size: 128, scale: 1.0, background: true },
   { ico: 'apps/web/src/app/favicon.ico', sizes: [16, 32, 48], scale: 1.2, background: true },
+  { banner: 'docs/store/play-feature-graphic-1024x500.png', width: 1024, height: 500 },
 ];
+
+/**
+ * Play's feature graphic: the mark at the left, the name and what the app is
+ * for beside it, on the icon's navy. The words are fitted to the space right
+ * of the mark rather than trusted to, so a longer tagline shrinks instead of
+ * running off the edge.
+ */
+const TAGLINE = ["Plan your society's events together.", 'See every rupee raised and spent.'];
+
+async function banner(page, { width, height }) {
+  const dataUrl = await page.evaluate(
+    async ({ svg, width, height, navy, nudge, font, tagline }) => {
+      const face = new FontFace(
+        'Baloo 2',
+        Uint8Array.from(atob(font), (c) => c.charCodeAt(0)),
+        { weight: '400 800' },
+      );
+      document.fonts.add(await face.load());
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      const markSize = 380;
+      const markX = 40;
+      const markY = (height - markSize) / 2;
+      // The navy's lighter middle sits behind the mark rather than the frame.
+      const g = ctx.createRadialGradient(
+        markX + markSize / 2,
+        height * 0.45,
+        0,
+        markX + markSize / 2,
+        height / 2,
+        width * 0.8,
+      );
+      g.addColorStop(0, navy.centre);
+      g.addColorStop(1, navy.edge);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, width, height);
+
+      const image = new Image();
+      image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+      await image.decode();
+      ctx.drawImage(image, markX + (nudge / 1024) * markSize, markY, markSize, markSize);
+
+      const left = markX + markSize + 30;
+      const right = width - 56;
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = '#FFFFFF';
+      let nameSize = 112;
+      do {
+        ctx.font = `700 ${nameSize}px 'Baloo 2'`;
+      } while (ctx.measureText('Compences').width > right - left && --nameSize);
+      ctx.fillText('Compences', left, 228);
+
+      // The mark's own blue, as a short rule under the name.
+      ctx.fillStyle = '#4C9BFF';
+      ctx.beginPath();
+      ctx.roundRect(left + 4, 254, 92, 8, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#C8D5EE';
+      let lineSize = 31;
+      do {
+        ctx.font = `500 ${lineSize}px 'Baloo 2'`;
+      } while (
+        Math.max(...tagline.map((line) => ctx.measureText(line).width)) > right - left &&
+        --lineSize
+      );
+      tagline.forEach((line, i) => ctx.fillText(line, left + 2, 318 + i * lineSize * 1.35));
+
+      return canvas.toDataURL('image/png');
+    },
+    { svg: SOURCE, width, height, navy: NAVY, nudge: NUDGE_X, font: DISPLAY, tagline: TAGLINE },
+  );
+  // Play takes a feature graphic as a JPEG or a 24-bit PNG: no alpha.
+  return sharp(Buffer.from(dataUrl.split(',')[1], 'base64'))
+    .removeAlpha()
+    .png()
+    .toBuffer();
+}
 
 /**
  * Draws the SVG onto a canvas in the page and hands back PNG bytes. A canvas
@@ -156,7 +247,10 @@ const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
   for (const job of JOBS) {
-    if (job.ico) {
+    if (job.banner) {
+      writeFileSync(join(ROOT, job.banner), await banner(page, job));
+      console.log(`wrote ${job.banner}`);
+    } else if (job.ico) {
       const images = [];
       for (const size of job.sizes)
         images.push({ size, png: await render(page, { ...job, size, keepAlpha: true }) });

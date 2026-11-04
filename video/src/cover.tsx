@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
-import { AbsoluteFill, Freeze, useVideoConfig } from 'remotion';
-import { Diya, Rangoli, Toran, festive } from './festive';
+import { AbsoluteFill, Freeze, Img, useVideoConfig } from 'remotion';
+import mark from '../../docs/brand/compences-mark.svg';
+import { Rangoli, Toran, festive } from './festive';
 import { BAR_H, BottomBar, MoneyScreen, RESIDENT, SCREEN, STATUS_H, StatusBar } from './screens';
 import { timeline } from './story';
 import { FPS, color, displayFamily, fontFamily, sec } from './theme';
@@ -130,8 +131,34 @@ function Petals({ u }: { u: number }) {
 }
 
 /**
- * The lamp and the name, as the video's title card has them: side by side
- * beside the words of a wide cover, stacked above them on a tall one.
+ * The Compences mark as the app icon draws it: docs/brand/compences-mark.svg
+ * on the navy of scripts/render-brand.mjs, nudged right by the same 19/1024
+ * because the mark's own box is not centred in its viewBox.
+ */
+function Mark({ size }: { size: number }) {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        flexShrink: 0,
+        overflow: 'hidden',
+        borderRadius: size * 0.225,
+        backgroundImage: 'radial-gradient(circle at 50% 45%, #16306B, #0A1736 75%)',
+        boxShadow: `0 ${size * 0.06}px ${size * 0.2}px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.12)`,
+      }}
+    >
+      <Img
+        src={mark}
+        style={{ width: size, height: size, transform: `translateX(${(19 / 1024) * size}px)` }}
+      />
+    </div>
+  );
+}
+
+/**
+ * The mark and the name: side by side beside the words of a wide cover,
+ * stacked above them on a tall one.
  */
 function Brand({ u, stacked = false }: { u: number; stacked?: boolean }) {
   return (
@@ -140,11 +167,10 @@ function Brand({ u, stacked = false }: { u: number; stacked?: boolean }) {
         display: 'flex',
         flexDirection: stacked ? 'column' : 'row',
         alignItems: 'center',
-        gap: stacked ? 0 : 10 * u,
-        marginLeft: stacked ? 0 : -18 * u,
+        gap: (stacked ? 18 : 22) * u,
       }}
     >
-      <Diya size={(stacked ? 150 : 104) * u} lit={-sec(2)} />
+      <Mark size={(stacked ? 128 : 84) * u} />
       <span
         style={{
           fontFamily: displayFamily,
@@ -152,7 +178,7 @@ function Brand({ u, stacked = false }: { u: number; stacked?: boolean }) {
           fontWeight: 600,
           letterSpacing: '-0.025em',
           color: 'white',
-          transform: `translateY(${(stacked ? -6 : 8) * u}px)`,
+          transform: `translateY(${(stacked ? 0 : 6) * u}px)`,
         }}
       >
         Compences
