@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!--
+    The Compences mark, drawn flat from the 3D brand renders: a blue C holding
+    the residents of a society, with a wallet tab carrying the rupee where the
+    C opens. The source of every icon in apps/mobile/assets, the web favicon and
+    the Play Store icon: run scripts/render-brand.mjs after changing it.
+  -->
+  <defs>
+    <linearGradient id="c-face" x1="0.15" y1="0.05" x2="0.85" y2="0.95">
+      <stop offset="0" stop-color="#4C9BFF"/>
+      <stop offset="0.55" stop-color="#2F6FEB"/>
+      <stop offset="1" stop-color="#1E4FD6"/>
+    </linearGradient>
+    <linearGradient id="c-fold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1D4ED8" stop-opacity="0"/>
+      <stop offset="1" stop-color="#1A3FB8" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="tab" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#1D46C9"/>
+    </linearGradient>
+    <linearGradient id="flap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2D6BEA"/>
+      <stop offset="1" stop-color="#4C8DFF"/>
+    </linearGradient>
+    <linearGradient id="people-back" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#DCE2EC"/>
+      <stop offset="1" stop-color="#B9C3D3"/>
+    </linearGradient>
+    <linearGradient id="people" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E2E6EE"/>
+    </linearGradient>
+  </defs>
+
+  <g id="mark">
+    <!-- The C: a thick ring open on the right, its ends cut square to the curve. -->
+    <path id="c" fill="url(#c-face)" d="
+      M 707.6 270.7
+      A 330 330 0 1 0 718.6 741.4
+      L 641.6 664.4
+      A 221 221 0 1 1 634.2 333.2
+      Z"/>
+    <!-- The fold: a darker band on the inside of the lower curve, the ribbon in the renders. -->
+    <path fill="url(#c-fold)" d="
+      M 718.6 741.4
+      A 330 330 0 0 1 182 512
+      A 300 270 0 0 0 641.6 664.4
+      Z"/>
+
+    <!-- Three residents: the two behind a shade darker, so the one in front stands out. -->
+    <g fill="url(#people-back)">
+      <circle cx="362" cy="454" r="38"/>
+      <path d="M 298 606 v -26 a 64 60 0 0 1 128 0 v 26 a 12 12 0 0 1 -12 12 h -104 a 12 12 0 0 1 -12 -12 z"/>
+      <circle cx="574" cy="454" r="38"/>
+      <path d="M 510 606 v -26 a 64 60 0 0 1 128 0 v 26 a 12 12 0 0 1 -12 12 h -104 a 12 12 0 0 1 -12 -12 z"/>
+    </g>
+    <g fill="url(#people)">
+      <circle cx="468" cy="418" r="52"/>
+      <path d="M 384 626 v -48 a 84 80 0 0 1 168 0 v 48 a 14 14 0 0 1 -14 14 h -140 a 14 14 0 0 1 -14 -14 z"/>
+    </g>
+
+    <!-- The wallet tab with the rupee, set into the C's opening. -->
+    <path fill="url(#flap)" d="M 676 470 L 836 432 L 836 486 L 676 486 Z"/>
+    <path fill="url(#tab)" d="
+      M 676 486 H 836 V 640
+      Q 836 662 818 674
+      L 768 708 Q 756 716 744 708
+      L 694 674 Q 676 662 676 640 Z"/>
+    <g id="rupee" fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 726 538 H 790"/>
+      <path d="M 726 566 H 790"/>
+      <path d="M 726 538 H 742 a 30 30 0 0 1 0 60 H 726 L 782 650"/>
+    </g>
+  </g>
+</svg>
