@@ -64,7 +64,7 @@ const JOBS = [
  * rather than a screenshot so a transparent icon is really transparent, and so
  * the silhouette's black rupee can be turned into a hole.
  */
-async function render(page, { size, scale, background, mono }) {
+async function render(page, { size, scale, background, mono, keepAlpha }) {
   const svg = mono ? monochrome(SOURCE) : SOURCE;
   const dataUrl = await page.evaluate(
     async ({ svg, size, scale, background, mono, navy, nudge }) => {
@@ -119,8 +119,9 @@ async function render(page, { size, scale, background, mono }) {
   );
   const png = Buffer.from(dataUrl.split(',')[1], 'base64');
   // An icon on navy is opaque, and saying so matters: App Store Connect
-  // refuses an app icon that carries an alpha channel at all.
-  return background ? sharp(png).removeAlpha().png().toBuffer() : png;
+  // refuses an app icon that carries an alpha channel at all. Inside an .ico
+  // the opposite holds: Next.js's decoder accepts only RGBA PNGs there.
+  return background && !keepAlpha ? sharp(png).removeAlpha().png().toBuffer() : png;
 }
 
 /** An .ico holding PNG images, which every browser since IE has read. */
@@ -152,7 +153,7 @@ try {
     if (job.ico) {
       const images = [];
       for (const size of job.sizes)
-        images.push({ size, png: await render(page, { ...job, size }) });
+        images.push({ size, png: await render(page, { ...job, size, keepAlpha: true }) });
       writeFileSync(join(ROOT, job.ico), ico(images));
       console.log(`wrote ${job.ico}`);
     } else {
