@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -76,19 +76,12 @@ export default function SignIn() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ gap: spacing.xs }}>
-            <View
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                backgroundColor: colors.accent,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: spacing.md,
-              }}
-            >
-              <Text style={{ color: colors.accentInk, fontSize: 22, fontWeight: '700' }}>स</Text>
-            </View>
+            {/* The app icon itself, so the first screen matches the home screen. */}
+            <Image
+              source={require('../assets/icon.png')}
+              accessibilityIgnoresInvertColors
+              style={{ width: 44, height: 44, borderRadius: 12, marginBottom: spacing.md }}
+            />
             <Title>Compences</Title>
             <Body muted>Sign in, then enter your society code and pick your flat.</Body>
           </View>
