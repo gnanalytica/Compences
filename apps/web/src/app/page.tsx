@@ -31,6 +31,7 @@ import {
   type ThemeOption,
 } from './_landing/theme';
 import { Tour, type Chapter } from './_landing/tour';
+import { BrandMark } from '@/components/brand-mark';
 
 const FEATURES = [
   {
@@ -204,9 +205,7 @@ export default async function LandingPage(props: PageProps<'/'>) {
         <header className="border-border-base/60 sticky top-0 z-30 border-b bg-[var(--festival-wash)]/85 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-2.5">
             <Link href="/" className="inline-flex items-center gap-2">
-              <span className="from-accent to-ribbon text-accent-ink font-display grid size-9 place-items-center rounded-xl bg-linear-to-br text-lg font-bold shadow-sm">
-                स
-              </span>
+              <BrandMark className="size-9 rounded-xl shadow-sm" />
               <span className="font-display text-xl font-semibold tracking-tight">Compences</span>
             </Link>
             <nav aria-label="On this page" className="hidden items-center gap-6 text-sm lg:flex">

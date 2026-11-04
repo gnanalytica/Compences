@@ -67,6 +67,9 @@ function RootStack() {
         <Stack.Screen
           name="(tabs)"
           options={{
+            // iOS labels the back button with the previous screen's title;
+            // without one it shows the route group's name, "(tabs)".
+            title: 'Back',
             headerShown: false,
             contentStyle: { backgroundColor: colors.surface, paddingBottom: 0 },
           }}

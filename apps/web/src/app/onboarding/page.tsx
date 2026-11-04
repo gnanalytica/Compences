@@ -11,6 +11,7 @@ import { CreateFlow } from './create-flow';
 import { InviteFlow } from './invite-flow';
 import { JoinFlow } from './join-flow';
 import { withdrawJoinRequest } from './actions';
+import { BrandMark } from '@/components/brand-mark';
 
 export const metadata = { title: 'Join your society' };
 
@@ -64,9 +65,7 @@ export default async function OnboardingPage(props: PageProps<'/onboarding'>) {
   return (
     <main id="main" className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-12">
       <Link href="/" className="mb-8 inline-flex items-center gap-2 self-start">
-        <span className="bg-accent text-accent-ink grid size-8 place-items-center rounded-lg text-sm font-bold">
-          स
-        </span>
+        <BrandMark />
         <span className="text-lg font-semibold tracking-tight">Compences</span>
       </Link>
 

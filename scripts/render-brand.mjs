@@ -10,6 +10,9 @@
  *   apps/mobile/assets/favicon.png                    48, on navy
  *   apps/web/src/app/favicon.ico                16/32/48, on navy
  *   docs/store/play-icon-512.png                     512, on navy
+ *   apps/web/src/app/icon.png                        256, on navy
+ *   apps/web/src/app/apple-icon.png                  180, on navy
+ *   apps/web/src/components/brand-mark.png           128, on navy (the site's header mark)
  *
  * Change the SVG, run this, commit what it writes. It drives the Chromium that
  * Playwright installs, so it needs `playwright` resolvable (it is not a
@@ -56,6 +59,9 @@ const JOBS = [
   { out: 'apps/mobile/assets/splash-icon.png', size: 1024, scale: 1.0 },
   { out: 'apps/mobile/assets/favicon.png', size: 48, scale: 1.2, background: true },
   { out: 'docs/store/play-icon-512.png', size: 512, scale: 1.0, background: true },
+  { out: 'apps/web/src/app/icon.png', size: 256, scale: 1.0, background: true },
+  { out: 'apps/web/src/app/apple-icon.png', size: 180, scale: 1.0, background: true },
+  { out: 'apps/web/src/components/brand-mark.png', size: 128, scale: 1.0, background: true },
   { ico: 'apps/web/src/app/favicon.ico', sizes: [16, 32, 48], scale: 1.2, background: true },
 ];
 

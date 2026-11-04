@@ -53,7 +53,7 @@ Not oversights — none of these can live in a repository.
 | 2   | A support URL that is answered                                         | Both stores                                          |
 | 3   | Play content-rating questionnaire, and 18+ age rating on both          | Both stores                                          |
 | 4   | `SENTRY_DSN` / `EXPO_PUBLIC_SENTRY_DSN` set in the deploy environments | Nothing — both apps run inert without one, by design |
-| 5   | Apple Team ID, for iOS universal links                                 | iOS deep links only                                  |
+| 5   | ~~Apple Team ID, for iOS universal links~~ — done, `9225M8DT8T`        | —                                                    |
 | 6   | A legal review of the Privacy Policy and Terms                         | Judgement call; they are drafts                      |
 | 7   | **Sign in with Apple**: Apple key in the web env, Supabase provider on | App Store review (Guideline 4.8) — code is done      |
 | 8   | A way for the reviewers to get in — see below                          | Both stores' review                                  |
@@ -100,21 +100,16 @@ Android app links work: `assetlinks.json` is served from
 `/invite`. The fingerprint in that file is the SHA-256 of the certificate the
 EAS-managed keystore signs the APK with. Once the app is on Play with Play App
 Signing, Play re-signs it, so add Play's SHA-256 (Play Console → App
-integrity) as a second entry rather than replacing the first. iOS has no
-equivalent yet, so on an iPhone those two links open the
-website rather than the app — which works, but is not the same thing. Closing
-it needs:
+integrity) as a second entry rather than replacing the first.
 
-- `ios.associatedDomains: ["applinks:compences.com"]` in
-  `apps/mobile/app.json`;
-- an `apple-app-site-association` file served from
-  `apps/web/public/.well-known/`, naming `<TeamID>.com.compences.app` with the
-  `/join/*` and `/invite/*` paths;
-- the Associated Domains capability on the App ID.
-
-The Team ID is the only part that is not in the repository, and putting a
-placeholder there would be worse than leaving it out: a wrong one fails
-silently, at runtime, on somebody else's phone.
+iOS universal links work the same way: `ios.associatedDomains` in
+`apps/mobile/app.json` claims `applinks:compences.com`, and
+`apps/web/public/.well-known/apple-app-site-association` names
+`9225M8DT8T.com.compences.app` (Gnanalytica's Team ID) for `/join/*` and
+`/invite/*`. `next.config.ts` serves that extensionless file as
+`application/json`. EAS turns on the Associated Domains capability on the App
+ID when it builds. Apple's CDN caches the file, so a change to it can take a
+day to reach phones.
 
 ## After changing a dependency
 

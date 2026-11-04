@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ButtonLink } from '@/components/ui/button';
 import { LEGAL } from '@/lib/legal';
+import { BrandMark } from '@/components/brand-mark';
 
 /** Shared chrome for /privacy and /terms: the landing page's header and footer
  *  around a narrower column that reads comfortably at length. */
@@ -9,9 +10,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
     <div className="min-h-dvh">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
         <Link href="/" className="inline-flex items-center gap-2">
-          <span className="bg-accent text-accent-ink grid size-8 place-items-center rounded-lg text-sm font-bold">
-            स
-          </span>
+          <BrandMark />
           <span className="text-lg font-semibold tracking-tight">Compences</span>
         </Link>
         <ButtonLink href="/login" variant="secondary" size="sm">
@@ -38,6 +37,9 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             </Link>
             <Link href="/delete-account" className="underline underline-offset-4">
               Delete your account
+            </Link>
+            <Link href="/support" className="underline underline-offset-4">
+              Support
             </Link>
           </nav>
         </div>

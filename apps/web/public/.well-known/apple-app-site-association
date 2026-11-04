@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["9225M8DT8T.com.compences.app"],
+        "components": [
+          { "/": "/join/*", "comment": "Shared society join links" },
+          { "/": "/invite/*", "comment": "Per-flat invite codes" }
+        ]
+      }
+    ]
+  }
+}

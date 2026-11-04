@@ -132,7 +132,7 @@ without them.
 | Screenshots                  | Phone, and 7"/10" tablet for Play; 6.7" and 6.5" for the App Store | `supportsTablet` is true on iOS, so iPad screenshots are required too — or turn it off |
 | Feature graphic              | Play only, 1024×500                                                | —                                                                                      |
 | App icon                     | Already in `assets/`, 512×512 for Play                             | —                                                                                      |
-| Support URL                  | Both                                                               | A page or an email that is answered                                                    |
+| Support URL                  | Both                                                               | `https://compences.com/support` (`apps/web/src/app/(legal)/support`)                   |
 | Marketing URL                | Optional                                                           | `https://compences.com`                                                                |
 | Category                     | Play: Lifestyle or House & Home. App Store: Lifestyle              | —                                                                                      |
 | Content rating questionnaire | Play                                                               | Answer honestly: user-generated content, no ads                                        |

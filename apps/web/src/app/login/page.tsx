@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { LEGAL } from '@/lib/legal';
 import { LoginForm } from './login-form';
+import { BrandMark } from '@/components/brand-mark';
 
 export const metadata = { title: 'Sign in' };
 
@@ -11,9 +12,7 @@ export default async function LoginPage(props: { searchParams: Promise<{ next?: 
   return (
     <main id="main" className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-12">
       <Link href="/" className="mb-8 inline-flex items-center gap-2 self-start">
-        <span className="bg-accent text-accent-ink grid size-8 place-items-center rounded-lg text-sm font-bold">
-          स
-        </span>
+        <BrandMark />
         <span className="font-serif text-lg font-medium tracking-tight">Compences</span>
       </Link>
 
