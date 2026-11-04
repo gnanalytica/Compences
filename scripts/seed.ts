@@ -375,6 +375,43 @@ async function main() {
     suggested_by: memberFor('dev@example.com'),
   });
 
+  console.log('▸ putting a few neighbours on the marketplace');
+  const { data: listings } = await db
+    .from('listings')
+    .insert([
+      {
+        community_id: community.id,
+        membership_id: memberFor('dev@example.com')!,
+        unit_id: units?.[0]?.id ?? null,
+        category: 'home_food',
+        title: 'Fresh idly & dosa batter',
+        description: 'Ground every morning, no soda. Order by 8 pm for the next day.',
+        price_note: '₹80 a kg',
+        contact_phone: '+919845010404',
+      },
+      {
+        community_id: community.id,
+        membership_id: memberFor('esha@example.com')!,
+        unit_id: units?.[1]?.id ?? null,
+        category: 'tuition',
+        title: 'Hindi classes for kids (6–12)',
+        description: 'Saturday and Sunday mornings in the clubhouse. Reading, writing and stories.',
+        price_note: '₹1,200 a month',
+        contact_phone: '+919845010505',
+      },
+    ])
+    .select('id, membership_id');
+  const batter = listings?.find((row) => row.membership_id === memberFor('dev@example.com'));
+  if (batter) {
+    await db.from('listing_reviews').insert({
+      community_id: community.id,
+      listing_id: batter.id,
+      membership_id: memberFor('esha@example.com')!,
+      rating: 5,
+      body: 'Soft idlis every single time.',
+    });
+  }
+
   console.log('\n✓ Seeded “My Home Residency”.');
   console.log('  Society ID: MHR4827');
   console.log('  Sign in with a magic link as any of:');

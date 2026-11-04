@@ -146,27 +146,6 @@ export type Database = {
           }
         ]
       }
-      apple_refresh_tokens: {
-        Row: {
-          user_id: string
-          refresh_token: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          user_id: string
-          refresh_token: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          user_id?: string
-          refresh_token?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       announcement_reads: {
         Row: {
           announcement_id: string
@@ -353,6 +332,35 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      apple_refresh_tokens: {
+        Row: {
+          user_id: string
+          refresh_token: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          refresh_token: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          refresh_token?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apple_refresh_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           }
         ]
@@ -1253,6 +1261,65 @@ export type Database = {
           }
         ]
       }
+      event_vendors: {
+        Row: {
+          id: string
+          community_id: string
+          event_id: string
+          listing_id: string
+          note: string | null
+          added_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          community_id: string
+          event_id: string
+          listing_id: string
+          note?: string | null
+          added_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          community_id?: string
+          event_id?: string
+          listing_id?: string
+          note?: string | null
+          added_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_vendors_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_vendors_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_vendors_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_vendors_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       event_volunteers: {
         Row: {
           id: string
@@ -1883,6 +1950,150 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      listing_reviews: {
+        Row: {
+          id: string
+          community_id: string
+          listing_id: string
+          membership_id: string
+          rating: number
+          body: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          community_id: string
+          listing_id: string
+          membership_id: string
+          rating: number
+          body?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          community_id?: string
+          listing_id?: string
+          membership_id?: string
+          rating?: number
+          body?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_reviews_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_reviews_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_reviews_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      listings: {
+        Row: {
+          id: string
+          community_id: string
+          membership_id: string
+          unit_id: string | null
+          category: string
+          title: string
+          description: string | null
+          price_note: string | null
+          contact_phone: string
+          on_whatsapp: boolean
+          photo_path: string | null
+          available_until: string | null
+          status: string
+          removed_reason: string | null
+          removed_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          community_id: string
+          membership_id: string
+          unit_id?: string | null
+          category: string
+          title: string
+          description?: string | null
+          price_note?: string | null
+          contact_phone: string
+          on_whatsapp?: boolean
+          photo_path?: string | null
+          available_until?: string | null
+          status?: string
+          removed_reason?: string | null
+          removed_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          community_id?: string
+          membership_id?: string
+          unit_id?: string | null
+          category?: string
+          title?: string
+          description?: string | null
+          price_note?: string | null
+          contact_phone?: string
+          on_whatsapp?: boolean
+          photo_path?: string | null
+          available_until?: string | null
+          status?: string
+          removed_reason?: string | null
+          removed_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_removed_by_fkey"
+            columns: ["removed_by"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
             referencedColumns: ["id"]
           }
         ]
@@ -2763,6 +2974,17 @@ export type Database = {
           fund_carried: number | null
           fund_carried_in: number | null
           fund_moved_out: number | null
+        }
+        Relationships: [
+
+        ]
+      }
+      listing_ratings: {
+        Row: {
+          listing_id: string | null
+          community_id: string | null
+          review_count: number | null
+          average_rating: number | null
         }
         Relationships: [
 

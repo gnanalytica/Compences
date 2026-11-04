@@ -3928,3 +3928,304 @@ update public.notifications
 select test.eq(
   (select title from public.notifications where body = 'old' and kind = 'payment_declined'),
   'Receipt not confirmed: ₹5', 'a notification stored with the old wording is rewritten');
+
+-- ============================================================================
+-- 1103.0100 — a neighbour can sell to a neighbour
+-- ============================================================================
+-- Chitra (resident, A-101) sells idly batter. Hana (resident) buys it.
+-- Bala is committee and teaches Hindi. Esha is staff. Gita is in Lake View.
+
+reset role;
+select test.act_as('33333333-3333-4333-8333-333333333333');
+insert into public.listings (id, community_id, membership_id, unit_id, category, title,
+                             description, price_note, contact_phone)
+select 'dddddddd-0000-4000-8000-0000000000a1', 'aaaaaaaa-0000-4000-8000-000000000001',
+       app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'),
+       'bbbbbbbb-0000-4000-8000-000000000001', 'home_food', '  Idly & dosa batter  ',
+       'Fresh every morning.', '₹80 a kg', '98450 10303';
+select test.eq(
+  (select concat_ws(' | ', title, contact_phone, status) from public.listings
+    where id = 'dddddddd-0000-4000-8000-0000000000a1'),
+  'Idly & dosa batter | +919845010303 | active',
+  'a resident can post a listing, its title trimmed and the phone normalised');
+
+select test.raises(
+  $q$insert into public.listings (community_id, membership_id, category, title, contact_phone)
+     select 'aaaaaaaa-0000-4000-8000-000000000001',
+            (select id from public.memberships where user_id = '88888888-8888-4888-8888-888888888888'
+               and community_id = 'aaaaaaaa-0000-4000-8000-000000000001'),
+            'home_food', 'Posing as Hana', '9845010404'$q$,
+  'nobody posts a listing in somebody else''s name');
+select test.raises(
+  $q$insert into public.listings (community_id, membership_id, unit_id, category, title, contact_phone)
+     select 'aaaaaaaa-0000-4000-8000-000000000001',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'),
+            'bbbbbbbb-0000-4000-8000-000000000002', 'home_food', 'From somebody else''s flat', '9845010303'$q$,
+  'nor from a flat they do not live in');
+select test.raises(
+  $q$insert into public.listings (community_id, membership_id, category, title, contact_phone)
+     select 'aaaaaaaa-0000-4000-8000-000000000001',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'),
+            'home_food', 'No way to reach me', 'call me'$q$,
+  'a listing needs a phone number somebody can call');
+select test.raises(
+  $q$insert into public.listings (community_id, membership_id, category, title, contact_phone)
+     select 'aaaaaaaa-0000-4000-8000-000000000001',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'),
+            'weapons', 'Something odd', '9845010303'$q$,
+  'and a category the app knows');
+select test.raises(
+  $q$insert into public.listings (community_id, membership_id, category, title, contact_phone, status)
+     select 'aaaaaaaa-0000-4000-8000-000000000001',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'),
+            'other', 'Already removed', '9845010303', 'removed'$q$,
+  'a listing cannot start life taken down');
+select test.raises(
+  $q$insert into public.listings (community_id, membership_id, category, title, contact_phone, photo_path)
+     select 'aaaaaaaa-0000-4000-8000-000000000001',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'),
+            'other', 'Borrowed photo', '9845010303',
+            'aaaaaaaa-0000-4000-8000-000000000001/someone-else/pic.jpg'$q$,
+  'a listing''s photo comes from the seller''s own folder');
+
+-- The committee lives here too.
+reset role;
+select test.act_as('22222222-2222-4222-8222-222222222222');
+insert into public.listings (id, community_id, membership_id, category, title, contact_phone, on_whatsapp)
+select 'dddddddd-0000-4000-8000-0000000000a2', 'aaaaaaaa-0000-4000-8000-000000000001',
+       app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'),
+       'tuition', 'Hindi classes for kids', '+91 98450 10202', false;
+select test.eq(test.visible($q$select 1 from public.listings where id = 'dddddddd-0000-4000-8000-0000000000a2'$q$),
+  1::bigint, 'a committee member can post a listing too');
+
+-- Staff run the place; they do not trade on it.
+reset role;
+select test.act_as('55555555-5555-4555-8555-555555555555');
+select test.raises(
+  $q$insert into public.listings (community_id, membership_id, category, title, contact_phone)
+     select 'aaaaaaaa-0000-4000-8000-000000000001',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'),
+            'other', 'Staff side hustle', '9845010505'$q$,
+  'staff cannot post listings');
+
+-- Everyone in the society sees the board; nobody outside it does.
+reset role;
+select test.act_as('88888888-8888-4888-8888-888888888888');
+select test.eq(test.visible('select 1 from public.listings'), 2::bigint,
+  'a resident sees every listing on the board');
+reset role;
+select test.act_as('77777777-7777-4777-8777-777777777777');
+select test.eq(test.visible('select 1 from public.listings'), 0::bigint,
+  'another society sees none of them');
+select test.eq(test.visible('select 1 from public.listing_ratings'), 0::bigint,
+  'nor their ratings');
+reset role;
+select test.act_anon();
+select test.eq(test.visible('select 1 from public.listings'), 0::bigint,
+  'and nobody signed out does');
+select test.raises('select 1 from public.listing_ratings',
+  'the ratings view is not open to anyone signed out');
+
+-- Reviews: one each, never your own.
+reset role;
+select test.act_as('88888888-8888-4888-8888-888888888888');
+insert into public.listing_reviews (community_id, listing_id, membership_id, rating, body)
+select 'aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000a1',
+       app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'), 4, 'Soft idlis every time.';
+select test.raises(
+  $q$insert into public.listing_reviews (community_id, listing_id, membership_id, rating)
+     select 'aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000a1',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'), 1$q$,
+  'one review per neighbour per listing');
+select test.raises(
+  $q$insert into public.listing_reviews (community_id, listing_id, membership_id, rating)
+     select 'aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000a2',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'), 6$q$,
+  'a rating is one to five stars');
+update public.listing_reviews set rating = 5
+ where listing_id = 'dddddddd-0000-4000-8000-0000000000a1'
+   and membership_id = app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001');
+insert into public.listing_reviews (community_id, listing_id, membership_id, rating)
+select 'aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000a2',
+       app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'), 3;
+
+reset role;
+select test.act_as('11111111-1111-4111-8111-111111111111');
+insert into public.listing_reviews (community_id, listing_id, membership_id, rating)
+select 'aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000a1',
+       app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'), 4;
+select test.eq(
+  (select concat_ws(' | ', review_count, average_rating) from public.listing_ratings
+    where listing_id = 'dddddddd-0000-4000-8000-0000000000a1'),
+  '2 | 4.5', 'the board shows how many neighbours rated it and the average');
+
+reset role;
+select test.act_as('33333333-3333-4333-8333-333333333333');
+select test.raises(
+  $q$insert into public.listing_reviews (community_id, listing_id, membership_id, rating)
+     select 'aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000a1',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'), 5$q$,
+  'nobody reviews their own listing');
+select test.eq(
+  (select title from public.notifications
+    where kind = 'listing_review'
+      and user_id = '33333333-3333-4333-8333-333333333333'
+      and body like 'Hana Iyer%'),
+  '★★★★☆ for Idly & dosa batter',
+  'the seller is told about a new review, with its stars');
+
+reset role;
+select test.act_as('55555555-5555-4555-8555-555555555555');
+select test.raises(
+  $q$insert into public.listing_reviews (community_id, listing_id, membership_id, rating)
+     select 'aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000a1',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'), 5$q$,
+  'staff do not review, as they do not vote');
+
+reset role;
+select test.act_as('77777777-7777-4777-8777-777777777777');
+select test.raises(
+  $q$insert into public.listing_reviews (community_id, listing_id, membership_id, rating)
+     values ('aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000a1',
+             (select id from public.memberships
+               where user_id = '77777777-7777-4777-8777-777777777777' limit 1), 1)$q$,
+  'nor does somebody from another society');
+
+-- The seller edits their own; nobody else's.
+reset role;
+select test.act_as('88888888-8888-4888-8888-888888888888');
+update public.listings set title = 'Hana''s now' where id = 'dddddddd-0000-4000-8000-0000000000a1';
+reset role;
+select test.eq((select title from public.listings where id = 'dddddddd-0000-4000-8000-0000000000a1'),
+  'Idly & dosa batter', 'a neighbour cannot edit somebody else''s listing');
+select test.act_as('33333333-3333-4333-8333-333333333333');
+update public.listings set price_note = '₹90 a kg', status = 'paused'
+ where id = 'dddddddd-0000-4000-8000-0000000000a1';
+reset role;
+select test.eq(
+  (select concat_ws(' | ', price_note, status) from public.listings
+    where id = 'dddddddd-0000-4000-8000-0000000000a1'),
+  '₹90 a kg | paused', 'the seller can change the price and pause it');
+select test.act_as('88888888-8888-4888-8888-888888888888');
+select test.eq(test.visible($q$select 1 from public.listings where id = 'dddddddd-0000-4000-8000-0000000000a1'$q$),
+  0::bigint, 'a paused listing is off the board for neighbours');
+select test.raises(
+  $q$insert into public.listing_reviews (community_id, listing_id, membership_id, rating)
+     select 'aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000a2',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001'), 3$q$,
+  'and a second review of the same listing is still refused');
+reset role;
+select test.act_as('33333333-3333-4333-8333-333333333333');
+select test.raises(
+  $q$update public.listings set status = 'removed' where id = 'dddddddd-0000-4000-8000-0000000000a1'$q$,
+  'a seller cannot mark their own listing as taken down');
+update public.listings set status = 'active' where id = 'dddddddd-0000-4000-8000-0000000000a1';
+
+-- Taking one down.
+reset role;
+select test.act_as('55555555-5555-4555-8555-555555555555');
+select test.raises(
+  $q$update public.listings set title = 'Rewritten by staff'
+      where id = 'dddddddd-0000-4000-8000-0000000000a2'$q$,
+  'staff cannot rewrite somebody''s listing');
+update public.listings set status = 'removed', removed_reason = 'Duplicate of another ad'
+ where id = 'dddddddd-0000-4000-8000-0000000000a2';
+reset role;
+select test.eq(
+  (select concat_ws(' | ', l.status, l.removed_reason, p.full_name)
+     from public.listings l
+     join public.memberships m on m.id = l.removed_by
+     join public.profiles p on p.id = m.user_id
+    where l.id = 'dddddddd-0000-4000-8000-0000000000a2'),
+  'removed | Duplicate of another ad | Esha Patil',
+  'staff can take a listing down, with a reason, and it records who did');
+select test.eq(
+  (select body from public.notifications
+    where kind = 'listing_removed' and user_id = '22222222-2222-4222-8222-222222222222'),
+  'Duplicate of another ad', 'and the seller is told why');
+select test.act_as('88888888-8888-4888-8888-888888888888');
+select test.eq(test.visible($q$select 1 from public.listings where id = 'dddddddd-0000-4000-8000-0000000000a2'$q$),
+  0::bigint, 'a listing taken down is off the board');
+select test.eq(test.visible($q$select 1 from public.listing_reviews where listing_id = 'dddddddd-0000-4000-8000-0000000000a2'$q$),
+  0::bigint, 'and so are its reviews');
+reset role;
+select test.act_as('22222222-2222-4222-8222-222222222222');
+select test.eq(test.visible($q$select 1 from public.listings where id = 'dddddddd-0000-4000-8000-0000000000a2'$q$),
+  1::bigint, 'the seller can still see what was taken down');
+reset role;
+select test.act_as('55555555-5555-4555-8555-555555555555');
+update public.listings set status = 'active' where id = 'dddddddd-0000-4000-8000-0000000000a2';
+reset role;
+select test.eq(
+  (select concat_ws(' | ', status, coalesce(removed_reason, '-'), coalesce(removed_by::text, '-'))
+     from public.listings where id = 'dddddddd-0000-4000-8000-0000000000a2'),
+  'active | - | -', 'staff can put it back, and the takedown is cleared');
+
+-- Vendors for an event.
+reset role;
+select test.act_as('88888888-8888-4888-8888-888888888888');
+select test.raises(
+  $q$insert into public.event_vendors (community_id, event_id, listing_id, added_by)
+     select 'aaaaaaaa-0000-4000-8000-000000000001', 'cccccccc-0000-4000-8000-000000000001',
+            'dddddddd-0000-4000-8000-0000000000a1',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001')$q$,
+  'a resident cannot name an event''s vendors');
+reset role;
+select test.act_as('55555555-5555-4555-8555-555555555555');
+insert into public.event_vendors (community_id, event_id, listing_id, note, added_by)
+select 'aaaaaaaa-0000-4000-8000-000000000001', 'cccccccc-0000-4000-8000-000000000001',
+       'dddddddd-0000-4000-8000-0000000000a1', 'Breakfast stall',
+       app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001');
+select test.raises(
+  $q$insert into public.event_vendors (community_id, event_id, listing_id, added_by)
+     select 'aaaaaaaa-0000-4000-8000-000000000001', 'cccccccc-0000-4000-8000-000000000001',
+            'dddddddd-0000-4000-8000-0000000000a1',
+            app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001')$q$,
+  'a listing is a vendor for an event once');
+reset role;
+select test.eq(
+  (select title from public.notifications
+    where kind = 'event_vendor' and user_id = '33333333-3333-4333-8333-333333333333'),
+  'You are a vendor for ' || (select name from public.events where id = 'cccccccc-0000-4000-8000-000000000001'),
+  'staff can make a listing an event''s vendor, and the seller is told');
+select test.act_as('88888888-8888-4888-8888-888888888888');
+select test.eq(test.visible($q$select 1 from public.event_vendors where event_id = 'cccccccc-0000-4000-8000-000000000001'$q$),
+  1::bigint, 'residents see who supplies an event');
+reset role;
+select test.act_as('77777777-7777-4777-8777-777777777777');
+select test.raises(
+  $q$insert into public.event_vendors (community_id, event_id, listing_id, added_by)
+     select c.id, 'cccccccc-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000a2',
+            app.my_membership_id(c.id)
+       from public.communities c where c.slug = 'lake-view'$q$,
+  'another society cannot borrow this society''s event or vendor');
+
+-- Photos.
+reset role;
+select test.act_as('33333333-3333-4333-8333-333333333333');
+insert into storage.objects (bucket_id, name)
+select 'listing-photos',
+       'aaaaaaaa-0000-4000-8000-000000000001/'
+       || app.my_membership_id('aaaaaaaa-0000-4000-8000-000000000001') || '/batter.jpg';
+select test.raises(
+  $q$insert into storage.objects (bucket_id, name)
+     values ('listing-photos', 'aaaaaaaa-0000-4000-8000-000000000001/not-mine/batter.jpg')$q$,
+  'a seller uploads photos only to their own folder');
+reset role;
+select test.act_as('88888888-8888-4888-8888-888888888888');
+select test.eq(test.visible($q$select 1 from storage.objects where bucket_id = 'listing-photos'$q$),
+  1::bigint, 'a seller can upload a photo, and neighbours can see it');
+reset role;
+select test.act_as('77777777-7777-4777-8777-777777777777');
+select test.eq(test.visible($q$select 1 from storage.objects where bucket_id = 'listing-photos'$q$),
+  0::bigint, 'another society cannot');
+
+-- Deleting a listing takes its reviews and vendor slots with it.
+reset role;
+select test.act_as('33333333-3333-4333-8333-333333333333');
+delete from public.listings where id = 'dddddddd-0000-4000-8000-0000000000a1';
+reset role;
+select test.eq(
+  (select count(*)::int from public.listing_reviews where listing_id = 'dddddddd-0000-4000-8000-0000000000a1')
+  + (select count(*)::int from public.event_vendors where listing_id = 'dddddddd-0000-4000-8000-0000000000a1'),
+  0, 'a seller can delete their listing, and its reviews and vendor slots go with it');

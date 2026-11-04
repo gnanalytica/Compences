@@ -54,6 +54,7 @@ import {
 } from '../../../src/components/ui';
 import { Chip, ChipRow, ErrorText } from '../../../src/components/admin-ui';
 import { DateField } from '../../../src/components/date-field';
+import { ManageVendorsCard } from '../../../src/components/market-ui';
 import { SuggestInput, findOrCreateCatalogueItem } from '../../../src/components/catalogue-ui';
 import {
   ActivityTypeChips,
@@ -195,6 +196,7 @@ export default function ManageEvent() {
           <DetailsCard key={`details:${data.event.id}`} data={data} onChange={refresh} />
           <BudgetCard data={data} onChange={refresh} />
           <ActivitiesCard data={data} onChange={refresh} />
+          <ManageVendorsCard eventId={data.event.id} />
           <View style={{ height: spacing.xl }} />
         </ScrollView>
       </KeyboardAvoidingView>

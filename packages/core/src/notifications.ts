@@ -36,6 +36,12 @@ export function notificationWebPath(data: NotificationData | null | undefined): 
     // Something only the committee can settle, such as an overspent event.
     case 'todo':
       return `${base}/todo`;
+    case 'listing': {
+      const listing = typeof data?.listing_id === 'string' ? data.listing_id : null;
+      return listing ? `${base}/market/${listing}` : `${base}/market`;
+    }
+    case 'market':
+      return `${base}/market`;
     case 'join':
       return '/onboarding';
     default:
@@ -63,6 +69,12 @@ export function notificationAppRoute(data: NotificationData | null | undefined):
       return '/(tabs)/money';
     case 'todo':
       return '/manage';
+    case 'listing': {
+      const listing = typeof data?.listing_id === 'string' ? data.listing_id : null;
+      return listing ? `/listing/${listing}` : '/market';
+    }
+    case 'market':
+      return '/market';
     case 'join':
       return '/join';
     default:

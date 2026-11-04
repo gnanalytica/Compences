@@ -25,6 +25,8 @@ import {
   pickNextEvent,
 } from '../../src/lib/events';
 import { fetchSetupFacts } from '../../src/lib/setup';
+import { supabase } from '../../src/lib/supabase';
+import { today } from '../../src/components/date-field';
 import { groupTodo, useTodoItems } from '../../src/lib/todo';
 import { useCommunityData } from '../../src/lib/use-community-data';
 import {
@@ -104,6 +106,18 @@ export default function Home() {
     `home:setup:${setupOpen}:${activeCommunity?.address ?? ''}:${activeCommunity?.upi_vpa ?? ''}:${activeCommunity?.catalogue_reviewed_at ?? ''}`,
     async () => (setupOpen && activeCommunity ? fetchSetupFacts(activeCommunity) : null),
   );
+
+  // How much is on the marketplace, for the line that points residents to it.
+  // A count, not the listings: Home is not the place to browse them.
+  const market = useCommunityData('market:count', async (communityId) => {
+    const { count } = await supabase
+      .from('listings')
+      .select('id', { count: 'exact', head: true })
+      .eq('community_id', communityId)
+      .eq('status', 'active')
+      .or(`available_until.is.null,available_until.gte.${today()}`);
+    return count ?? 0;
+  });
 
   if (loading && !data) {
     return (
@@ -282,6 +296,24 @@ export default function Home() {
             </Card>
           </>
         ) : null}
+
+        {/* The marketplace, where residents will find it: most of them never
+            open the drawer, and "can I sell my batter here?" is a question
+            for the screen they open every day. */}
+        <SectionLabel>From your neighbours</SectionLabel>
+        <Card style={{ paddingVertical: spacing.sm }}>
+          <LinkRow
+            label="Marketplace"
+            detail={
+              market.data
+                ? `${market.data} ${market.data === 1 ? 'thing' : 'things'} neighbours make, teach and offer`
+                : can(role, 'marketplace:post')
+                  ? 'Home food, classes, festive goods — post what you offer'
+                  : 'Home food, classes, festive goods and more'
+            }
+            onPress={() => router.push('/market')}
+          />
+        </Card>
 
         {can(role, 'campaigns:propose') ? (
           <Card style={{ gap: spacing.sm }}>

@@ -22,6 +22,7 @@ import {
   Plus,
   Scale,
   Settings2,
+  Store,
   UserRound,
   Users,
   Wallet,
@@ -53,6 +54,8 @@ const MAIN: Item[] = [
   { href: '/people', label: 'People', icon: Users },
   { href: '/money', label: 'Money', icon: Wallet },
   { href: '/ideas', label: 'Ideas', icon: Lightbulb },
+  // Every member: residents post and buy, staff and the committee moderate.
+  { href: '/market', label: 'Marketplace', icon: Store },
   { href: '/me', label: 'Me', icon: UserRound },
 ];
 

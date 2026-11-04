@@ -99,9 +99,11 @@ export default function PrivacyPage() {
           <Strong>What you do in your community.</Strong> Announcements you post or read, comments
           and reactions you leave, votes you cast in polls, event tasks assigned to you, activities
           you sign up to perform in, volunteer roles you take on, and activity ideas you suggest or
-          show interest in. When you sign up for an activity, organisers may ask for details such as
-          the type of performance, age group, experience and any special requirements — share only
-          what they need.
+          show interest in. If you post in the marketplace, what you list — its title, description,
+          price, category, photo, the flat it is from and the phone number you give for it — and the
+          ratings and reviews you leave on other members’ listings. When you sign up for an
+          activity, organisers may ask for details such as the type of performance, age group,
+          experience and any special requirements — share only what they need.
         </p>
         <p>
           <Strong>Money records.</Strong> Contributions to an event fund — the amount, the payment
@@ -196,6 +198,11 @@ export default function PrivacyPage() {
           </li>
           <li>Your ballot in a poll is readable only by you; others see the results.</li>
           <li>
+            A marketplace listing — including the phone number you type on it, your name and your
+            flat — and the reviews on it are visible to every member of your community, not outside
+            it. The phone number on your profile is never shown on a listing.
+          </li>
+          <li>
             Admins can see member details including phone numbers, join requests, all contributions
             and expenses under review, imported bank statement lines, and the audit trail for their
             community.
@@ -278,8 +285,8 @@ export default function PrivacyPage() {
         <LegalList>
           <li>
             your profile, community memberships, flat assignments, join and move requests, votes,
-            sign-ups, comments and reactions, WhatsApp link, notification tokens and notifications
-            are deleted;
+            sign-ups, comments and reactions, marketplace listings and reviews, WhatsApp link,
+            notification tokens and notifications are deleted;
           </li>
           <li>
             contributions, expenses and audit entries you were part of are{' '}

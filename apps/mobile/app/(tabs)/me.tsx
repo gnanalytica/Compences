@@ -106,6 +106,15 @@ export default function Me() {
             detail="Suggest ideas and vote on them"
             onPress={() => router.push('/ideas')}
           />
+          <LinkRow
+            label="Marketplace"
+            detail={
+              can(viewRole, 'marketplace:post')
+                ? 'Sell to neighbours, and your listings'
+                : 'What residents make, teach and offer'
+            }
+            onPress={() => router.push('/market')}
+          />
         </Card>
 
         {participant && data?.registrations.length ? (

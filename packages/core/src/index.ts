@@ -25,3 +25,4 @@ export * from './audit';
 export * from './account';
 export * from './activities';
 export * from './comments';
+export * from './marketplace';

@@ -65,6 +65,10 @@ const KNOWN_DB_MESSAGES = [
   'Only the committee can correct the amount of a payment',
   'A corrected amount must be more than zero',
   'This event is closed; its ledger cannot be changed',
+  'This listing was taken down by the committee. Ask them to restore it.',
+  'Only staff or the committee can take a listing down',
+  'Staff can take a listing down or restore it, not rewrite it',
+  'A listing cannot move to another society or seller',
 ];
 
 /** Constraint names worth their own explanation. */
@@ -80,6 +84,10 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   units_number_not_blank: 'Give the flat a number.',
   communities_pincode_format: 'Enter a 6-digit PIN code.',
   communities_address_length: 'Keep the address under 300 characters.',
+  listings_phone_e164: 'Enter a phone number like 98765 43210, or with its country code.',
+  listings_title_length: 'Say what you are offering in 3 to 120 characters.',
+  listing_reviews_one_each: 'You have already reviewed this. Edit your review instead.',
+  event_vendors_once: 'That listing is already a vendor for this event.',
 };
 
 /**
