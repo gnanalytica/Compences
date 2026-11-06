@@ -380,9 +380,14 @@ export default function Join() {
   );
 }
 
+/** Flats shown before a tower is picked or a number typed, so the list stays quick. */
+const UNNARROWED_LIMIT = 60;
+
 /**
  * Picks one flat out of a few hundred: choose the tower, then type to narrow
- * the flat numbers. Shows at most 60 matches so the list stays quick.
+ * the flat numbers. Once either is done every match shows: a tower can hold
+ * more than the first list's 60, and a cut there hid real flats (E-802 in an
+ * 81-flat tower) from residents who had no reason to type.
  */
 function FlatPicker({
   units,
@@ -425,6 +430,7 @@ function FlatPicker({
       (unit) => !needle || unitLabel(unit).toUpperCase().replace(/[\s-]/g, '').includes(needle),
     )
     .sort((a, b) => unitLabel(a).localeCompare(unitLabel(b), undefined, { numeric: true }));
+  const limit = block === null && !needle ? UNNARROWED_LIMIT : matches.length;
 
   return (
     <View style={{ gap: spacing.sm }}>
@@ -450,15 +456,17 @@ function FlatPicker({
       />
       {matches.length ? (
         <ChipRow>
-          {matches.slice(0, 60).map((unit) => (
+          {matches.slice(0, limit).map((unit) => (
             <Chip key={unit.id} label={unitLabel(unit)} onPress={() => onPick(unit.id)} />
           ))}
         </ChipRow>
       ) : (
         <Caption>No flat matches. Check the tower and number.</Caption>
       )}
-      {matches.length > 60 ? (
-        <Caption>Showing 60 of {matches.length}. Pick a tower or type your flat number.</Caption>
+      {matches.length > limit ? (
+        <Caption>
+          Showing {limit} of {matches.length}. Pick a tower or type your flat number.
+        </Caption>
       ) : null}
     </View>
   );
