@@ -22,7 +22,11 @@ env:
 jobs:
   database:
     name: Schema & RLS
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest: the step below installs postgresql-16
+    # from the distribution's own packages, and the image "latest" moved to in
+    # November 2026 (26.04) no longer carries that version. Moving on means
+    # choosing the PostgreSQL version here on purpose, not inheriting one.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
