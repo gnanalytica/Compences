@@ -15,29 +15,31 @@ worse problem than one that was never filed.
 
 ## Collected, and linked to you
 
-| What                          | Where it lives                                                                | Why                                             | Optional?                                      |
-| ----------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------- |
-| Name                          | `profiles.full_name`                                                          | Your neighbours need to know who is on the list | Required                                       |
-| Email address                 | `profiles.email`, `auth.users`                                                | It is how you sign in                           | Required                                       |
-| Phone number                  | `profiles.phone`, `join_requests.claimed_phone`                               | So staff and the committee can reach you        | Required — asked when founding or joining      |
-| Profile photo                 | `profiles.avatar_url` (from Google; Apple sends none)                         | Shown beside your name                          | Optional                                       |
-| Which society, which flat     | `memberships`, `unit_occupants`, `units`                                      | The whole product; also who may read what       | Required                                       |
-| Join requests                 | `join_requests`                                                               | The admin approves or declines                  | Required to join that way                      |
-| Move-in / move-out requests   | `unit_change_requests`                                                        | The admin records who lives where               | Optional                                       |
-| Invite codes tried            | `invite_code_attempts.code_tried`                                             | Rate-limits brute force                         | Required                                       |
-| Contributions                 | `contributions` — amount, UPI reference, receipt number                       | The society ledger                              | Optional (you need not contribute)             |
-| Expenses you filed            | `expenses` — vendor, amount, bill                                             | The society ledger                              | Staff and committee only                       |
-| Bills and payment screenshots | `storage.bills`, `storage.payment-proofs` (both private)                      | Proof behind a ledger line                      | Optional                                       |
-| Votes, sign-ups, volunteering | `poll_votes`, `suggestion_votes`, `activity_participants`, `event_volunteers` | Taking part                                     | Optional                                       |
-| Things you wrote              | `activity_suggestions`, `comments`, `comment_reactions`, `announcements`      | Taking part                                     | Optional                                       |
-| Marketplace listings          | `listings` — title, details, price, flat, **a phone number you type**, photo  | Neighbours find what you sell or teach          | Optional (residents and committee only)        |
-| Marketplace reviews           | `listing_reviews` — star rating and text                                      | Neighbours rate what they bought                | Optional                                       |
-| Listing photos                | `storage.listing-photos` (private; readable by your society)                  | The picture on a listing                        | Optional                                       |
-| Apple sign-in token           | `apple_refresh_tokens` (service-role only)                                    | Revoked at Apple when you delete your account   | Only if you sign in with Apple                 |
-| Push notification token       | `device_push_tokens.token`, plus platform and app version                     | Sending you a notification                      | Optional — declining notifications stores none |
-| WhatsApp number and messages  | `whatsapp_links`, `whatsapp_messages`                                         | Only if you use the WhatsApp bot                | Optional                                       |
-| Bank statement lines          | `bank_transactions` — date, amount, narration, counterparty name (staff only) | Matching contributions to the bank              | Admin imports; the CSV itself is not stored    |
-| Audit trail                   | `audit_log` — the fields that moved, and who moved them                       | So a ledger cannot be quietly corrected         | Required                                       |
+| What                          | Where it lives                                                                | Why                                                        | Optional?                                      |
+| ----------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------- |
+| Name                          | `profiles.full_name`                                                          | Your neighbours need to know who is on the list            | Required                                       |
+| Email address                 | `profiles.email`, `auth.users`                                                | It is how you sign in                                      | Required                                       |
+| Phone number                  | `profiles.phone`, `join_requests.claimed_phone`                               | So staff and the committee can reach you                   | Required — asked when founding or joining      |
+| Profile photo                 | `profiles.avatar_url` (from Google; Apple sends none)                         | Shown beside your name                                     | Optional                                       |
+| Which society, which flat     | `memberships`, `unit_occupants`, `units`                                      | The whole product; also who may read what                  | Required                                       |
+| Join requests                 | `join_requests`                                                               | The admin approves or declines                             | Required to join that way                      |
+| Move-in / move-out requests   | `unit_change_requests`                                                        | The admin records who lives where                          | Optional                                       |
+| Invite codes tried            | `invite_code_attempts.code_tried`                                             | Rate-limits brute force                                    | Required                                       |
+| Contributions                 | `contributions` — amount, UPI reference, receipt number                       | The society ledger                                         | Optional (you need not contribute)             |
+| Expenses you filed            | `expenses` — vendor, amount, bill                                             | The society ledger                                         | Staff and committee only                       |
+| Bills and payment screenshots | `storage.bills`, `storage.payment-proofs` (both private)                      | Proof behind a ledger line                                 | Optional                                       |
+| Votes, sign-ups, volunteering | `poll_votes`, `suggestion_votes`, `activity_participants`, `event_volunteers` | Taking part                                                | Optional                                       |
+| Things you wrote              | `activity_suggestions`, `comments`, `comment_reactions`, `announcements`      | Taking part                                                | Optional                                       |
+| Marketplace listings          | `listings` — title, details, price, flat, **a phone number you type**, photo  | Neighbours find what you sell or teach                     | Optional (residents and committee only)        |
+| Marketplace reviews           | `listing_reviews` — star rating and text                                      | Neighbours rate what they bought                           | Optional                                       |
+| Listing photos                | `storage.listing-photos` (private; readable by your society)                  | The picture on a listing                                   | Optional                                       |
+| Reports you made              | `content_reports` — what it is about, the reason, anything you added          | Staff and the committee take down what should not be there | Optional                                       |
+| People you blocked            | `member_blocks`                                                               | You stop seeing what they post                             | Optional                                       |
+| Apple sign-in token           | `apple_refresh_tokens` (service-role only)                                    | Revoked at Apple when you delete your account              | Only if you sign in with Apple                 |
+| Push notification token       | `device_push_tokens.token`, plus platform and app version                     | Sending you a notification                                 | Optional — declining notifications stores none |
+| WhatsApp number and messages  | `whatsapp_links`, `whatsapp_messages`                                         | Only if you use the WhatsApp bot                           | Optional                                       |
+| Bank statement lines          | `bank_transactions` — date, amount, narration, counterparty name (staff only) | Matching contributions to the bank                         | Admin imports; the CSV itself is not stored    |
+| Audit trail                   | `audit_log` — the fields that moved, and who moved them                       | So a ledger cannot be quietly corrected                    | Required                                       |
 
 ## Collected, and **not** linked to you
 
@@ -95,3 +97,17 @@ and everything personal attached to it, keeps ledger rows with the link to you
 removed, and refuses only while you are the last committee member of a society
 that still has other members. The in-app path is Settings on the web and Me on
 the phone; the web page Play requires is `/delete-account`.
+
+Reports you made and your blocks go with the account. A report about
+something **you** posted stays as a closed record — the reason, what was
+decided and up to 280 characters of what it said — with the link to you
+removed, so there is a record of what a committee took down and why.
+
+## Reports and blocks
+
+Migration `20261115000100`. Who made a report is stored, so the same person
+cannot report the same thing twice and can be told what was decided, and is
+shown to **nobody in the society**: staff and the committee read reports
+through `reports_to_review()`, which does not return it, and the person who
+posted the thing is never told. Who you have blocked is readable only by you;
+the committee is told that somebody blocked that member, not who.

@@ -66,13 +66,13 @@ own definition says so; the Privacy Policy lists them anyway.
 
 ### App activity
 
-| Data type                    | Collected | Required or optional | Purposes          | Note                                                                                                         |
-| ---------------------------- | --------- | -------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
-| App interactions             | **No**    | —                    | —                 | There is no analytics SDK. The audit trail records changes to the society's records, not your use of the app |
-| Other user-generated content | Yes       | Optional             | App functionality | Votes, activity sign-ups, volunteer roles, marketplace listings and reviews                                  |
-| In-app search history        | No        | —                    | —                 | —                                                                                                            |
-| Installed apps               | No        | —                    | —                 | —                                                                                                            |
-| Other actions                | No        | —                    | —                 | —                                                                                                            |
+| Data type                    | Collected | Required or optional | Purposes          | Note                                                                                                            |
+| ---------------------------- | --------- | -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| App interactions             | **No**    | —                    | —                 | There is no analytics SDK. The audit trail records changes to the society's records, not your use of the app    |
+| Other user-generated content | Yes       | Optional             | App functionality | Votes, activity sign-ups, volunteer roles, marketplace listings and reviews, reports you make and who you block |
+| In-app search history        | No        | —                    | —                 | —                                                                                                               |
+| Installed apps               | No        | —                    | —                 | —                                                                                                               |
+| Other actions                | No        | —                    | —                 | —                                                                                                               |
 
 ### App info and performance
 

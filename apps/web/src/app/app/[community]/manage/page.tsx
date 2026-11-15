@@ -4,6 +4,7 @@ import {
   CalendarCog,
   ChevronRight,
   ClipboardCheck,
+  Flag,
   Library,
   Scale,
   Send,
@@ -58,6 +59,14 @@ export default async function ManagePage(props: PageProps<'/app/[community]/mana
 
   // Each row carries the capability its page checks, so it is never an
   // invitation to somewhere that will turn you away.
+  if (can(role, 'reports:review')) {
+    rows.push({
+      href: `${base}/admin/reports`,
+      label: 'Reports',
+      detail: 'Listings, reviews and comments neighbours have reported',
+      icon: Flag,
+    });
+  }
   if (can(role, 'payments:record')) {
     rows.push({
       href: `${base}/admin/reconcile`,

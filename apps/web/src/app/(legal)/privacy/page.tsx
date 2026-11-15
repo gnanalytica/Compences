@@ -101,9 +101,11 @@ export default function PrivacyPage() {
           you sign up to perform in, volunteer roles you take on, and activity ideas you suggest or
           show interest in. If you post in the marketplace, what you list — its title, description,
           price, category, photo, the flat it is from and the phone number you give for it — and the
-          ratings and reviews you leave on other members’ listings. When you sign up for an
-          activity, organisers may ask for details such as the type of performance, age group,
-          experience and any special requirements — share only what they need.
+          ratings and reviews you leave on other members’ listings. If you report a listing, a
+          review or a comment, we keep the report: what it was about, the reason you picked and
+          anything you added. If you block another member, we keep who you blocked. When you sign up
+          for an activity, organisers may ask for details such as the type of performance, age
+          group, experience and any special requirements — share only what they need.
         </p>
         <p>
           <Strong>Money records.</Strong> Contributions to an event fund — the amount, the payment
@@ -203,6 +205,13 @@ export default function PrivacyPage() {
             it. The phone number on your profile is never shown on a listing.
           </li>
           <li>
+            A report you make about a listing, a review or a comment is read by your community’s
+            staff and committee, who decide what to do about it, <Strong>without your name</Strong>:
+            who made a report is not shown to them, or to the person who posted it. Who you have
+            blocked is visible only to you. The committee is told that somebody blocked that member,
+            not who.
+          </li>
+          <li>
             Admins can see member details including phone numbers, join requests, all contributions
             and expenses under review, imported bank statement lines, and the audit trail for their
             community.
@@ -285,8 +294,14 @@ export default function PrivacyPage() {
         <LegalList>
           <li>
             your profile, community memberships, flat assignments, join and move requests, votes,
-            sign-ups, comments and reactions, marketplace listings and reviews, WhatsApp link,
-            notification tokens and notifications are deleted;
+            sign-ups, comments and reactions, marketplace listings and reviews, reports you made,
+            your blocks, WhatsApp link, notification tokens and notifications are deleted;
+          </li>
+          <li>
+            if something you posted was reported, the record of that report — why it was reported,
+            what was decided and a short excerpt of what it said — is{' '}
+            <Strong>kept but no longer linked to your account</Strong>, so there is a record of what
+            a community’s committee took down and why;
           </li>
           <li>
             contributions, expenses and audit entries you were part of are{' '}

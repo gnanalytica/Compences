@@ -42,6 +42,7 @@ import {
 } from '@/components/listing-bits';
 import { deleteListing, deleteReview, restoreListing, setListingPaused } from '../actions';
 import { ReviewForm, TakeDownForm } from './listing-forms';
+import { ReportControls } from '@/components/report-forms';
 
 export const metadata = { title: 'Marketplace' };
 
@@ -56,6 +57,9 @@ export const metadata = { title: 'Marketplace' };
  *
  * Notifications about a listing (a new review, a take-down) land here, so the
  * seller sees the same page a neighbour does, with their own controls on top.
+ *
+ * Anybody else can report the listing or any review on it, and block whoever
+ * wrote it. Nobody is offered either on something of their own.
  */
 export default async function ListingPage(props: PageProps<'/app/[community]/market/[listing]'>) {
   const { community: slug, listing: listingId } = await props.params;
@@ -378,6 +382,17 @@ export default async function ListingPage(props: PageProps<'/app/[community]/mar
                         </button>
                       </form>
                     ) : null}
+                    {review.membershipId !== membership.id ? (
+                      <div className="mt-2">
+                        <ReportControls
+                          slug={slug}
+                          kind="review"
+                          subjectId={review.id}
+                          authorId={review.membershipId}
+                          authorName={review.name}
+                        />
+                      </div>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -389,6 +404,22 @@ export default async function ListingPage(props: PageProps<'/app/[community]/mar
               />
             ) : null}
           </Card>
+
+          {/* Under everything else, where somebody who has read the listing
+              and does not like it will be. Blocking the seller leaves nothing
+              on this page, so that goes back to the board. */}
+          {isMine ? null : (
+            <div className="px-1">
+              <ReportControls
+                slug={slug}
+                kind="listing"
+                subjectId={listing.id}
+                authorId={listing.membershipId}
+                authorName={listing.sellerName}
+                blockNext={board}
+              />
+            </div>
+          )}
         </div>
       </PageBody>
     </>

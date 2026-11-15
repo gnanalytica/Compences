@@ -42,6 +42,9 @@ export function notificationWebPath(data: NotificationData | null | undefined): 
     }
     case 'market':
       return `${base}/market`;
+    // Something a neighbour reported, for staff and the committee to decide.
+    case 'reports':
+      return `${base}/admin/reports`;
     case 'join':
       return '/onboarding';
     default:
@@ -75,6 +78,8 @@ export function notificationAppRoute(data: NotificationData | null | undefined):
     }
     case 'market':
       return '/market';
+    case 'reports':
+      return '/admin/reports';
     case 'join':
       return '/join';
     default:

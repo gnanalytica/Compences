@@ -115,6 +115,13 @@ export default function Me() {
             }
             onPress={() => router.push('/market')}
           />
+          {/* Where a block is undone. Always here, blocked anybody or not, so
+              the Block button elsewhere can say where to find it. */}
+          <LinkRow
+            label="Blocked people"
+            detail="Neighbours whose posts you have hidden"
+            onPress={() => router.push('/blocked')}
+          />
         </Card>
 
         {participant && data?.registrations.length ? (

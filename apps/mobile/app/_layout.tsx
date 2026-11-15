@@ -86,6 +86,8 @@ function RootStack() {
         <Stack.Screen name="listing/[id]" options={{ title: '' }} />
         <Stack.Screen name="listing/new" options={{ title: 'Post a listing' }} />
         <Stack.Screen name="listing/edit/[id]" options={{ title: 'Edit listing' }} />
+        <Stack.Screen name="blocked" options={{ title: 'Blocked people' }} />
+        <Stack.Screen name="admin/reports" options={{ title: 'Reported by neighbours' }} />
         <Stack.Screen name="admin/member/[id]" options={{ title: 'Resident' }} />
         <Stack.Screen name="admin/bills" options={{ title: 'Bills' }} />
         <Stack.Screen name="admin/bill" options={{ title: 'Bill' }} />

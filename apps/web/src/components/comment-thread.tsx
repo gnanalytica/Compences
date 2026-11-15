@@ -3,6 +3,7 @@ import { relativeTime, startsTurn, summarizeReactions } from '@compences/core';
 import { getSupabase } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 import { CommentForm, CommentReactions, DeleteCommentButton } from './comment-forms';
+import { CommentReport } from './report-forms';
 
 export type CommentSubject = { eventId: string } | { suggestionId: string };
 
@@ -119,6 +120,16 @@ export async function CommentThread({
                         eventSlug={eventSlug}
                       />
                     ) : null}
+                    {/* On anybody's message but your own: say it should not be
+                        here, or stop seeing what they write. */}
+                    {mine ? null : (
+                      <CommentReport
+                        slug={slug}
+                        commentId={comment.id}
+                        authorId={comment.membership_id}
+                        authorName={name}
+                      />
+                    )}
                   </CommentReactions>
                 </div>
               </li>

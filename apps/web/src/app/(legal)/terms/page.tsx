@@ -193,6 +193,11 @@ export default function TermsPage() {
           <li>send spam through the WhatsApp bot, notifications or the API; or</li>
           <li>use {LEGAL.product} in breach of any applicable law.</li>
         </LegalList>
+        <p>
+          There is no tolerance on {LEGAL.product} for objectionable content or for abusive
+          behaviour towards other members. Anything that breaks these rules can be taken down, and
+          whoever posted it can be removed from their community or have their account ended.
+        </p>
       </LegalSection>
 
       <LegalSection id="your-content" title="Your content">
@@ -315,6 +320,20 @@ export default function TermsPage() {
       </LegalSection>
 
       <LegalSection id="grievances" title="Grievances and reporting content">
+        <p>
+          Every listing, review and comment another member posted has a <Strong>Report</Strong>{' '}
+          option beside it, in the mobile app and on the website. A report goes to your community’s
+          staff and committee, who look at it within 24 hours and take down what breaks these terms.
+          Nobody in your community — not the person who posted it, and not the committee — is told
+          who made the report.
+        </p>
+        <p>
+          You can also <Strong>block</Strong> another member from anything they have posted. You
+          stop seeing their listings, reviews and comments straight away; they are not told, and
+          your community’s committee is told only that somebody blocked them. You can undo a block
+          at any time from <Strong>Settings</Strong> on the web or <Strong>Me</Strong> in the mobile
+          app.
+        </p>
         <p>
           If something on {LEGAL.product} breaks these terms or the law — for example content that
           is defamatory, harassing, impersonates someone or shares someone’s personal data without a

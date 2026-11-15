@@ -62,6 +62,10 @@ function detailRoute(item: TodoItem): Href {
     // they are already thinking about flats.
     case 'flat_change':
       return '/admin/society';
+    // The thing reported has to be read before it is decided, so the
+    // decision is made on the screen that shows it.
+    case 'report_to_review':
+      return '/admin/reports';
     // Paying somebody back needs the screenshot of the transfer, so it has a
     // screen of its own rather than a button here.
     case 'overspent':
@@ -253,10 +257,12 @@ function actionsFor(kind: TodoKind, id: string): Action[] {
             supabase.from('activity_suggestions').update({ status: 'declined' }).eq('id', id),
         },
       ];
-    // Both need a screen of their own — fixing a bill, and paying somebody
-    // back with the screenshot of the transfer — so the card opens it.
+    // These need a screen of their own — fixing a bill, paying somebody back
+    // with the screenshot of the transfer, reading what a neighbour reported
+    // — so the card opens it.
     case 'bill_sent_back':
     case 'overspent':
+    case 'report_to_review':
       return [];
   }
 }
