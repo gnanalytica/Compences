@@ -22,6 +22,6 @@ export const LEGAL = {
   grievanceOfficer: 'Grievance Officer',
   grievanceOfficerName: 'Sandeep Pvn',
   grievancePhone: '+91 99808 56880',
-  effectiveDate: '3 November 2026',
+  effectiveDate: '15 November 2026',
   courts: 'Bengaluru, Karnataka',
 } as const;

@@ -50,6 +50,10 @@ function detailHref(base: string, item: TodoItem): string | null {
       return event ? `${base}/events/${event}#vote` : `${base}/suggest`;
     case 'overspent':
       return event ? `${base}/events/${event}#money` : null;
+    // The thing reported has to be read before it is decided, so the
+    // decision is made on the page that shows it.
+    case 'report_to_review':
+      return `${base}/admin/reports`;
   }
 }
 
@@ -62,6 +66,7 @@ const DETAIL_LABEL: Record<TodoKind, string> = {
   suggestion_to_review: 'See the event',
   flat_change: 'See everyone and their flats',
   overspent: 'See the event’s money',
+  report_to_review: 'See what was reported',
 };
 
 /**
@@ -152,7 +157,9 @@ export default async function TodoPage(props: PageProps<'/app/[community]/todo'>
                           fixHref={href}
                         />
 
-                        {href && item.kind !== 'bill_sent_back' ? (
+                        {href &&
+                        item.kind !== 'bill_sent_back' &&
+                        item.kind !== 'report_to_review' ? (
                           <Link
                             href={href}
                             className="text-accent inline-flex items-center gap-1 text-xs hover:underline"
@@ -317,6 +324,13 @@ function TodoActions({
       return fixHref ? (
         <ButtonLink href={fixHref} size="sm" variant="secondary">
           {TODO_KIND.bill_sent_back.action}
+        </ButtonLink>
+      ) : null;
+
+    case 'report_to_review':
+      return fixHref && can(role, 'reports:review') ? (
+        <ButtonLink href={fixHref} size="sm" variant="secondary">
+          {TODO_KIND.report_to_review.action}
         </ButtonLink>
       ) : null;
 

@@ -122,6 +122,33 @@ Free to use. No advertising, no analytics, and nothing sold to anybody. Your dat
 
 ---
 
+## Reporting and blocking, for both reviews
+
+Residents post listings and reviews in the app, and comments on the website,
+so both stores ask how that is moderated: App Store guideline 1.2, and Play's
+User-generated content policy. What is there, and where:
+
+| What the stores ask for | Where it is                                                                                                                                                                         |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A way to report         | "Report this listing" at the foot of every listing and "Report this review" under every review, on anything somebody else posted. On the website, also the flag beside each comment |
+| A way to block          | "Block (name)" beside each of those. That person's listings, reviews and comments disappear at once; undone under Me → Blocked people, or Settings on the web                       |
+| Acting on reports       | A report notifies staff and the committee and sits on To do under "Reported by neighbours" (also Manage → Reports). They take it down or leave it up. The Terms promise 24 hours    |
+| Terms that rule it out  | `/terms`, under "Acceptable use" and "Grievances and reporting content"; agreed to at sign-in                                                                                       |
+| Somebody to contact     | The Grievance Officer named in the Terms and at `/support`                                                                                                                          |
+
+Ideas are not on that list because other residents are shown an idea only
+after the committee has approved it.
+
+Add this to **App Review Information → Notes** in App Store Connect, after the
+sign-in steps. The reviewer's society needs a listing by somebody other than
+the reviewer, with a review on it, or there is nothing to try it on.
+
+```text
+Reporting and blocking (Guideline 1.2). Residents post marketplace listings and reviews of them. Open Me > Marketplace and open a listing posted by another resident. At the foot of the listing are "Report this listing" and "Block (name)"; under each review by another resident are "Report this review" and "Block (name)". A report asks for a reason and goes to the society's staff and committee, who are notified, see it under Manage > Reports, and take the listing down or remove the review within 24 hours. Blocking hides that person's listings and reviews immediately and can be undone under Me > Blocked people. The Terms, agreed to at sign-in, prohibit objectionable content and abusive behaviour. Ideas residents suggest are shown to other residents only after the committee approves them.
+```
+
+---
+
 ## What still needs a person
 
 These cannot be written into the repository, and no submission goes through
@@ -135,6 +162,7 @@ without them.
 | Support URL                  | Both                                                               | `https://compences.com/support` (`apps/web/src/app/(legal)/support`)                   |
 | Marketing URL                | Optional                                                           | `https://compences.com`                                                                |
 | Category                     | Play: Lifestyle or House & Home. App Store: Lifestyle              | —                                                                                      |
-| Content rating questionnaire | Play                                                               | Answer honestly: user-generated content, no ads                                        |
+| Content rating questionnaire | Play                                                               | Answer honestly: user-generated content, which users can report and block; no ads      |
+| Something to report          | App Store review                                                   | The reviewer's society needs a listing by somebody else, with a review on it           |
 | Age rating                   | Both, 18+                                                          | The Terms require 18+                                                                  |
 | Apple Team ID                | iOS universal links                                                | Needed for `apple-app-site-association`; see README                                    |

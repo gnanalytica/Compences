@@ -101,6 +101,17 @@ export default async function MarketPage(props: PageProps<'/app/[community]/mark
       />
       <PageBody>
         <div className="space-y-8">
+          {/* Blocking a seller from their listing lands here, since that page
+              has nothing left on it; say what happened and how to undo it. */}
+          {search.blocked ? (
+            <p
+              role="status"
+              className="border-success/40 bg-success/10 text-ink rounded-2xl border p-4 text-sm"
+            >
+              {search.reported ? 'Reported, and blocked. ' : 'Blocked. '}
+              You will not see what they post any more. Undo it any time in Settings.
+            </p>
+          ) : null}
           {current.length ? (
             <section aria-label="On offer" className="space-y-4">
               <form action={base} className="flex gap-2" role="search">

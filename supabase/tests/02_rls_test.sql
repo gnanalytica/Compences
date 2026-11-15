@@ -4229,3 +4229,665 @@ select test.eq(
   (select count(*)::int from public.listing_reviews where listing_id = 'dddddddd-0000-4000-8000-0000000000a1')
   + (select count(*)::int from public.event_vendors where listing_id = 'dddddddd-0000-4000-8000-0000000000a1'),
   0, 'a seller can delete their listing, and its reviews and vendor slots go with it');
+
+-- ============================================================================
+-- 1115.0100 — a neighbour can say this should not be here
+-- ============================================================================
+-- Green Valley: Chitra, Hana and Ismail are residents, Esha is staff, Asha and
+-- Bala are the committee. Gita runs Lake View and has no business here.
+
+reset role;
+create or replace function test.member(p_user uuid, p_slug text default 'green-valley')
+returns uuid language sql security definer as $$
+  select m.id from public.memberships m
+    join public.communities c on c.id = m.community_id
+   where m.user_id = p_user and c.slug = p_slug;
+$$;
+
+-- Something to report: a listing, a review of it, and a comment.
+select test.act_as('33333333-3333-4333-8333-333333333333');
+insert into public.listings (id, community_id, membership_id, category, title, contact_phone)
+values ('dddddddd-0000-4000-8000-0000000000b1', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('33333333-3333-4333-8333-333333333333'),
+        'festive', 'Loose crackers, cash only', '9845010303');
+reset role;
+select test.act_as('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9');
+insert into public.listing_reviews (id, community_id, listing_id, membership_id, rating, body)
+values ('eeeeeeee-0000-4000-8000-0000000000b1', 'aaaaaaaa-0000-4000-8000-000000000001',
+        'dddddddd-0000-4000-8000-0000000000b1',
+        test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'), 1,
+        'Chitra is a cheat and so is her whole family.');
+insert into public.comments (id, community_id, event_id, membership_id, body)
+values ('c0c0c0c0-0000-4000-8000-0000000000b1', 'aaaaaaaa-0000-4000-8000-000000000001',
+        'cccccccc-0000-4000-8000-0000000000f1',
+        test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'),
+        'Whoever parked in my slot is an idiot.');
+
+-- Reporting. Who posted it and what it said come from the thing, not the form.
+reset role;
+select test.act_as('88888888-8888-4888-8888-888888888888');
+insert into public.content_reports (id, community_id, reporter_id, subject_kind, listing_id, reason, details)
+values ('f0000000-0000-4000-8000-0000000000b1', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('88888888-8888-4888-8888-888888888888'), 'listing',
+        'dddddddd-0000-4000-8000-0000000000b1', 'unsafe',
+        '  Crackers are not allowed in the flats.  ');
+select test.eq(
+  (select concat_ws(' | ', status, excerpt, details,
+                    (author_id = test.member('33333333-3333-4333-8333-333333333333'))::text)
+     from public.content_reports where id = 'f0000000-0000-4000-8000-0000000000b1'),
+  'open | Loose crackers, cash only | Crackers are not allowed in the flats. | true',
+  'a resident can report a listing, and who posted it and what it said are read off the listing');
+
+insert into public.content_reports (id, community_id, reporter_id, subject_kind, review_id, reason,
+                                    status, author_id, excerpt, resolved_by)
+values ('f0000000-0000-4000-8000-0000000000b2', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('88888888-8888-4888-8888-888888888888'), 'review',
+        'eeeeeeee-0000-4000-8000-0000000000b1', 'harassment',
+        'dismissed', test.member('33333333-3333-4333-8333-333333333333'), 'made up',
+        test.member('88888888-8888-4888-8888-888888888888'));
+select test.eq(
+  (select concat_ws(' | ', status, excerpt, (resolved_by is null)::text,
+                    (author_id = test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'))::text)
+     from public.content_reports where id = 'f0000000-0000-4000-8000-0000000000b2'),
+  'open | Chitra is a cheat and so is her whole family. | true | true',
+  'a report cannot arrive already decided, or naming an author and words of its own');
+
+select test.raises(
+  $q$insert into public.content_reports (community_id, reporter_id, subject_kind, listing_id, reason)
+     values ('aaaaaaaa-0000-4000-8000-000000000001',
+             test.member('88888888-8888-4888-8888-888888888888'), 'listing',
+             'dddddddd-0000-4000-8000-0000000000b1', 'spam')$q$,
+  'the same person cannot report the same thing twice while it is waiting');
+select test.raises(
+  $q$insert into public.content_reports (community_id, reporter_id, subject_kind, comment_id, reason)
+     values ('aaaaaaaa-0000-4000-8000-000000000001',
+             test.member('88888888-8888-4888-8888-888888888888'), 'comment',
+             'c0c0c0c0-0000-4000-8000-0000000000b1', 'blocked')$q$,
+  'the reason kept for a block cannot come from a form');
+select test.raises(
+  $q$insert into public.content_reports (community_id, reporter_id, subject_kind, comment_id, reason)
+     values ('aaaaaaaa-0000-4000-8000-000000000001',
+             test.member('88888888-8888-4888-8888-888888888888'), 'comment',
+             'c0c0c0c0-0000-4000-8000-0000000000b1', 'boring')$q$,
+  'a reason has to be one the app knows');
+select test.raises(
+  $q$insert into public.content_reports (community_id, reporter_id, subject_kind, comment_id, listing_id, reason)
+     values ('aaaaaaaa-0000-4000-8000-000000000001',
+             test.member('88888888-8888-4888-8888-888888888888'), 'comment',
+             'c0c0c0c0-0000-4000-8000-0000000000b1',
+             'dddddddd-0000-4000-8000-0000000000a2', 'spam')$q$,
+  'a report is about one thing');
+select test.raises(
+  $q$insert into public.content_reports (community_id, reporter_id, subject_kind, comment_id, reason)
+     values ('aaaaaaaa-0000-4000-8000-000000000001',
+             test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'), 'comment',
+             'c0c0c0c0-0000-4000-8000-0000000000b1', 'spam')$q$,
+  'nobody reports in somebody else''s name');
+
+reset role;
+select test.act_as('33333333-3333-4333-8333-333333333333');
+select test.raises(
+  $q$insert into public.content_reports (community_id, reporter_id, subject_kind, listing_id, reason)
+     values ('aaaaaaaa-0000-4000-8000-000000000001',
+             test.member('33333333-3333-4333-8333-333333333333'), 'listing',
+             'dddddddd-0000-4000-8000-0000000000b1', 'other')$q$,
+  'nobody reports their own listing');
+select test.eq(test.visible('select 1 from public.content_reports'), 0::bigint,
+  'the person reported cannot see that anybody reported them, let alone who');
+
+reset role;
+select test.act_as('77777777-7777-4777-8777-777777777777');
+select test.raises(
+  $q$insert into public.content_reports (community_id, reporter_id, subject_kind, listing_id, reason)
+     select c.id, app.my_membership_id(c.id), 'listing',
+            'dddddddd-0000-4000-8000-0000000000b1'::uuid, 'spam'
+       from public.communities c where c.slug = 'lake-view'$q$,
+  'somebody in another society cannot report a listing they cannot see');
+
+-- What staff and the committee read.
+reset role;
+select test.act_as('55555555-5555-4555-8555-555555555555');
+select test.eq(test.visible('select 1 from public.content_reports'), 0::bigint,
+  'staff cannot read the reports table itself, which is where the reporter is');
+select test.eq(
+  (select concat_ws(' | ', author_name, excerpt, report_count, array_to_string(reasons, ','),
+                    array_to_string(details, ','))
+     from public.reports_to_review('aaaaaaaa-0000-4000-8000-000000000001')
+    where subject_kind = 'listing'),
+  'Chitra Rao | Loose crackers, cash only | 1 | unsafe | Crackers are not allowed in the flats.',
+  'staff see what was reported, whose it is, why, and by how many');
+select test.ok(
+  not exists (
+    select 1 from pg_proc p, unnest(p.proargnames) as col
+     where p.proname = 'reports_to_review' and col like '%reporter%'),
+  'and nothing in what they are given says who reported it');
+select test.eq(
+  (select concat_ws(' | ', title, subtitle)
+     from public.todo_items('aaaaaaaa-0000-4000-8000-000000000001')
+    where kind = 'report_to_review' and title like 'Listing:%'),
+  'Listing: Loose crackers, cash only | Unsafe or not allowed',
+  'a report is on the To do list of staff and the committee');
+select test.eq(
+  (select concat_ws(' | ', title, subtitle)
+     from public.todo_items('aaaaaaaa-0000-4000-8000-000000000001')
+    where kind = 'report_to_review' and title like 'Review by%'),
+  'Review by Ismail Rahman | Harassment or a personal attack · “Chitra is a cheat and so is her whole family.”',
+  'a reported review is listed with what it said');
+
+-- A second neighbour reporting the same listing adds to the count.
+reset role;
+select test.act_as('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9');
+insert into public.content_reports (id, community_id, reporter_id, subject_kind, listing_id, reason)
+values ('f0000000-0000-4000-8000-0000000000b3', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'), 'listing',
+        'dddddddd-0000-4000-8000-0000000000b1', 'scam');
+reset role;
+select test.act_as('11111111-1111-4111-8111-111111111111');
+select test.eq(
+  (select concat_ws(' | ', report_count, array_to_string(reasons, ','))
+     from public.reports_to_review('aaaaaaaa-0000-4000-8000-000000000001')
+    where subject_kind = 'listing'),
+  '2 | scam,unsafe', 'two neighbours reporting one listing is one item, with a count');
+select test.eq(
+  (select subtitle from public.todo_items('aaaaaaaa-0000-4000-8000-000000000001')
+    where kind = 'report_to_review' and title like 'Listing:%'),
+  'Misleading or a scam, Unsafe or not allowed · 2 neighbours',
+  'and the To do list says so');
+reset role;
+select test.eq(
+  (select count(*)::int from public.notifications
+    where kind = 'content_report'
+      and data ->> 'report_id' = 'f0000000-0000-4000-8000-0000000000b1'),
+  3, 'staff and the committee are each told about a report');
+select test.eq(
+  (select count(*)::int from public.notifications
+    where kind = 'content_report'
+      and data ->> 'report_id' = 'f0000000-0000-4000-8000-0000000000b3'),
+  0, 'and not again when a second neighbour reports the same thing');
+
+-- Who may read the queue, and who may decide.
+select test.act_as('88888888-8888-4888-8888-888888888888');
+select test.eq(
+  test.visible($q$select 1 from public.reports_to_review('aaaaaaaa-0000-4000-8000-000000000001')$q$),
+  0::bigint, 'a resident has no queue of reports');
+select test.eq(test.visible('select 1 from public.content_reports'), 2::bigint,
+  'but sees the ones they filed themselves');
+select test.eq(
+  public.resolve_report('f0000000-0000-4000-8000-0000000000b1', true, null),
+  'not_staff', 'and cannot decide one');
+reset role;
+select test.act_as('77777777-7777-4777-8777-777777777777');
+select test.eq(
+  test.visible($q$select 1 from public.reports_to_review('aaaaaaaa-0000-4000-8000-000000000001')$q$),
+  0::bigint, 'another society''s committee reads none of them');
+select test.eq(
+  public.resolve_report('f0000000-0000-4000-8000-0000000000b1', true, null),
+  'not_staff', 'and decides none');
+
+-- Taking a reported listing down.
+reset role;
+select test.act_as('55555555-5555-4555-8555-555555555555');
+select test.eq(
+  public.resolve_report('f0000000-0000-4000-8000-0000000000b1', true,
+                        '  Crackers are not allowed on the premises.  '),
+  'ok', 'staff can take down what was reported');
+reset role;
+select test.eq(
+  (select concat_ws(' | ', status, removed_reason,
+                    (removed_by = test.member('55555555-5555-4555-8555-555555555555'))::text)
+     from public.listings where id = 'dddddddd-0000-4000-8000-0000000000b1'),
+  'removed | Crackers are not allowed on the premises. | true',
+  'the listing comes off the board, with the reason given');
+select test.eq(
+  (select string_agg(
+            concat_ws(' | ', status, resolution_note,
+                      (resolved_by = test.member('55555555-5555-4555-8555-555555555555'))::text),
+            ' ; ' order by id)
+     from public.content_reports where listing_id = 'dddddddd-0000-4000-8000-0000000000b1'),
+  'actioned | Crackers are not allowed on the premises. | true ; actioned | Crackers are not allowed on the premises. | true',
+  'and every report about it is closed, saying who decided and why');
+select test.eq(
+  (select count(*)::int from public.notifications
+    where kind = 'report_resolved' and title = 'Thank you for your report'
+      and user_id in ('88888888-8888-4888-8888-888888888888',
+                      'b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9')),
+  2, 'both neighbours who reported it are told');
+select test.ok(
+  exists (select 1 from public.notifications
+           where kind = 'listing_removed'
+             and user_id = '33333333-3333-4333-8333-333333333333'
+             and title = 'Your listing was taken down: Loose crackers, cash only'
+             and body = 'Crackers are not allowed on the premises.'),
+  'and the seller is told why it came down');
+select test.act_as('55555555-5555-4555-8555-555555555555');
+select test.eq(
+  public.resolve_report('f0000000-0000-4000-8000-0000000000b1', true, null),
+  'already_resolved', 'a report is decided once');
+select test.eq(
+  public.resolve_report('00000000-0000-4000-8000-00000000dead', true, null),
+  'no_report', 'and one that does not exist is said not to');
+
+-- Removing a reported review.
+reset role;
+select test.act_as('11111111-1111-4111-8111-111111111111');
+select test.eq(
+  (select concat_ws(' | ', author_name, listing_id)
+     from public.reports_to_review('aaaaaaaa-0000-4000-8000-000000000001')
+    where subject_kind = 'review'),
+  'Ismail Rahman | dddddddd-0000-4000-8000-0000000000b1',
+  'a reported review comes with the listing it is on');
+select test.eq(
+  public.resolve_report('f0000000-0000-4000-8000-0000000000b2', true, null),
+  'ok', 'the committee can remove a reported review');
+reset role;
+select test.eq(
+  (select count(*)::int from public.listing_reviews
+    where id = 'eeeeeeee-0000-4000-8000-0000000000b1'),
+  0, 'the review is gone');
+select test.eq(
+  (select concat_ws(' | ', status, (review_id is null)::text, excerpt,
+                    (resolved_by = test.member('11111111-1111-4111-8111-111111111111'))::text)
+     from public.content_reports where id = 'f0000000-0000-4000-8000-0000000000b2'),
+  'actioned | true | Chitra is a cheat and so is her whole family. | true',
+  'and the report keeps what it said and who decided');
+select test.ok(
+  exists (select 1 from public.notifications
+           where kind = 'content_removed'
+             and user_id = 'b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'
+             and title = 'Your review was removed'),
+  'whoever wrote it is told');
+
+-- Leaving a reported comment up.
+select test.act_as('88888888-8888-4888-8888-888888888888');
+insert into public.content_reports (id, community_id, reporter_id, subject_kind, comment_id, reason)
+values ('f0000000-0000-4000-8000-0000000000b4', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('88888888-8888-4888-8888-888888888888'), 'comment',
+        'c0c0c0c0-0000-4000-8000-0000000000b1', 'offensive');
+reset role;
+select test.act_as('22222222-2222-4222-8222-222222222222');
+select test.eq(
+  (select concat_ws(' | ', event_slug, excerpt)
+     from public.reports_to_review('aaaaaaaa-0000-4000-8000-000000000001')
+    where subject_kind = 'comment'),
+  'gv-onam-2026 | Whoever parked in my slot is an idiot.',
+  'a reported comment comes with the event it is under');
+select test.eq(
+  public.resolve_report('f0000000-0000-4000-8000-0000000000b4', false,
+                        'Rude, but not against the rules.'),
+  'ok', 'the committee can leave something up');
+reset role;
+select test.eq(
+  (select count(*)::int from public.comments where id = 'c0c0c0c0-0000-4000-8000-0000000000b1'),
+  1, 'the comment stays');
+select test.eq(
+  (select concat_ws(' | ', status, resolution_note)
+     from public.content_reports where id = 'f0000000-0000-4000-8000-0000000000b4'),
+  'dismissed | Rude, but not against the rules.', 'the report is closed as looked at');
+select test.ok(
+  exists (select 1 from public.notifications
+           where kind = 'report_resolved'
+             and user_id = '88888888-8888-4888-8888-888888888888'
+             and title = 'Your report was looked at'),
+  'and the neighbour who reported it is told it was');
+
+-- Nobody decides a report about what they posted themselves.
+select test.act_as('88888888-8888-4888-8888-888888888888');
+insert into public.content_reports (id, community_id, reporter_id, subject_kind, listing_id, reason)
+values ('f0000000-0000-4000-8000-0000000000b5', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('88888888-8888-4888-8888-888888888888'), 'listing',
+        'dddddddd-0000-4000-8000-0000000000a2', 'spam');
+reset role;
+select test.act_as('22222222-2222-4222-8222-222222222222');
+select test.eq(
+  test.visible($q$select 1 from public.reports_to_review('aaaaaaaa-0000-4000-8000-000000000001')$q$),
+  0::bigint, 'a committee member is not shown a report about their own listing');
+select test.eq(
+  (select count(*)::int from public.todo_items('aaaaaaaa-0000-4000-8000-000000000001')
+    where kind = 'report_to_review'),
+  0, 'nor is it on their To do list');
+select test.eq(
+  public.resolve_report('f0000000-0000-4000-8000-0000000000b5', false, null),
+  'own_content', 'and they cannot decide it');
+reset role;
+select test.eq(
+  (select string_agg(p.full_name, ', ' order by p.full_name)
+     from public.notifications n join public.profiles p on p.id = n.user_id
+    where n.kind = 'content_report'
+      and n.data ->> 'report_id' = 'f0000000-0000-4000-8000-0000000000b5'),
+  'Asha Menon, Esha Patil', 'nor are they told; the others are');
+select test.act_as('11111111-1111-4111-8111-111111111111');
+select test.eq(
+  public.resolve_report('f0000000-0000-4000-8000-0000000000b5', false, null),
+  'ok', 'the other committee member decides it');
+
+-- Blocking. More to block first: a listing, a review and a comment of
+-- Chitra's, and a listing and a comment of Hana's.
+reset role;
+select test.act_as('33333333-3333-4333-8333-333333333333');
+insert into public.listings (id, community_id, membership_id, category, title, contact_phone)
+values ('dddddddd-0000-4000-8000-0000000000b2', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('33333333-3333-4333-8333-333333333333'),
+        'home_food', 'Idly batter, again', '9845010303');
+insert into public.listing_reviews (id, community_id, listing_id, membership_id, rating, body)
+values ('eeeeeeee-0000-4000-8000-0000000000b2', 'aaaaaaaa-0000-4000-8000-000000000001',
+        'dddddddd-0000-4000-8000-0000000000a2',
+        test.member('33333333-3333-4333-8333-333333333333'), 5, 'A patient teacher.');
+insert into public.comments (id, community_id, event_id, membership_id, body)
+values ('c0c0c0c0-0000-4000-8000-0000000000b2', 'aaaaaaaa-0000-4000-8000-000000000001',
+        'cccccccc-0000-4000-8000-0000000000f1',
+        test.member('33333333-3333-4333-8333-333333333333'), 'I will bring the pookalam flowers.');
+reset role;
+select test.act_as('88888888-8888-4888-8888-888888888888');
+insert into public.listings (id, community_id, membership_id, category, title, contact_phone)
+values ('dddddddd-0000-4000-8000-0000000000c1', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('88888888-8888-4888-8888-888888888888'),
+        'home_decor', 'Hand-painted diyas', '9845010808');
+insert into public.comments (id, community_id, event_id, membership_id, body)
+values ('c0c0c0c0-0000-4000-8000-0000000000b3', 'aaaaaaaa-0000-4000-8000-000000000001',
+        'cccccccc-0000-4000-8000-0000000000f1',
+        test.member('88888888-8888-4888-8888-888888888888'), 'I can do the lamps.');
+
+select test.eq(
+  test.visible($q$select 1 from public.listings
+                   where membership_id = test.member('33333333-3333-4333-8333-333333333333')$q$)
+  + test.visible($q$select 1 from public.listing_reviews
+                     where id = 'eeeeeeee-0000-4000-8000-0000000000b2'$q$)
+  + test.visible($q$select 1 from public.comments
+                     where id = 'c0c0c0c0-0000-4000-8000-0000000000b2'$q$),
+  3::bigint, 'before blocking her, Hana sees Chitra''s listing, review and comment');
+insert into public.member_blocks (community_id, blocker_id, blocked_id)
+values ('aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('88888888-8888-4888-8888-888888888888'),
+        test.member('33333333-3333-4333-8333-333333333333'));
+select test.eq(
+  test.visible($q$select 1 from public.listings
+                   where membership_id = test.member('33333333-3333-4333-8333-333333333333')$q$),
+  0::bigint, 'a blocked neighbour''s listings disappear at once');
+select test.eq(
+  test.visible($q$select 1 from public.listing_reviews
+                   where id = 'eeeeeeee-0000-4000-8000-0000000000b2'$q$),
+  0::bigint, 'and their reviews');
+select test.eq(
+  test.visible($q$select 1 from public.comments
+                   where id = 'c0c0c0c0-0000-4000-8000-0000000000b2'$q$),
+  0::bigint, 'and their comments');
+select test.eq(
+  (select review_count from public.listing_ratings
+    where listing_id = 'dddddddd-0000-4000-8000-0000000000a2'),
+  1, 'and their stars stop counting, for the one who blocked them');
+select test.eq(test.visible('select 1 from public.member_blocks'), 1::bigint,
+  'whoever blocked can see their own list, to undo it');
+
+select test.raises(
+  $q$insert into public.member_blocks (community_id, blocker_id, blocked_id)
+     values ('aaaaaaaa-0000-4000-8000-000000000001',
+             test.member('88888888-8888-4888-8888-888888888888'),
+             test.member('33333333-3333-4333-8333-333333333333'))$q$,
+  'nobody is blocked twice');
+select test.raises(
+  $q$insert into public.member_blocks (community_id, blocker_id, blocked_id)
+     values ('aaaaaaaa-0000-4000-8000-000000000001',
+             test.member('88888888-8888-4888-8888-888888888888'),
+             test.member('88888888-8888-4888-8888-888888888888'))$q$,
+  'nobody blocks themselves');
+select test.raises(
+  $q$insert into public.member_blocks (community_id, blocker_id, blocked_id)
+     values ('aaaaaaaa-0000-4000-8000-000000000001',
+             test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'),
+             test.member('33333333-3333-4333-8333-333333333333'))$q$,
+  'nor in somebody else''s name');
+select test.raises(
+  $q$insert into public.member_blocks (community_id, blocker_id, blocked_id)
+     values ('aaaaaaaa-0000-4000-8000-000000000001',
+             test.member('88888888-8888-4888-8888-888888888888'),
+             test.member('77777777-7777-4777-8777-777777777777', 'lake-view'))$q$,
+  'nor somebody from another society');
+
+reset role;
+select test.act_as('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9');
+select test.eq(
+  test.visible($q$select 1 from public.listings
+                   where membership_id = test.member('33333333-3333-4333-8333-333333333333')$q$),
+  1::bigint, 'nobody else''s view changes');
+select test.eq(
+  (select review_count from public.listing_ratings
+    where listing_id = 'dddddddd-0000-4000-8000-0000000000a2'),
+  2, 'nor the stars they see');
+reset role;
+select test.act_as('33333333-3333-4333-8333-333333333333');
+select test.eq(test.visible('select 1 from public.member_blocks'), 0::bigint,
+  'the blocked person is not told');
+select test.eq(
+  test.visible($q$select 1 from public.listings
+                   where id = 'dddddddd-0000-4000-8000-0000000000c1'$q$),
+  1::bigint, 'and still sees what the other posts');
+
+-- The committee hears about a block, as a report about the person.
+reset role;
+select test.act_as('55555555-5555-4555-8555-555555555555');
+select test.eq(test.visible('select 1 from public.member_blocks'), 0::bigint,
+  'staff cannot see who blocked whom');
+select test.eq(
+  (select concat_ws(' | ', author_name, array_to_string(reasons, ','),
+                    (member_id = test.member('33333333-3333-4333-8333-333333333333'))::text)
+     from public.reports_to_review('aaaaaaaa-0000-4000-8000-000000000001')
+    where subject_kind = 'member'),
+  'Chitra Rao | blocked | true', 'but they are told that somebody was blocked');
+select test.eq(
+  (select concat_ws(' | ', title, subtitle)
+     from public.todo_items('aaaaaaaa-0000-4000-8000-000000000001')
+    where kind = 'report_to_review' and title like 'Resident:%'),
+  'Resident: Chitra Rao | Blocked by a neighbour', 'on the To do list');
+reset role;
+select test.ok(
+  exists (select 1 from public.notifications
+           where kind = 'content_report'
+             and user_id = '11111111-1111-4111-8111-111111111111'
+             and title = 'Chitra Rao was blocked by a neighbour'),
+  'and in a notification');
+
+-- What a blocked person posts does not arrive as a notification either.
+select test.act_as('33333333-3333-4333-8333-333333333333');
+insert into public.listing_reviews (community_id, listing_id, membership_id, rating, body)
+values ('aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-0000000000c1',
+        test.member('33333333-3333-4333-8333-333333333333'), 1, 'Overpriced.');
+insert into public.comments (id, community_id, event_id, membership_id, body)
+values ('c0c0c0c0-0000-4000-8000-0000000000b4', 'aaaaaaaa-0000-4000-8000-000000000001',
+        'cccccccc-0000-4000-8000-0000000000f1',
+        test.member('33333333-3333-4333-8333-333333333333'), 'Still here.');
+reset role;
+select test.eq(
+  (select count(*)::int from public.notifications
+    where kind = 'listing_review'
+      and user_id = '88888888-8888-4888-8888-888888888888'
+      and body like 'Chitra Rao%'),
+  0, 'a review by somebody you blocked does not reach you as a notification');
+select test.eq(
+  (select count(*)::int from public.notifications
+    where kind = 'comment'
+      and user_id = '88888888-8888-4888-8888-888888888888'
+      and data ->> 'comment_id' = 'c0c0c0c0-0000-4000-8000-0000000000b4'),
+  0, 'nor does their comment');
+select test.ok(
+  exists (select 1 from public.notifications
+           where kind = 'comment'
+             and user_id = 'b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'
+             and data ->> 'comment_id' = 'c0c0c0c0-0000-4000-8000-0000000000b4'),
+  'while the rest of the thread still hears about it');
+
+-- Blocking somebody you have already reported is one complaint, not two.
+select test.act_as('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9');
+insert into public.content_reports (id, community_id, reporter_id, subject_kind, listing_id, reason)
+values ('f0000000-0000-4000-8000-0000000000b6', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'), 'listing',
+        'dddddddd-0000-4000-8000-0000000000b2', 'spam');
+insert into public.member_blocks (community_id, blocker_id, blocked_id)
+values ('aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'),
+        test.member('33333333-3333-4333-8333-333333333333'));
+reset role;
+select test.eq(
+  (select count(*)::int from public.content_reports
+    where reporter_id = test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9')
+      and author_id = test.member('33333333-3333-4333-8333-333333333333')
+      and status = 'open'),
+  1, 'blocking somebody you have already reported does not file a second report');
+
+-- Unblocking.
+select test.act_as('88888888-8888-4888-8888-888888888888');
+delete from public.member_blocks
+ where blocked_id = test.member('33333333-3333-4333-8333-333333333333');
+select test.eq(
+  test.visible($q$select 1 from public.listings
+                   where membership_id = test.member('33333333-3333-4333-8333-333333333333')$q$),
+  1::bigint, 'unblocking brings their posts back');
+
+-- Staff who have blocked somebody can still decide a report about them.
+reset role;
+select test.act_as('55555555-5555-4555-8555-555555555555');
+insert into public.member_blocks (community_id, blocker_id, blocked_id)
+values ('aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('55555555-5555-4555-8555-555555555555'),
+        test.member('33333333-3333-4333-8333-333333333333'));
+select test.eq(
+  test.visible($q$select 1 from public.listings
+                   where id = 'dddddddd-0000-4000-8000-0000000000b2'$q$),
+  0::bigint, 'staff who block somebody stop seeing their listings like anyone else');
+select test.eq(
+  public.resolve_report('f0000000-0000-4000-8000-0000000000b6', true,
+                        'Advertising, not a listing.'),
+  'ok', 'and can still decide a report about them');
+reset role;
+select test.eq(
+  (select status from public.listings where id = 'dddddddd-0000-4000-8000-0000000000b2'),
+  'removed', 'which takes the listing down all the same');
+
+-- A listing taken down from its own page settles the reports about it.
+select test.act_as('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9');
+insert into public.content_reports (id, community_id, reporter_id, subject_kind, listing_id, reason)
+values ('f0000000-0000-4000-8000-0000000000b7', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'), 'listing',
+        'dddddddd-0000-4000-8000-0000000000c1', 'other');
+reset role;
+select test.act_as('11111111-1111-4111-8111-111111111111');
+update public.listings set status = 'removed', removed_reason = 'Reselling shop stock.'
+ where id = 'dddddddd-0000-4000-8000-0000000000c1';
+reset role;
+select test.eq(
+  (select concat_ws(' | ', status, resolution_note,
+                    (resolved_by = test.member('11111111-1111-4111-8111-111111111111'))::text)
+     from public.content_reports where id = 'f0000000-0000-4000-8000-0000000000b7'),
+  'actioned | Reselling shop stock. | true',
+  'a listing taken down from its own page closes the reports about it');
+
+-- Something its author deletes closes its reports, quietly.
+select test.act_as('22222222-2222-4222-8222-222222222222');
+insert into public.content_reports (id, community_id, reporter_id, subject_kind, comment_id, reason)
+values ('f0000000-0000-4000-8000-0000000000b8', 'aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('22222222-2222-4222-8222-222222222222'), 'comment',
+        'c0c0c0c0-0000-4000-8000-0000000000b2', 'spam');
+reset role;
+select test.act_as('33333333-3333-4333-8333-333333333333');
+delete from public.comments where id = 'c0c0c0c0-0000-4000-8000-0000000000b2';
+reset role;
+select test.eq(
+  (select concat_ws(' | ', status, (comment_id is null)::text, excerpt, (resolved_by is null)::text)
+     from public.content_reports where id = 'f0000000-0000-4000-8000-0000000000b8'),
+  'actioned | true | I will bring the pookalam flowers. | true',
+  'a comment its author deletes closes the reports about it, which keep what it said');
+select test.eq(
+  (select count(*)::int from public.notifications
+    where kind = 'report_resolved' and user_id = '22222222-2222-4222-8222-222222222222'),
+  0, 'without a notification saying the committee decided something it did not');
+
+-- A report costs a volunteer's evening to read, so there is a ceiling.
+insert into public.comments (community_id, event_id, membership_id, body)
+select 'aaaaaaaa-0000-4000-8000-000000000001', 'cccccccc-0000-4000-8000-0000000000f1',
+       test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'), 'Filler ' || lpad(n::text, 2, '0')
+  from generate_series(1, 21) as n;
+select test.act_as('11111111-1111-4111-8111-111111111111');
+insert into public.content_reports (community_id, reporter_id, subject_kind, comment_id, reason)
+select 'aaaaaaaa-0000-4000-8000-000000000001',
+       test.member('11111111-1111-4111-8111-111111111111'), 'comment', c.id, 'spam'
+  from public.comments c
+ where c.body like 'Filler %' and c.body <> 'Filler 21';
+select test.eq(test.visible('select 1 from public.content_reports'), 20::bigint,
+  'twenty reports in a day go through');
+select test.raises(
+  $q$insert into public.content_reports (community_id, reporter_id, subject_kind, comment_id, reason)
+     select 'aaaaaaaa-0000-4000-8000-000000000001',
+            test.member('11111111-1111-4111-8111-111111111111'), 'comment', c.id, 'spam'
+       from public.comments c where c.body = 'Filler 21'$q$,
+  'the twenty-first is refused');
+reset role;
+delete from public.comments where body like 'Filler %';
+select test.eq(
+  (select count(*)::int from public.content_reports
+    where reporter_id = test.member('11111111-1111-4111-8111-111111111111') and status = 'open'),
+  0, 'and deleting what was reported leaves none of them waiting');
+
+-- Somebody with reports and blocks on both sides can still leave.
+select test.act_as('33333333-3333-4333-8333-333333333333');
+insert into public.content_reports (community_id, reporter_id, subject_kind, comment_id, reason)
+values ('aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('33333333-3333-4333-8333-333333333333'), 'comment',
+        'c0c0c0c0-0000-4000-8000-0000000000b1', 'harassment');
+insert into public.member_blocks (community_id, blocker_id, blocked_id)
+values ('aaaaaaaa-0000-4000-8000-000000000001',
+        test.member('33333333-3333-4333-8333-333333333333'),
+        test.member('b9b9b9b9-b9b9-4b9b-8b9b-b9b9b9b9b9b9'));
+select test.eq(
+  (select status from public.delete_my_account()), 'deleted',
+  'somebody who has reported, been reported, blocked and been blocked can delete their account');
+reset role;
+select test.eq((select count(*)::int from public.member_blocks), 0,
+  'their blocks, and the blocks of them, go with them');
+select test.eq(
+  (select count(*)::int from public.content_reports where status = 'open'),
+  0, 'and nothing is left waiting on somebody who has gone');
+select test.ok(
+  exists (select 1 from public.content_reports
+           where id = 'f0000000-0000-4000-8000-0000000000b1'
+             and status = 'actioned' and listing_id is null and author_id is null
+             and excerpt = 'Loose crackers, cash only'),
+  'while the record of what was reported and decided stays, no longer tied to them');
+
+-- A whole society can still be deleted with a report open in it.
+select test.act_as('f0f0f0f0-f0f0-4f0f-8f0f-f0f0f0f0f0f0');
+insert into public.listings (community_id, membership_id, category, title, contact_phone)
+select c.id, app.my_membership_id(c.id), 'other', 'Old bicycle', '9845010606'
+  from public.communities c where c.slug = 'hill-crest';
+reset role;
+select test.act_as('abababab-abab-4bab-8bab-abababababab');
+insert into public.content_reports (community_id, reporter_id, subject_kind, listing_id, reason)
+select l.community_id, app.my_membership_id(l.community_id), 'listing', l.id, 'spam'
+  from public.listings l where l.title = 'Old bicycle';
+insert into public.member_blocks (community_id, blocker_id, blocked_id)
+select l.community_id, app.my_membership_id(l.community_id), l.membership_id
+  from public.listings l where l.title = 'Old bicycle';
+reset role;
+select test.eq(
+  (select count(*)::int from public.content_reports r
+     join public.communities c on c.id = r.community_id
+    where c.slug = 'hill-crest' and r.status = 'open'),
+  1, 'a report is waiting in Hill Crest');
+-- By the platform team, as the service role: a founder cannot delete a society
+-- that has other members in it.
+set role service_role;
+delete from public.communities where slug = 'hill-crest';
+reset role;
+select test.eq(
+  (select count(*)::int from public.communities where slug = 'hill-crest'),
+  0, 'and the society can still be deleted, reports, blocks and all');
+
+select test.ok(
+  not has_table_privilege('anon', 'public.content_reports', 'SELECT')
+  and not has_table_privilege('anon', 'public.content_reports', 'INSERT')
+  and not has_table_privilege('anon', 'public.member_blocks', 'SELECT')
+  and not has_table_privilege('anon', 'public.member_blocks', 'INSERT')
+  and not has_table_privilege('authenticated', 'public.content_reports', 'UPDATE')
+  and not has_table_privilege('authenticated', 'public.content_reports', 'DELETE')
+  and not has_table_privilege('authenticated', 'public.member_blocks', 'UPDATE')
+  and not has_function_privilege('anon', 'public.reports_to_review(uuid)', 'EXECUTE')
+  and not has_function_privilege('anon', 'public.resolve_report(uuid,boolean,text)', 'EXECUTE'),
+  'none of it is reachable signed out, and no client can rewrite or delete a report');

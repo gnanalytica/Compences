@@ -49,6 +49,7 @@ import {
 import { Chip, ChipRow, ErrorText } from '../../src/components/admin-ui';
 import { ListingStatusBadge, StarPicker, untilLine } from '../../src/components/market-ui';
 import { OwnerActions } from '../../src/components/listing-form';
+import { ReportControls } from '../../src/components/report-ui';
 import { fonts, minTapTarget, radius, spacing } from '../../src/lib/theme';
 import { useTheme } from '../../src/lib/use-theme';
 
@@ -59,6 +60,9 @@ import { useTheme } from '../../src/lib/use-theme';
  * Notifications for a new review or a listing taken down open here, so it has
  * to make sense to the seller as much as to a buyer: the seller sees their
  * own controls and why it went, if it went, in place of the Call button.
+ *
+ * Anybody else can report the listing or any review on it, and block whoever
+ * wrote it. Nobody is offered either on something of their own.
  */
 export default function ListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -213,6 +217,16 @@ export default function ListingScreen() {
         {mayModerate ? <Moderation data={data} /> : null}
 
         <Caption>Posted {formatDate(listing.createdAt.slice(0, 10))}</Caption>
+        {/* Under everything else, where somebody who has read the listing and
+            does not like it will be. Blocking the seller leaves nothing here
+            to show, so it goes back to the board. */}
+        <ReportControls
+          kind="listing"
+          subjectId={listing.id}
+          authorId={listing.membershipId}
+          authorName={listing.sellerName}
+          onBlocked={() => router.back()}
+        />
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </Screen>
@@ -393,6 +407,12 @@ function Reviews({
               <Chip label="Delete review" onPress={() => removeReview(review)} />
             </ChipRow>
           ) : null}
+          <ReportControls
+            kind="review"
+            subjectId={review.id}
+            authorId={review.membershipId}
+            authorName={review.reviewerName}
+          />
         </View>
       ))}
 

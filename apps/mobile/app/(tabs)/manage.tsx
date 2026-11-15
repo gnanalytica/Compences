@@ -86,6 +86,11 @@ export default function Manage() {
             onPress={() => router.push('/people')}
           />
           <LinkRow
+            label="Reports"
+            detail="Listings and reviews neighbours have reported"
+            onPress={() => router.push('/admin/reports')}
+          />
+          <LinkRow
             label="Bills"
             detail="Add a bill, or see bills waiting and sent back"
             onPress={() => router.push('/admin/bills')}

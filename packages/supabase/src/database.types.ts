@@ -958,6 +958,123 @@ export type Database = {
           }
         ]
       }
+      content_reports: {
+        Row: {
+          id: string
+          community_id: string
+          reporter_id: string
+          subject_kind: string
+          listing_id: string | null
+          review_id: string | null
+          comment_id: string | null
+          member_id: string | null
+          author_id: string | null
+          excerpt: string | null
+          reason: string
+          details: string | null
+          status: string
+          resolved_by: string | null
+          resolved_at: string | null
+          resolution_note: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          community_id: string
+          reporter_id: string
+          subject_kind: string
+          listing_id?: string | null
+          review_id?: string | null
+          comment_id?: string | null
+          member_id?: string | null
+          author_id?: string | null
+          excerpt?: string | null
+          reason: string
+          details?: string | null
+          status?: string
+          resolved_by?: string | null
+          resolved_at?: string | null
+          resolution_note?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          community_id?: string
+          reporter_id?: string
+          subject_kind?: string
+          listing_id?: string | null
+          review_id?: string | null
+          comment_id?: string | null
+          member_id?: string | null
+          author_id?: string | null
+          excerpt?: string | null
+          reason?: string
+          details?: string | null
+          status?: string
+          resolved_by?: string | null
+          resolved_at?: string | null
+          resolution_note?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_reports_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "listing_reviews"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       contributions: {
         Row: {
           id: string
@@ -2094,6 +2211,52 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      member_blocks: {
+        Row: {
+          id: string
+          community_id: string
+          blocker_id: string
+          blocked_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          community_id: string
+          blocker_id: string
+          blocked_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          community_id?: string
+          blocker_id?: string
+          blocked_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_blocks_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_blocks_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_blocks_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           }
         ]
@@ -3284,6 +3447,26 @@ export type Database = {
         unit_id: string | null
       }[]
       }
+      reports_to_review: {
+        Args: {
+        p_community_id: string
+      }
+        Returns: {
+        id: string | null
+        subject_kind: string | null
+        listing_id: string | null
+        review_id: string | null
+        comment_id: string | null
+        member_id: string | null
+        event_slug: string | null
+        author_name: string | null
+        excerpt: string | null
+        reasons: string[] | null
+        details: string[] | null
+        report_count: number | null
+        created_at: string | null
+      }[]
+      }
       request_to_join: {
         Args: {
         p_join_code: string
@@ -3303,6 +3486,14 @@ export type Database = {
         Args: {
         p_community_id: string
         p_unit_id?: string
+        p_note?: string
+      }
+        Returns: string
+      }
+      resolve_report: {
+        Args: {
+        p_report_id: string
+        p_remove: boolean
         p_note?: string
       }
         Returns: string
