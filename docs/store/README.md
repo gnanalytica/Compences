@@ -76,13 +76,31 @@ capability on the App ID, the Apple provider in Supabase with
 `com.compences.app` as an authorised client ID, and `APPLE_TEAM_ID`,
 `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` on the web deployment.
 
-**Reviewer access.** Both stores need credentials that reach the inside of the
-app. With Google-only sign-in that means a dedicated Google account, which
-Google often challenges on a new device, and the account must already be an
-approved member of a demo society. Create that society (`pnpm db:seed`
-against production, or `pnpm society:create`), approve the reviewer account
-in it, and put the credentials in App Review Information and Play's App
-access section.
+**Reviewer access.** Both stores need a way into the app that asks nothing of
+us on the day, and each gets a different one. Either way the reviewer lands in
+a demo society (`pnpm db:seed` against production, or `pnpm society:create`)
+that has a listing and a review by somebody else, so there is something to
+report and block.
+
+- **App Store.** The reviewer signs in with any Apple ID and enters the demo
+  society's invite code. No demo account; the steps and the code are in App
+  Review Information → Notes.
+- **Google Play.** Play's reviewers cannot use a Google account of their own,
+  so they are given a test account: an email address and a password, entered
+  behind "Have a test account? Sign in with a password" on the sign-in screen
+  (`PASSWORD_SIGN_IN_ENABLED` in `apps/mobile/src/lib/sign-in-options.ts`).
+  The account is made by hand in Supabase (Authentication → Users → Add user,
+  confirmed on creation), on an address at a domain we control because
+  sign-in mail for it goes to that mailbox, and it is a committee member of
+  the demo society. The wording for Play is in
+  [listings.md](./listings.md#getting-the-reviewers-in).
+
+The test account's credentials live in Play Console → App content → Sign in
+details and nowhere else: not in this repository. That entry should never
+hold a person's own Google account, which is what it was first set up with.
+Builds made before the password form (Android 11 and earlier) cannot use the
+test account, so the entry is switched to it together with the first build
+that has the form, not before.
 
 ### The DPDP Rules timeline
 
