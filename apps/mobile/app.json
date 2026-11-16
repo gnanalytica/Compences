@@ -192,7 +192,15 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "@sentry/react-native/expo"
+      "@sentry/react-native/expo",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
