@@ -1,22 +1,35 @@
 import { useEffect, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { Redirect } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../src/lib/auth';
-import { EMAIL_SIGN_IN_ENABLED } from '../src/lib/sign-in-options';
+import { EMAIL_SIGN_IN_ENABLED, PASSWORD_SIGN_IN_ENABLED } from '../src/lib/sign-in-options';
 import { Body, Button, Caption, Input, Screen, Title } from '../src/components/ui';
 import { LegalLinks } from '../src/components/legal-links';
-import { spacing } from '../src/lib/theme';
+import { minTapTarget, spacing } from '../src/lib/theme';
 import { useTheme } from '../src/lib/use-theme';
 
 export default function SignIn() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { signInWithGoogle, signInWithApple, signInWithEmail, user, loading } = useAuth();
+  const { signInWithGoogle, signInWithApple, signInWithEmail, signInWithPassword, user, loading } =
+    useAuth();
 
   const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState<'google' | 'apple' | 'email' | null>(null);
+  const [password, setPassword] = useState('');
+  // The test account's form replaces the buttons rather than sitting under
+  // them: a resident never has a password, so they should not meet the field.
+  const [withPassword, setWithPassword] = useState(false);
+  const [busy, setBusy] = useState<'google' | 'apple' | 'email' | 'password' | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -59,6 +72,38 @@ export default function SignIn() {
     setBusy(null);
   };
 
+  const handlePassword = async () => {
+    if (!email.includes('@') || !password) {
+      setError('Enter the email address and the password.');
+      return;
+    }
+    setBusy('password');
+    setError(null);
+    const result = await signInWithPassword(email, password);
+    if (result.error) setError(result.error);
+    setBusy(null);
+  };
+
+  const switchForm = (toPassword: boolean) => {
+    setWithPassword(toPassword);
+    setPassword('');
+    setError(null);
+  };
+
+  const textLink = (label: string, onPress: () => void) => (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      disabled={busy !== null}
+      hitSlop={8}
+      style={{ minHeight: minTapTarget, justifyContent: 'center', alignItems: 'center' }}
+    >
+      <Text style={{ color: colors.accent, fontSize: 13, textDecorationLine: 'underline' }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+
   return (
     <Screen>
       <KeyboardAvoidingView
@@ -90,6 +135,44 @@ export default function SignIn() {
             <View style={{ gap: spacing.xs }}>
               <Body>Check your email. We sent a sign-in link to {email}.</Body>
               <Caption>It’s good for one hour.</Caption>
+            </View>
+          ) : withPassword ? (
+            <View style={{ gap: spacing.md }}>
+              <Caption>
+                For a test account you were given an email address and a password for. Everybody
+                else signs in the other way.
+              </Caption>
+              <Input
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="username"
+                keyboardType="email-address"
+                inputMode="email"
+              />
+              <Input
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="current-password"
+                textContentType="password"
+                returnKeyType="go"
+                onSubmitEditing={() => void handlePassword()}
+              />
+              <Button
+                label="Sign in"
+                onPress={handlePassword}
+                loading={busy === 'password'}
+                disabled={busy !== null}
+              />
+              {textLink('Sign in another way', () => switchForm(false))}
             </View>
           ) : (
             <View style={{ gap: spacing.md }}>
@@ -145,6 +228,10 @@ export default function SignIn() {
               ) : (
                 <Caption>Use the Google account you want your society to know you by.</Caption>
               )}
+
+              {PASSWORD_SIGN_IN_ENABLED
+                ? textLink('Have a test account? Sign in with a password', () => switchForm(true))
+                : null}
             </View>
           )}
 

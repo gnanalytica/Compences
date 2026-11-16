@@ -122,6 +122,25 @@ Free to use. No advertising, no analytics, and nothing sold to anybody. Your dat
 
 ---
 
+## Getting the reviewers in
+
+The App Store's reviewer uses their own Apple ID and the demo society's invite
+code; those steps open the notes in App Review Information. Play's reviewer is
+given a test account instead (why, and how it is made, is in the
+[README](./README.md)). Its email address and password go in the fields of
+**Play Console → App content → Sign in details**, and this goes in the
+instructions beside them:
+
+```text
+On the sign-in screen, tap "Have a test account? Sign in with a password" below the Google button, then enter the email address and password given here. You land in Demo Society as a committee member with nothing else to set up: no invite code, no approval wait and no 2-step verification.
+
+Home, Events, Money and Me are what residents see; Manage is the committee's side. To try reporting and blocking, open Me > Marketplace and the listing "Fresh idly & dosa batter": "Report this listing" and "Block (name)" are at its foot, and "Report this review" and "Block (name)" are under its review. Reports arrive under Manage > Reports.
+
+Please do not use Me > Delete account. This account is shared by every review.
+```
+
+---
+
 ## Reporting and blocking, for both reviews
 
 Residents post listings and reviews in the app, and comments on the website,

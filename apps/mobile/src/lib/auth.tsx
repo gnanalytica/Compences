@@ -85,6 +85,8 @@ type AuthValue = {
   /** iOS only: Apple's native sheet, exchanged for a session with a nonce. */
   signInWithApple: () => Promise<{ error?: string }>;
   signInWithEmail: (email: string) => Promise<{ error?: string; sent?: boolean }>;
+  /** The reviewers' test account only; see PASSWORD_SIGN_IN_ENABLED. */
+  signInWithPassword: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   setActiveCommunity: (communityId: string) => void;
   refresh: () => Promise<void>;
@@ -266,6 +268,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error ? { error: error.message } : { sent: true };
   }, []);
 
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
+    // The email is tidied the way Supabase stores it; the password goes exactly
+    // as typed, spaces and all.
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (!error) return {};
+    // Supabase answers a wrong password and an unknown email the same way, on
+    // purpose, so this cannot say which of the two it was.
+    if (error.code === 'invalid_credentials') {
+      return { error: 'That email and password do not match.' };
+    }
+    if (error.code === 'over_request_rate_limit') {
+      return { error: 'Too many tries. Wait a minute, then try again.' };
+    }
+    return { error: error.message };
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
   }, []);
@@ -297,6 +318,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       signInWithApple,
       signInWithEmail,
+      signInWithPassword,
       signOut,
       setActiveCommunity: setActiveId,
       refresh,
@@ -312,6 +334,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithGoogle,
     signInWithApple,
     signInWithEmail,
+    signInWithPassword,
     signOut,
     refresh,
   ]);
