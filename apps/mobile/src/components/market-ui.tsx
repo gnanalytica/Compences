@@ -1,27 +1,44 @@
 import { useState, type ReactNode } from 'react';
-import { Alert, Image, Pressable, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
+  Baby,
+  Bike,
+  BookMarked,
   BookOpen,
   Briefcase,
   CakeSlice,
   CookingPot,
+  Dumbbell,
   Flower2,
   Gift,
+  Microwave,
   Music,
   Scissors,
   Shapes,
+  Shirt,
+  ShoppingBasket,
+  Smartphone,
+  Sofa,
   Sparkles,
   Star,
+  Stethoscope,
+  Truck,
+  WashingMachine,
   Wrench,
   type LucideIcon,
 } from 'lucide-react-native';
 import {
   LISTING_CATEGORY_LABEL,
+  LISTING_KIND_LABEL,
+  LISTING_KIND_PRICE,
+  can,
+  closedLabel,
   eventVendorSchema,
   formatDate,
   formatRating,
+  isReviewedKind,
   reviewCountLabel,
   starString,
   type ListingCategory,
@@ -34,6 +51,8 @@ import {
   invalidateMarket,
   matchesSearch,
   onTheBoard,
+  sellerLine,
+  shopsBySeller,
   sortBoard,
   type Listing,
 } from '../lib/market';
@@ -41,7 +60,7 @@ import { supabase } from '../lib/supabase';
 import { useCommunityData } from '../lib/use-community-data';
 import { minTapTarget, radius, spacing } from '../lib/theme';
 import { useTheme } from '../lib/use-theme';
-import { Badge, Body, Button, Caption, Card, Heading, Input } from './ui';
+import { Badge, Body, Button, Caption, Card, Heading, Input, SectionLabel } from './ui';
 import { Chip, ChipRow, ErrorText } from './admin-ui';
 
 /**
@@ -112,6 +131,18 @@ export const LISTING_CATEGORY_ICON: Record<ListingCategory, LucideIcon> = {
   festive: Gift,
   home_services: Wrench,
   other: Shapes,
+  furniture: Sofa,
+  electronics: Smartphone,
+  appliances: Microwave,
+  kids: Baby,
+  books: BookMarked,
+  vehicles: Bike,
+  clothing: Shirt,
+  sports: Dumbbell,
+  daily_needs: ShoppingBasket,
+  laundry: WashingMachine,
+  health: Stethoscope,
+  transport: Truck,
 };
 
 export function CategoryIcon({
@@ -148,12 +179,34 @@ export function RatingLine({ average, count }: { average: number | null; count: 
   );
 }
 
-/** Where a listing stands, for its seller and for whoever moderates. */
+/**
+ * Where a listing stands, for its seller and for whoever moderates. Sold and
+ * found are paused as far as the database is concerned (so older apps keep
+ * them off the board); here they say what actually happened.
+ */
 export function ListingStatusBadge({ listing }: { listing: Listing }) {
   if (listing.status === 'removed') return <Badge label="Taken down" tone="danger" />;
+  if (listing.closedAt) return <Badge label={closedLabel(listing.kind)} tone="success" />;
   if (listing.status === 'paused') return <Badge label="Paused" tone="warning" />;
   if (hasEnded(listing)) return <Badge label="Ended" />;
   return null;
+}
+
+/**
+ * "For sale", "Wanted", "Shop", "Local business". Nothing for a plain offer,
+ * which is most of the board and needs no label to say so.
+ */
+export function KindBadge({ listing, always = false }: { listing: Listing; always?: boolean }) {
+  if (listing.kind === 'offer' && !always) return null;
+  return <Badge label={LISTING_KIND_LABEL[listing.kind]} tone="info" />;
+}
+
+/** The price as a card or a page shows it: a wanted notice's is a budget. */
+export function priceLine(listing: Pick<Listing, 'kind' | 'priceNote'>): string | null {
+  if (!listing.priceNote) return null;
+  return listing.kind === 'wanted'
+    ? `${LISTING_KIND_PRICE.wanted.label}: ${listing.priceNote}`
+    : listing.priceNote;
 }
 
 /** "Until 12 Nov 2026" for a seasonal listing still on offer; nothing otherwise. */
@@ -161,22 +214,33 @@ export function untilLine(listing: Pick<Listing, 'availableUntil'>): string | nu
   return listing.availableUntil ? `Until ${formatDate(listing.availableUntil)}` : null;
 }
 
-/** A listing in a list: picture, title, what kind, price, who and where, stars. */
+/**
+ * A listing in a list: picture, title, what kind, price, who and where, and
+ * stars for what is reviewed. `shops` is each seller's shop on the board, so
+ * what a shop-keeper sells is shown under the shop's name.
+ */
 export function ListingCard({
   listing,
   onPress,
   showStatus = false,
+  shops,
 }: {
   listing: Listing;
   onPress: () => void;
   /** On "Your listings" and "Taken down", where state is the point. */
   showStatus?: boolean;
+  shops?: Map<string, Listing>;
 }) {
   const until = onTheBoard(listing) ? untilLine(listing) : null;
+  const price = priceLine(listing);
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`${listing.title}, ${LISTING_CATEGORY_LABEL[listing.category]}`}
+      accessibilityLabel={`${listing.title}, ${
+        listing.kind === 'offer'
+          ? LISTING_CATEGORY_LABEL[listing.category]
+          : LISTING_KIND_LABEL[listing.kind]
+      }`}
       onPress={onPress}
       style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
     >
@@ -189,12 +253,17 @@ export function ListingCard({
             </View>
             {showStatus ? <ListingStatusBadge listing={listing} /> : null}
           </View>
-          <Caption>
-            {LISTING_CATEGORY_LABEL[listing.category]}
-            {listing.priceNote ? ` · ${listing.priceNote}` : ''}
-          </Caption>
-          <Caption>{[listing.sellerName, listing.flat].filter(Boolean).join(' · ')}</Caption>
-          <RatingLine average={listing.averageRating} count={listing.reviewCount} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+            <KindBadge listing={listing} />
+            <Caption>
+              {LISTING_CATEGORY_LABEL[listing.category]}
+              {price ? ` · ${price}` : ''}
+            </Caption>
+          </View>
+          <Caption>{sellerLine(listing, shops)}</Caption>
+          {isReviewedKind(listing.kind) ? (
+            <RatingLine average={listing.averageRating} count={listing.reviewCount} />
+          ) : null}
           {until ? <Caption tone="warning">{until}</Caption> : null}
           {showStatus && listing.status === 'removed' && listing.removedReason ? (
             <Caption tone="danger">{listing.removedReason}</Caption>
@@ -281,7 +350,7 @@ function VendorRow({
         <View style={{ flex: 1, gap: 2 }}>
           <Body>{listing.title}</Body>
           {note ? <Caption>{note}</Caption> : null}
-          <Caption>{[listing.sellerName, listing.flat].filter(Boolean).join(' · ')}</Caption>
+          <Caption>{sellerLine(listing)}</Caption>
         </View>
       </Pressable>
       {trailing}
@@ -306,7 +375,7 @@ export function EventVendors({ eventId }: { eventId: string }) {
     <Card style={{ gap: spacing.md }}>
       <View style={{ gap: 2 }}>
         <Heading>Vendors</Heading>
-        <Caption>Neighbours from the marketplace supplying this event.</Caption>
+        <Caption>From the marketplace, supplying this event.</Caption>
       </View>
       {vendors.map((vendor) => (
         <VendorRow
@@ -343,9 +412,12 @@ export function ManageVendorsCard({ eventId }: { eventId: string }) {
   const taken = new Set(named.map((vendor) => vendor.listing.id));
   // Only what is on the board today can be named: the database refuses a
   // listing that is paused or taken down, and an ended one would be a stall
-  // nobody is running.
+  // nobody is running. And only somebody who supplies — an offer, a shop or
+  // an outside business — never a cycle sold once (1118.0100).
   const candidates = sortBoard(
-    (board.data ?? []).filter((listing) => onTheBoard(listing) && !taken.has(listing.id)),
+    (board.data ?? []).filter(
+      (listing) => onTheBoard(listing) && isReviewedKind(listing.kind) && !taken.has(listing.id),
+    ),
   );
   const matches = search.trim()
     ? candidates.filter((listing) => matchesSearch(listing, search)).slice(0, 8)
@@ -415,8 +487,8 @@ export function ManageVendorsCard({ eventId }: { eventId: string }) {
       <View style={{ gap: 2 }}>
         <Heading>Vendors</Heading>
         <Caption>
-          Name a neighbour from the marketplace who is supplying this event. It shows on the event’s
-          page, and they are told.
+          Name a neighbour or a local business from the marketplace who is supplying this event. It
+          shows on the event’s page, and a neighbour is told.
         </Caption>
       </View>
 
@@ -494,5 +566,201 @@ export function ManageVendorsCard({ eventId }: { eventId: string }) {
       ) : null}
       <ErrorText message={error} />
     </Card>
+  );
+}
+
+/**
+ * A listing's photos, a page each, swiped sideways, with a dot for each so
+ * nobody misses that there are more. One photo is just the photo.
+ */
+export function PhotoGallery({ urls, title }: { urls: string[]; title: string }) {
+  const { colors } = useTheme();
+  const [width, setWidth] = useState(0);
+  const [page, setPage] = useState(0);
+  if (!urls.length) return null;
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <View
+        onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+        style={{
+          width: '100%',
+          aspectRatio: 4 / 3,
+          borderRadius: radius.lg,
+          overflow: 'hidden',
+          backgroundColor: colors.surfaceSunken,
+        }}
+      >
+        {width ? (
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(event) =>
+              setPage(Math.round(event.nativeEvent.contentOffset.x / width))
+            }
+          >
+            {urls.map((uri, index) => (
+              <Image
+                key={uri}
+                source={{ uri }}
+                accessibilityLabel={
+                  urls.length > 1
+                    ? `Photo ${index + 1} of ${urls.length} of ${title}`
+                    : `Photo of ${title}`
+                }
+                resizeMode="cover"
+                style={{ width, height: (width * 3) / 4 }}
+              />
+            ))}
+          </ScrollView>
+        ) : null}
+      </View>
+      {urls.length > 1 ? (
+        <View
+          accessible
+          accessibilityLabel={`Photo ${page + 1} of ${urls.length}. Swipe for the others.`}
+          style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}
+        >
+          {urls.map((uri, index) => (
+            <View
+              key={uri}
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: index === page ? colors.ink : colors.border,
+              }}
+            />
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** How many of the newest listings Home shows before "See all". */
+const STRIP_LENGTH = 10;
+
+/**
+ * "From your neighbours" on Home: the newest things on the board as photo
+ * cards to swipe through, and a way to the whole marketplace. Home is the
+ * screen people open every day, and a row of pictures is what makes somebody
+ * stop and look; a line of text saying there is a marketplace was not.
+ *
+ * It reads the same board the Market tab does, under the same key, so
+ * opening the tab after Home has nothing left to load.
+ */
+export function NeighboursStrip() {
+  const router = useRouter();
+  const { colors } = useTheme();
+  const { viewRole } = useAuth();
+  const { data } = useCommunityData('market', (communityId) => fetchBoard(communityId));
+  // Nothing at all until the board is in, rather than an empty card that
+  // turns into a full one under somebody's thumb.
+  if (!data) return null;
+
+  // The board comes newest first.
+  const newest = data.filter(onTheBoard).slice(0, STRIP_LENGTH);
+  const shops = shopsBySeller(data);
+  const mayPost = can(viewRole, 'marketplace:post') || can(viewRole, 'marketplace:business');
+
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+        <View style={{ flex: 1 }}>
+          <SectionLabel>From your neighbours</SectionLabel>
+        </View>
+        {newest.length ? (
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="See all of the marketplace"
+            onPress={() => router.navigate('/market')}
+            hitSlop={8}
+            style={({ pressed }) => ({
+              minHeight: minTapTarget,
+              justifyContent: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Text style={{ color: colors.ink, fontSize: 13, fontWeight: '600' }}>See all ›</Text>
+          </Pressable>
+        ) : null}
+      </View>
+      {newest.length ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          // Edge to edge, so the row reads as something to swipe.
+          style={{ marginHorizontal: -spacing.lg }}
+          contentContainerStyle={{ paddingHorizontal: spacing.lg, gap: spacing.md }}
+        >
+          {newest.map((listing) => (
+            <StripCard
+              key={listing.id}
+              listing={listing}
+              shops={shops}
+              onPress={() => router.push({ pathname: '/listing/[id]', params: { id: listing.id } })}
+            />
+          ))}
+        </ScrollView>
+      ) : (
+        <Card style={{ gap: spacing.sm }}>
+          <Heading>Sell, offer or ask your neighbours</Heading>
+          <Body muted>
+            An old cycle, fresh batter, Hindi classes, a cooker to borrow for a week: post it here,
+            and neighbours call or WhatsApp you.
+          </Body>
+          {mayPost ? (
+            <Button
+              label="Post something"
+              variant="secondary"
+              onPress={() => router.push('/listing/new')}
+            />
+          ) : null}
+        </Card>
+      )}
+    </View>
+  );
+}
+
+/** One card in the strip: the cover, the title, and the price or what kind it is. */
+function StripCard({
+  listing,
+  shops,
+  onPress,
+}: {
+  listing: Listing;
+  shops: Map<string, Listing>;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  const price = priceLine(listing);
+  const width = 148;
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={[listing.title, price ?? LISTING_KIND_LABEL[listing.kind]]
+        .filter(Boolean)
+        .join(', ')}
+      onPress={onPress}
+      style={({ pressed }) => ({ width, gap: spacing.xs, opacity: pressed ? 0.85 : 1 })}
+    >
+      <ListingThumb uri={listing.photoUrl} category={listing.category} size={width} />
+      <Text numberOfLines={2} style={{ color: colors.ink, fontSize: 14, lineHeight: 19 }}>
+        {listing.title}
+      </Text>
+      {price ? (
+        <Text numberOfLines={1} style={{ color: colors.ink, fontSize: 13, fontWeight: '600' }}>
+          {price}
+        </Text>
+      ) : listing.kind !== 'offer' ? (
+        <View style={{ flexDirection: 'row' }}>
+          <KindBadge listing={listing} />
+        </View>
+      ) : null}
+      <Text numberOfLines={1} style={{ color: colors.inkSubtle, fontSize: 12 }}>
+        {sellerLine(listing, shops)}
+      </Text>
+    </Pressable>
   );
 }

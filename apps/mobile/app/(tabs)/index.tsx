@@ -25,8 +25,6 @@ import {
   pickNextEvent,
 } from '../../src/lib/events';
 import { fetchSetupFacts } from '../../src/lib/setup';
-import { supabase } from '../../src/lib/supabase';
-import { today } from '../../src/components/date-field';
 import { groupTodo, useTodoItems } from '../../src/lib/todo';
 import { useCommunityData } from '../../src/lib/use-community-data';
 import {
@@ -47,6 +45,7 @@ import { ResidentViewBanner } from '../../src/components/view-switch';
 import { FestivalHero } from '../../src/components/festival';
 import { FundKey, Meter, StatTile } from '../../src/components/event-ui';
 import { todoTitle } from '../../src/components/todo-queue';
+import { NeighboursStrip } from '../../src/components/market-ui';
 import { spacing } from '../../src/lib/theme';
 import { useTheme } from '../../src/lib/use-theme';
 
@@ -106,18 +105,6 @@ export default function Home() {
     `home:setup:${setupOpen}:${activeCommunity?.address ?? ''}:${activeCommunity?.upi_vpa ?? ''}:${activeCommunity?.catalogue_reviewed_at ?? ''}`,
     async () => (setupOpen && activeCommunity ? fetchSetupFacts(activeCommunity) : null),
   );
-
-  // How much is on the marketplace, for the line that points residents to it.
-  // A count, not the listings: Home is not the place to browse them.
-  const market = useCommunityData('market:count', async (communityId) => {
-    const { count } = await supabase
-      .from('listings')
-      .select('id', { count: 'exact', head: true })
-      .eq('community_id', communityId)
-      .eq('status', 'active')
-      .or(`available_until.is.null,available_until.gte.${today()}`);
-    return count ?? 0;
-  });
 
   if (loading && !data) {
     return (
@@ -276,6 +263,12 @@ export default function Home() {
           </Card>
         )}
 
+        {/* The marketplace, high on the screen residents open every day: the
+            newest things neighbours have put up, as pictures to swipe
+            through. A line of text near the bottom saying there was a
+            marketplace was not enough for anybody to find it. */}
+        <NeighboursStrip />
+
         {/* Money the society is holding that is not behind any event: what a
             closed event had left, once the committee decided to keep it. On
             everybody's home screen, resident and committee alike, because it
@@ -296,24 +289,6 @@ export default function Home() {
             </Card>
           </>
         ) : null}
-
-        {/* The marketplace, where residents will find it: most of them never
-            open the drawer, and "can I sell my batter here?" is a question
-            for the screen they open every day. */}
-        <SectionLabel>From your neighbours</SectionLabel>
-        <Card style={{ paddingVertical: spacing.sm }}>
-          <LinkRow
-            label="Marketplace"
-            detail={
-              market.data
-                ? `${market.data} ${market.data === 1 ? 'thing' : 'things'} neighbours make, teach and offer`
-                : can(role, 'marketplace:post')
-                  ? 'Home food, classes, festive goods — post what you offer'
-                  : 'Home food, classes, festive goods and more'
-            }
-            onPress={() => router.push('/market')}
-          />
-        </Card>
 
         {can(role, 'campaigns:propose') ? (
           <Card style={{ gap: spacing.sm }}>

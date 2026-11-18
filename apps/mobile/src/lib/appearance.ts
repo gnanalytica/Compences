@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { parseAppearance, type AppearanceChoice } from '@compences/core';
 
 /**
- * System, Light or Dark, chosen on the Me tab and kept on the phone.
+ * System, Light or Dark, chosen on Me and kept on the phone.
  *
  * Appearance.setColorScheme() changes what useColorScheme() reports across the
  * whole app, so useTheme() and the status bar follow it without knowing a

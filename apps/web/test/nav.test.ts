@@ -219,8 +219,8 @@ describe('a phone reaches everything a desktop does', () => {
     // Neither screen turns anybody away — /people checks membership and
     // nothing else — but the only screens that opened them were Manage, which
     // residents never see, and Community, which is switched off for the pilot.
-    expect(mobile('app', '(tabs)', 'me.tsx')).toContain("router.push('/people')");
-    expect(mobile('app', '(tabs)', 'me.tsx')).toContain("router.push('/ideas')");
+    expect(mobile('app', 'me.tsx')).toContain("router.push('/people')");
+    expect(mobile('app', 'me.tsx')).toContain("router.push('/ideas')");
     expect(mobile('app', '_layout.tsx')).toContain('name="ideas"');
   });
 

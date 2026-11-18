@@ -66,6 +66,7 @@ export function ReportControls({
   authorId,
   authorName,
   onBlocked,
+  blockable = true,
 }: {
   kind: ReportSubject;
   subjectId: string;
@@ -74,6 +75,12 @@ export function ReportControls({
   authorName: string;
   /** After a block, when the screen itself is about to have nothing to show. */
   onBlocked?: () => void;
+  /**
+   * Off for an outside business: it is the committee's recommendation, not
+   * the post of whoever typed it in, and blocking them would not hide it.
+   * It can still be reported.
+   */
+  blockable?: boolean;
 }) {
   const queryClient = useQueryClient();
   const { activeCommunity, membershipId } = useAuth();
@@ -163,11 +170,13 @@ export function ReportControls({
               setOpen(true);
             }}
           />
-          <QuietLink
-            label={`Block ${who}`}
-            hint="Hides what they post from you"
-            onPress={confirmBlock}
-          />
+          {blockable ? (
+            <QuietLink
+              label={`Block ${who}`}
+              hint="Hides what they post from you"
+              onPress={confirmBlock}
+            />
+          ) : null}
         </View>
         <ErrorText message={error} />
       </View>
@@ -200,14 +209,16 @@ export function ReportControls({
         maxLength={500}
         style={{ minHeight: 72, textAlignVertical: 'top' }}
       />
-      <ChipRow>
-        <Chip
-          label={alsoBlock ? `Also block ${who} ✓` : `Also block ${who}`}
-          selected={alsoBlock}
-          onPress={() => setAlsoBlock((current) => !current)}
-          disabled={busy}
-        />
-      </ChipRow>
+      {blockable ? (
+        <ChipRow>
+          <Chip
+            label={alsoBlock ? `Also block ${who} ✓` : `Also block ${who}`}
+            selected={alsoBlock}
+            onPress={() => setAlsoBlock((current) => !current)}
+            disabled={busy}
+          />
+        </ChipRow>
+      ) : null}
       <View style={{ flexDirection: 'row', gap: spacing.sm }}>
         <View style={{ flex: 1 }}>
           <Button

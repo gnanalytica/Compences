@@ -1,14 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import {
-  Alert,
-  Image,
-  Linking,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { MessageCircle, Phone } from 'lucide-react-native';
@@ -17,12 +8,14 @@ import {
   can,
   formatDate,
   formatRating,
+  isReviewedKind,
   listingEnquiryText,
   listingReviewSchema,
   reviewCountLabel,
   starString,
   telLink,
   whatsappLink,
+  type ListingKind,
 } from '@compences/core';
 import { useAuth } from '../../src/lib/auth';
 import {
@@ -47,15 +40,38 @@ import {
   Title,
 } from '../../src/components/ui';
 import { Chip, ChipRow, ErrorText } from '../../src/components/admin-ui';
-import { ListingStatusBadge, StarPicker, untilLine } from '../../src/components/market-ui';
+import {
+  KindBadge,
+  ListingCard,
+  ListingStatusBadge,
+  PhotoGallery,
+  StarPicker,
+  priceLine,
+  untilLine,
+} from '../../src/components/market-ui';
 import { OwnerActions } from '../../src/components/listing-form';
 import { ReportControls } from '../../src/components/report-ui';
 import { fonts, minTapTarget, radius, spacing } from '../../src/lib/theme';
 import { useTheme } from '../../src/lib/use-theme';
 
+/** Over the seller's name: what they are to this listing. */
+const SELLER_CAPTION: Record<ListingKind, string> = {
+  offer: 'OFFERED BY',
+  sale: 'SOLD BY',
+  wanted: 'ASKED FOR BY',
+  shop: 'RUN BY',
+  business: 'AN OUTSIDE BUSINESS',
+};
+
 /**
- * One listing: its picture and details, a way to call or WhatsApp the seller,
+ * One listing: its photos and details, a way to call or WhatsApp the seller,
  * what neighbours thought of it, and the events it has supplied.
+ *
+ * Every kind opens here. A shop's page also lists everything else its owner
+ * has on the board; anything else a shop-keeper sells links back to their
+ * shop. Something sold once has no reviews, and its seller marks it sold.
+ * An outside business is the committee's: any of them may change it, it has
+ * no flat, and there is nobody to block — only something to report.
  *
  * Notifications for a new review or a listing taken down open here, so it has
  * to make sense to the seller as much as to a buyer: the seller sees their
@@ -67,7 +83,6 @@ import { useTheme } from '../../src/lib/use-theme';
 export default function ListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { colors } = useTheme();
   const { membershipId, viewRole } = useAuth();
 
   const { data, loading, refreshing, refresh } = useCommunityData(`listing:${id}`, (communityId) =>
@@ -93,16 +108,28 @@ export default function ListingScreen() {
     );
   }
 
-  const { listing, reviews, vendorFor } = data;
+  const { listing, reviews, vendorFor, shop, moreFromSeller } = data;
   const mine = listing.membershipId === membershipId;
-  const mayModerate = can(viewRole, 'marketplace:moderate') && !mine;
+  const business = listing.kind === 'business';
+  // Whoever on staff or the committee is to hand keeps a business up to date.
+  const keeper = business && can(viewRole, 'marketplace:business');
+  const removed = listing.status === 'removed';
+  // Nobody moderates their own listing — except a business, which is nobody's
+  // own: any of the committee may take it down or put it back.
+  const mayModerate = can(viewRole, 'marketplace:moderate') && (!mine || business);
+  const reviewed = isReviewedKind(listing.kind);
   const myReview = reviews.find((review) => review.membershipId === membershipId) ?? null;
   // A new review needs the listing on the board; one already written can
   // still be changed or withdrawn, as the database allows.
   const mayReview =
-    can(viewRole, 'marketplace:review') && !mine && (listing.status === 'active' || !!myReview);
+    reviewed &&
+    can(viewRole, 'marketplace:review') &&
+    !mine &&
+    (listing.status === 'active' || !!myReview);
   const others = reviews.filter((review) => review.id !== myReview?.id);
   const until = untilLine(listing);
+  const price = priceLine(listing);
+  const photos = listing.photoUrls.filter((url): url is string => url !== null);
 
   return (
     <Screen>
@@ -111,24 +138,15 @@ export default function ListingScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
         keyboardShouldPersistTaps="handled"
       >
-        {listing.photoUrl ? (
-          <Image
-            source={{ uri: listing.photoUrl }}
-            accessibilityLabel={`Photo of ${listing.title}`}
-            resizeMode="cover"
-            style={{
-              width: '100%',
-              aspectRatio: 4 / 3,
-              borderRadius: radius.lg,
-              backgroundColor: colors.surfaceSunken,
-            }}
-          />
-        ) : null}
+        <PhotoGallery urls={photos} title={listing.title} />
 
         <View style={{ gap: spacing.xs }}>
-          <Caption>{LISTING_CATEGORY_LABEL[listing.category]}</Caption>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+            <KindBadge listing={listing} always />
+            <Caption>{LISTING_CATEGORY_LABEL[listing.category]}</Caption>
+          </View>
           <Title>{listing.title}</Title>
-          {listing.priceNote ? <Heading>{listing.priceNote}</Heading> : null}
+          {price ? <Heading>{price}</Heading> : null}
           <View
             style={{
               flexDirection: 'row',
@@ -154,11 +172,35 @@ export default function ListingScreen() {
         ) : null}
 
         <Card style={{ gap: spacing.md }}>
-          <View style={{ gap: 2 }}>
-            <Caption>OFFERED BY</Caption>
-            <Heading>{[listing.sellerName, listing.flat].filter(Boolean).join(' · ')}</Heading>
-          </View>
-          {mine ? (
+          {business ? (
+            <View style={{ gap: 2 }}>
+              <Caption>{SELLER_CAPTION.business}</Caption>
+              <Heading>Recommended by the committee</Heading>
+            </View>
+          ) : (
+            <View style={{ gap: 2 }}>
+              <Caption>{SELLER_CAPTION[listing.kind]}</Caption>
+              <Heading>{[listing.sellerName, listing.flat].filter(Boolean).join(' · ')}</Heading>
+            </View>
+          )}
+          {shop ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Open ${shop.title}, their shop`}
+              onPress={() => router.push({ pathname: '/listing/[id]', params: { id: shop.id } })}
+              style={({ pressed }) => ({
+                minHeight: minTapTarget,
+                justifyContent: 'center',
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <Body>From {shop.title} ›</Body>
+              <Caption>Everything else they sell is in their shop.</Caption>
+            </Pressable>
+          ) : null}
+          {/* The committee members who keep a business up to date call it
+              like anybody else; a resident's own listing has nobody to call. */}
+          {mine && !business ? (
             <Caption>
               This is your listing. Neighbours see the number {listing.contactPhone}.
             </Caption>
@@ -171,6 +213,20 @@ export default function ListingScreen() {
           <Card>
             <Body>{listing.description}</Body>
           </Card>
+        ) : null}
+
+        {/* A shop's page is the shop: what is in it. */}
+        {listing.kind === 'shop' && moreFromSeller.length ? (
+          <View style={{ gap: spacing.md }}>
+            <Heading>More from {listing.title}</Heading>
+            {moreFromSeller.map((other) => (
+              <ListingCard
+                key={other.id}
+                listing={other}
+                onPress={() => router.push({ pathname: '/listing/[id]', params: { id: other.id } })}
+              />
+            ))}
+          </View>
         ) : null}
 
         {vendorFor.length ? (
@@ -203,18 +259,26 @@ export default function ListingScreen() {
           </Card>
         ) : null}
 
-        <Reviews
-          data={data}
-          others={others}
-          myReview={myReview}
-          mayReview={mayReview}
-          // Not on their own listing: a seller who moderates should not be the
-          // one deciding which of their reviews stand.
-          mayModerate={mayModerate}
-        />
+        {/* Nobody reviews a second-hand cycle, or a neighbour's request. */}
+        {reviewed ? (
+          <Reviews
+            data={data}
+            others={others}
+            myReview={myReview}
+            mayReview={mayReview}
+            // Not on their own listing: a seller who moderates should not be
+            // the one deciding which of their reviews stand.
+            mayModerate={mayModerate && !mine}
+          />
+        ) : null}
 
-        {mine ? <OwnerActions listing={listing} /> : null}
-        {mayModerate ? <Moderation data={data} /> : null}
+        {/* A business taken down comes back through Moderation; until then
+            its keepers, whoever added it included, have nothing to pause or
+            edit. */}
+        {(business ? (mine || keeper) && !removed : mine) ? (
+          <OwnerActions listing={listing} />
+        ) : null}
+        {mayModerate && (!business || removed) ? <Moderation data={data} /> : null}
 
         <Caption>Posted {formatDate(listing.createdAt.slice(0, 10))}</Caption>
         {/* Under everything else, where somebody who has read the listing and
@@ -224,7 +288,8 @@ export default function ListingScreen() {
           kind="listing"
           subjectId={listing.id}
           authorId={listing.membershipId}
-          authorName={listing.sellerName}
+          authorName={business ? listing.title : listing.sellerName}
+          blockable={!business}
           onBlocked={() => router.back()}
         />
         <View style={{ height: spacing.xl }} />
@@ -265,7 +330,7 @@ function ContactButtons({ data }: { data: ListingDetail }) {
             open(
               whatsappLink(
                 listing.contactPhone,
-                listingEnquiryText(listing.title, activeCommunity?.name ?? 'society'),
+                listingEnquiryText(listing.title, activeCommunity?.name ?? 'society', listing.kind),
               ),
               'WhatsApp',
             )
@@ -499,7 +564,13 @@ function ReviewForm({ data, mine }: { data: ListingDetail; mine: ListingReview |
 
   return (
     <View style={{ gap: spacing.sm }}>
-      <Caption>{mine ? 'YOUR REVIEW' : 'BOUGHT FROM THEM? LEAVE A REVIEW'}</Caption>
+      <Caption>
+        {mine
+          ? 'YOUR REVIEW'
+          : data.listing.kind === 'business'
+            ? 'USED THEM? LEAVE A REVIEW'
+            : 'BOUGHT FROM THEM? LEAVE A REVIEW'}
+      </Caption>
       <StarPicker
         value={rating}
         onChange={(next) => {
@@ -535,7 +606,13 @@ function ReviewForm({ data, mine }: { data: ListingDetail; mine: ListingReview |
           disabled={busy !== null}
         />
       ) : null}
-      {saved ? <Caption>Thank you — the seller has been told.</Caption> : null}
+      {saved ? (
+        <Caption>
+          {data.listing.kind === 'business'
+            ? 'Thank you — your neighbours will see it.'
+            : 'Thank you — the seller has been told.'}
+        </Caption>
+      ) : null}
       <ErrorText message={error} />
     </View>
   );

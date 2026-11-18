@@ -2145,6 +2145,9 @@ export type Database = {
           removed_by: string | null
           created_at: string
           updated_at: string
+          kind: string
+          photo_paths: string[]
+          closed_at: string | null
         }
         Insert: {
           id?: string
@@ -2164,6 +2167,9 @@ export type Database = {
           removed_by?: string | null
           created_at?: string
           updated_at?: string
+          kind?: string
+          photo_paths?: string[]
+          closed_at?: string | null
         }
         Update: {
           id?: string
@@ -2183,6 +2189,9 @@ export type Database = {
           removed_by?: string | null
           created_at?: string
           updated_at?: string
+          kind?: string
+          photo_paths?: string[]
+          closed_at?: string | null
         }
         Relationships: [
           {

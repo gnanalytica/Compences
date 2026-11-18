@@ -6,7 +6,7 @@ import {
   House,
   LayoutGrid,
   Plus,
-  UserRound,
+  Store,
   Wallet,
   type LucideIcon,
 } from 'lucide-react-native';
@@ -14,7 +14,7 @@ import { useAuth } from '../../src/lib/auth';
 import { useSeason } from '../../src/lib/events';
 import { useTodoItems } from '../../src/lib/todo';
 import { NavDrawerButton } from '../../src/components/nav-drawer';
-import { NotificationBell } from '../../src/components/notification-bell';
+import { HeaderActions } from '../../src/components/header-actions';
 import { Loading, Screen } from '../../src/components/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fonts, lookColours, spacing } from '../../src/lib/theme';
@@ -131,6 +131,8 @@ export default function TabsLayout() {
         headerTitleStyle: { fontFamily: fonts.serif, fontSize: 18 },
         // The society name opens the full navigation, as on the web.
         headerLeft: () => <NavDrawerButton />,
+        // The bell, and the round button that opens Me, on every tab.
+        headerRight: () => <HeaderActions />,
         headerTitleAlign: 'center',
         // Visible, so the Contribute button can rise above the bar's edge.
         // The bar is its own height plus the home indicator's inset, so its
@@ -166,7 +168,6 @@ export default function TabsLayout() {
           // The screen greets by name instead; the header keeps the bell.
           headerTitle: '',
           tabBarIcon: tabIcon(House),
-          headerRight: () => <NotificationBell />,
         }}
       />
       <Tabs.Screen
@@ -174,7 +175,6 @@ export default function TabsLayout() {
         options={{
           title: 'Events',
           tabBarIcon: tabIcon(CalendarDays),
-          headerRight: () => <NotificationBell />,
         }}
       />
       <Tabs.Screen
@@ -197,7 +197,6 @@ export default function TabsLayout() {
           title: 'Money',
           href: staffView ? null : undefined,
           tabBarIcon: tabIcon(Wallet),
-          headerRight: () => <NotificationBell />,
         }}
       />
       {/* Staff and the committee only; residents never see the tab. */}
@@ -210,7 +209,13 @@ export default function TabsLayout() {
           tabBarBadge: todoCount > 0 ? (todoCount > 99 ? '99+' : todoCount) : undefined,
         }}
       />
-      <Tabs.Screen name="me" options={{ title: 'Me', tabBarIcon: tabIcon(UserRound) }} />
+      {/* The marketplace, in the slot Me had: what neighbours sell, offer and
+          ask for, a resident's shop, and the outside businesses the committee
+          recommends. Me opens from the round button in the header instead. */}
+      <Tabs.Screen
+        name="market"
+        options={{ title: 'Market', headerTitle: 'Marketplace', tabBarIcon: tabIcon(Store) }}
+      />
       {/* Notices and polls are switched off for the pilot; the screen stays in
           the codebase but is kept out of the tab bar. */}
       <Tabs.Screen name="community" options={{ href: null }} />

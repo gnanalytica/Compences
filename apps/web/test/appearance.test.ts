@@ -184,8 +184,8 @@ describe('the phone', () => {
     );
   });
 
-  it('offers it on the Me tab, just above Join another society', () => {
-    const me = read('mobile', 'app', '(tabs)', 'me.tsx');
+  it('offers it on the Me screen, just above Join another society', () => {
+    const me = read('mobile', 'app', 'me.tsx');
     const card = me.indexOf('<AppearanceCard />');
     expect(card).toBeGreaterThan(me.indexOf('<Heading>Switch society</Heading>'));
     expect(me.slice(card, me.indexOf('label="Join another society"'))).toMatch(

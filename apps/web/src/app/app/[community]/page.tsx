@@ -7,7 +7,9 @@ import {
   Lightbulb,
   Megaphone,
   PiggyBank,
+  Plus,
   Sparkles,
+  Store,
   Users,
   Wallet,
 } from 'lucide-react';
@@ -30,6 +32,9 @@ import {
 import { requireCommunity } from '@/lib/auth';
 import { getTodoItems } from '@/lib/todo';
 import { getSocietyBalance, getIdeas, getSeason, getStatsFor } from '@/lib/events';
+import { getNewestOnBoard } from '@/lib/market';
+import { ListingStripCard } from '@/components/listing-bits';
+import { postableKinds } from './market/post-menu';
 import { bottomNavItems } from '@/components/nav-items';
 import {
   FestivalTile,
@@ -141,6 +146,10 @@ export default async function DashboardPage(props: PageProps<'/app/[community]'>
   const needsMySay = ideas.filter((row) => row.status === 'accepted' && row.myVote === null).length;
   const roleName = normalizeRole(role);
   const heading = next ? headingTowards(nextFestival, next.name) : null;
+  // The newest few on the marketplace, so a resident sees it on the screen
+  // they open every day rather than having to know it is in the sidebar.
+  const fromNeighbours = await getNewestOnBoard(community.id, today, 8);
+  const mayPost = postableKinds(role, false).length > 0;
 
   return (
     <>
@@ -339,6 +348,58 @@ export default async function DashboardPage(props: PageProps<'/app/[community]'>
             />
           </Card>
         )}
+
+        {/* The marketplace, high on the page: what neighbours have put up
+            lately, a swipe of covers, with the way to post beside it. */}
+        {fromNeighbours.length || mayPost ? (
+          <section aria-labelledby="from-neighbours" className="mt-8">
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <SectionLabel id="from-neighbours">From your neighbours</SectionLabel>
+              {fromNeighbours.length ? (
+                <Link
+                  href={`${base}/market`}
+                  className="text-ink-muted hover:text-ink text-sm font-medium underline-offset-4 hover:underline"
+                >
+                  See all
+                </Link>
+              ) : null}
+            </div>
+            {fromNeighbours.length ? (
+              <ul
+                aria-label="Newest on the marketplace"
+                className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6"
+              >
+                {fromNeighbours.map((listing, index) => (
+                  <li key={listing.id} className="flex">
+                    <ListingStripCard
+                      listing={listing}
+                      href={`${base}/market/${listing.id}`}
+                      index={index}
+                    />
+                  </li>
+                ))}
+                {mayPost ? (
+                  <li className="flex">
+                    <Link
+                      href={`${base}/market/new`}
+                      className="pressable border-border-strong text-ink-muted hover:text-ink flex w-36 shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-2xl border border-dashed p-4 text-center text-sm font-medium transition-colors"
+                    >
+                      <Plus className="size-5" aria-hidden="true" />
+                      Post something
+                    </Link>
+                  </li>
+                ) : null}
+              </ul>
+            ) : (
+              <LinkRow
+                href={`${base}/market/new`}
+                icon={<Store className="size-5" aria-hidden="true" />}
+                title="Sell, offer or ask your neighbours"
+                detail="An old cycle, home food, a cooker to borrow: the marketplace is empty so far."
+              />
+            )}
+          </section>
+        ) : null}
 
         {/* Money the society is holding that is not behind any event: what a
             closed event had left, once the committee decided to keep it. On

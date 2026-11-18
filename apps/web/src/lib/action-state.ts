@@ -69,6 +69,9 @@ const KNOWN_DB_MESSAGES = [
   'Only staff or the committee can take a listing down',
   'Staff can take a listing down or restore it, not rewrite it',
   'A listing cannot move to another society or seller',
+  'You already have a shop here. Edit it rather than opening another.',
+  'Only something for sale or wanted can be marked sold or found',
+  'A listing cannot change what kind of listing it is',
 ];
 
 /** Constraint names worth their own explanation. */
@@ -88,6 +91,10 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   listings_title_length: 'Say what you are offering in 3 to 120 characters.',
   listing_reviews_one_each: 'You have already reviewed this. Edit your review instead.',
   event_vendors_once: 'That listing is already a vendor for this event.',
+  listings_one_shop_each: 'You already have a shop here. Edit it rather than opening another.',
+  listings_photo_paths_shape: 'A listing can have five photos at most.',
+  listings_business_has_no_flat: 'An outside business is not listed under a flat.',
+  listings_closed_only_once_off: 'Only something for sale or wanted can be marked sold or found.',
 };
 
 /**

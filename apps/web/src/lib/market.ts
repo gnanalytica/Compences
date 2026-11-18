@@ -1,5 +1,11 @@
 import { cache } from 'react';
-import { isListingCategory, unitLabel, type ListingCategory } from '@compences/core';
+import {
+  isListingCategory,
+  isListingKind,
+  unitLabel,
+  type ListingCategory,
+  type ListingKind,
+} from '@compences/core';
 import { fileUrls } from './storage';
 import { getSupabase } from './supabase/server';
 import { rowsOf } from './rows';
@@ -16,26 +22,42 @@ import { rowsOf } from './rows';
  * `seller` and `remover` are named embeds because listings points at
  * memberships twice (membership_id and removed_by), and PostgREST refuses an
  * ambiguous one rather than guessing.
+ *
+ * Since 1118.0100 a listing has a kind (an offer, something for sale once,
+ * something wanted, a resident's shop, an outside business) and up to five
+ * photos, `photo_paths`, the first of which is the cover. `photo_path` is
+ * still there, kept equal to that first one by the database for apps built
+ * before; it is read only as a fallback.
  */
 
 // Single string literals, so supabase-js can read the row type off them.
 const LISTING_FIELDS =
-  'id, community_id, membership_id, unit_id, category, title, description, price_note, contact_phone, on_whatsapp, photo_path, available_until, status, removed_reason, created_at, updated_at, units(block, number), seller:memberships!listings_membership_id_fkey(profiles(full_name))';
+  'id, community_id, membership_id, unit_id, kind, category, title, description, price_note, contact_phone, on_whatsapp, photo_path, photo_paths, available_until, status, closed_at, removed_reason, created_at, updated_at, units(block, number), seller:memberships!listings_membership_id_fkey(profiles(full_name))';
 
 export type ListingCard = {
   id: string;
   membershipId: string;
   unitId: string | null;
+  kind: ListingKind;
   category: ListingCategory;
   title: string;
   description: string | null;
   priceNote: string | null;
   contactPhone: string;
   onWhatsapp: boolean;
+  /** The cover, or null when there is no photo. */
   photoPath: string | null;
   photoUrl: string | null;
+  /** Every photo, cover first. */
+  photoPaths: string[];
+  /** Signed links to the photos the viewer may open, in the same order. */
+  photoUrls: string[];
+  /** Each photo with its link, or null where the viewer could not get one. */
+  photos: { path: string; url: string | null }[];
   availableUntil: string | null;
   status: 'active' | 'paused' | 'removed';
+  /** When something for sale was sold, or something wanted was found. */
+  closedAt: string | null;
   removedReason: string | null;
   createdAt: string;
   sellerName: string;
@@ -43,12 +65,18 @@ export type ListingCard = {
   flat: string | null;
   reviewCount: number;
   averageRating: number | null;
+  /**
+   * The seller's shop, when they have one on the board and this is not it:
+   * their other listings say whose shop they belong to.
+   */
+  shop: { id: string; title: string } | null;
 };
 
 type ListingRow = {
   id: string;
   membership_id: string;
   unit_id: string | null;
+  kind: string;
   category: string;
   title: string;
   description: string | null;
@@ -56,8 +84,10 @@ type ListingRow = {
   contact_phone: string;
   on_whatsapp: boolean;
   photo_path: string | null;
+  photo_paths: string[] | null;
   available_until: string | null;
   status: string;
+  closed_at: string | null;
   removed_reason: string | null;
   created_at: string;
   units: { block: string | null; number: string | null } | null;
@@ -66,6 +96,37 @@ type ListingRow = {
 
 function statusOf(value: string): ListingCard['status'] {
   return value === 'paused' || value === 'removed' ? value : 'active';
+}
+
+/** A kind this app does not know yet reads as an offer, as it did before kinds. */
+export function kindOf(value: string | null | undefined): ListingKind {
+  return isListingKind(value) ? value : 'offer';
+}
+
+/** The photos, cover first; a row from before 1118.0100 may have only photo_path. */
+function pathsOf(row: Pick<ListingRow, 'photo_path' | 'photo_paths'>): string[] {
+  const paths = (row.photo_paths ?? []).filter(Boolean);
+  if (paths.length) return paths;
+  return row.photo_path ? [row.photo_path] : [];
+}
+
+/**
+ * Tells each listing whose shop it belongs to: the seller's shop, if it is on
+ * the board (a shop has no last day, so that is whether it is active). The
+ * shop itself is left alone; its seller line is the person who runs it.
+ */
+export function attachShops(listings: ListingCard[]): ListingCard[] {
+  const shops = new Map<string, { id: string; title: string }>();
+  for (const listing of listings) {
+    if (listing.kind === 'shop' && listing.status === 'active') {
+      shops.set(listing.membershipId, { id: listing.id, title: listing.title });
+    }
+  }
+  return listings.map((listing) =>
+    listing.kind === 'shop' || listing.kind === 'business'
+      ? listing
+      : { ...listing, shop: shops.get(listing.membershipId) ?? null },
+  );
 }
 
 /** Ratings and photo links for a set of listings, in two round trips not 2n. */
@@ -80,10 +141,7 @@ async function decorate(rows: ListingRow[]): Promise<ListingCard[]> {
         'listing_id',
         rows.map((row) => row.id),
       ),
-    fileUrls(
-      'listing-photos',
-      rows.map((row) => row.photo_path),
-    ),
+    fileUrls('listing-photos', rows.flatMap(pathsOf)),
   ]);
   const byListing = new Map(
     rowsOf(ratings, 'listing_ratings').map((rating) => [rating.listing_id, rating]),
@@ -91,31 +149,45 @@ async function decorate(rows: ListingRow[]): Promise<ListingCard[]> {
 
   return rows.map((row) => {
     const rating = byListing.get(row.id);
+    const paths = pathsOf(row);
+    const urls = paths.flatMap((path) => {
+      const url = photos.get(path);
+      return url ? [url] : [];
+    });
     return {
       id: row.id,
       membershipId: row.membership_id,
       unitId: row.unit_id,
+      kind: kindOf(row.kind),
       category: isListingCategory(row.category) ? row.category : 'other',
       title: row.title,
       description: row.description,
       priceNote: row.price_note,
       contactPhone: row.contact_phone,
       onWhatsapp: row.on_whatsapp,
-      photoPath: row.photo_path,
-      photoUrl: row.photo_path ? (photos.get(row.photo_path) ?? null) : null,
+      photoPath: paths[0] ?? null,
+      photoUrl: paths[0] ? (photos.get(paths[0]) ?? null) : null,
+      photoPaths: paths,
+      photoUrls: urls,
+      photos: paths.map((path) => ({ path, url: photos.get(path) ?? null })),
       availableUntil: row.available_until,
       status: statusOf(row.status),
+      closedAt: row.closed_at,
       removedReason: row.removed_reason,
       createdAt: row.created_at,
       sellerName: row.seller?.profiles?.full_name?.trim() || 'A neighbour',
       flat: row.units?.number ? unitLabel(row.units) : null,
       reviewCount: rating?.review_count ?? 0,
-      averageRating: rating?.average_rating === null ? null : Number(rating?.average_rating),
+      averageRating:
+        rating?.average_rating === null || rating?.average_rating === undefined
+          ? null
+          : Number(rating.average_rating),
+      shop: null,
     };
   });
 }
 
-/** Every listing the viewer may see in this society, newest first. */
+/** Every listing the viewer may see in this society, newest first, each told whose shop it is in. */
 export const getListings = cache(async (communityId: string): Promise<ListingCard[]> => {
   const supabase = await getSupabase();
   const result = await supabase
@@ -124,8 +196,27 @@ export const getListings = cache(async (communityId: string): Promise<ListingCar
     .eq('community_id', communityId)
     .order('created_at', { ascending: false })
     .limit(500);
-  return decorate(rowsOf(result, 'listings'));
+  return attachShops(await decorate(rowsOf(result, 'listings')));
 });
+
+/**
+ * The newest few on the board, for the strip on Home. A handful of rows and
+ * their covers rather than the whole board: Home is not the place to browse.
+ */
+export const getNewestOnBoard = cache(
+  async (communityId: string, today: string, count = 8): Promise<ListingCard[]> => {
+    const supabase = await getSupabase();
+    const result = await supabase
+      .from('listings')
+      .select(LISTING_FIELDS)
+      .eq('community_id', communityId)
+      .eq('status', 'active')
+      .or(`available_until.is.null,available_until.gte.${today}`)
+      .order('created_at', { ascending: false })
+      .limit(count);
+    return decorate(rowsOf(result, 'newest listings'));
+  },
+);
 
 /** One listing, or null when it does not exist or the viewer may not see it. */
 export const getListing = cache(
@@ -193,6 +284,7 @@ export type EventVendor = {
   note: string | null;
   listingId: string;
   title: string;
+  kind: ListingKind;
   category: ListingCategory;
   status: ListingCard['status'];
   sellerName: string;
@@ -205,7 +297,7 @@ export const getEventVendors = cache(async (eventId: string): Promise<EventVendo
   const result = await supabase
     .from('event_vendors')
     .select(
-      'id, note, listing_id, created_at, listings(title, category, status, units(block, number), seller:memberships!listings_membership_id_fkey(profiles(full_name)))',
+      'id, note, listing_id, created_at, listings(title, kind, category, status, units(block, number), seller:memberships!listings_membership_id_fkey(profiles(full_name)))',
     )
     .eq('event_id', eventId)
     .order('created_at');
@@ -220,6 +312,7 @@ export const getEventVendors = cache(async (eventId: string): Promise<EventVendo
             note: row.note,
             listingId: row.listing_id,
             title: row.listings.title,
+            kind: kindOf(row.listings.kind),
             category: isListingCategory(row.listings.category) ? row.listings.category : 'other',
             status: statusOf(row.listings.status),
             sellerName: row.listings.seller?.profiles?.full_name?.trim() || 'A neighbour',

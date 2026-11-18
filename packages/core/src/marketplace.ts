@@ -4,15 +4,122 @@ import { residentPhoneSchema, uuid } from './schemas';
 /**
  * The marketplace: what residents make, teach and offer each other — idly
  * batter, Hindi classes for children, Diwali crackers, tailoring, a lawyer
- * two floors down. Neighbours rate and review what they have bought, and the
- * committee can name a listing as a vendor for an event.
+ * two floors down — and, since 1118.0100, the old cycle sold once, the
+ * pressure cooker somebody wants to borrow, a resident's shop, and the
+ * outside electrician the committee recommends. Neighbours rate and review
+ * what is offered again and again, and the committee can name a listing as a
+ * vendor for an event.
  *
- * The database (migration 1103.0100) is the authority on who may post,
- * review and moderate; this file is the shared vocabulary and the form rules
- * every surface validates against before it gets there.
+ * The database (migrations 1103.0100 and 1118.0100) is the authority on who
+ * may post, review and moderate; this file is the shared vocabulary and the
+ * form rules every surface validates against before it gets there.
  */
 
-/** Mirrors the listings_category_known check constraint. */
+/**
+ * What a listing is. Mirrors the listings_kind_known check constraint.
+ *
+ * Every listing posted before 1118.0100 is an offer, and an app built before
+ * then shows every kind as one.
+ */
+export const LISTING_KINDS = ['offer', 'sale', 'wanted', 'shop', 'business'] as const;
+
+export type ListingKind = (typeof LISTING_KINDS)[number];
+
+export function isListingKind(value: unknown): value is ListingKind {
+  return typeof value === 'string' && (LISTING_KINDS as readonly string[]).includes(value);
+}
+
+export const listingKindSchema = z.enum(LISTING_KINDS, {
+  message: 'Pick what kind of listing it is',
+});
+
+/** One of them, on a badge: "For sale". */
+export const LISTING_KIND_LABEL: Record<ListingKind, string> = {
+  offer: 'Offered',
+  sale: 'For sale',
+  wanted: 'Wanted',
+  shop: 'Shop',
+  business: 'Local business',
+};
+
+/** All of them, on a filter: "Shops". */
+export const LISTING_KIND_PLURAL: Record<ListingKind, string> = {
+  offer: 'Offered',
+  sale: 'For sale',
+  wanted: 'Wanted',
+  shop: 'Shops',
+  business: 'Local businesses',
+};
+
+/** What posting one does, on the button that starts it. */
+export const LISTING_KIND_ACTION: Record<ListingKind, string> = {
+  offer: 'Offer what you make or teach',
+  sale: 'Sell something',
+  wanted: 'Ask for something',
+  shop: 'Open your shop',
+  business: 'Add a local business',
+};
+
+/** A line under each, so somebody posting knows which they want. */
+export const LISTING_KIND_HINT: Record<ListingKind, string> = {
+  offer: 'Food, classes, tailoring: something you do again and again',
+  sale: 'One thing, once: an old cycle, a sofa, last year’s books',
+  wanted: 'Something you are looking to buy or borrow',
+  shop: 'A name and a cover photo, with everything you sell gathered under it',
+  business: 'Somebody from outside the society the committee recommends',
+};
+
+/** What the title field asks for, and an example of one. */
+export const LISTING_KIND_TITLE: Record<ListingKind, { label: string; placeholder: string }> = {
+  offer: { label: 'What are you offering?', placeholder: 'Fresh idly & dosa batter' },
+  sale: { label: 'What are you selling?', placeholder: 'Kids’ cycle, 20 inch' },
+  wanted: {
+    label: 'What are you looking for?',
+    placeholder: 'Pressure cooker to borrow for a week',
+  },
+  shop: { label: 'Your shop’s name', placeholder: 'Lakshmi’s Kitchen' },
+  business: { label: 'The business’s name', placeholder: 'Ravi Electricals' },
+};
+
+/** What the price field is called for each kind, and an example. */
+export const LISTING_KIND_PRICE: Record<ListingKind, { label: string; placeholder: string }> = {
+  offer: { label: 'Price', placeholder: '₹80 a kg, or On request' },
+  sale: { label: 'Asking price', placeholder: '₹2,000, or Free' },
+  wanted: { label: 'Budget', placeholder: 'Up to ₹1,500' },
+  shop: { label: 'Prices', placeholder: 'From ₹60' },
+  business: { label: 'Rates', placeholder: '₹300 a visit' },
+};
+
+/**
+ * What neighbours rate and review: what is offered again and again. Nobody
+ * reviews a second-hand cycle, and a review of a request is a review of a
+ * neighbour. Mirrors the listing_reviews policies, and the same kinds are the
+ * ones the committee can name as an event's vendor.
+ */
+export const REVIEWED_KINDS: readonly ListingKind[] = ['offer', 'shop', 'business'];
+
+export function isReviewedKind(kind: ListingKind): boolean {
+  return REVIEWED_KINDS.includes(kind);
+}
+
+/** Sold once, or found once: these are marked done rather than paused. */
+export function isOnceOffKind(kind: ListingKind): boolean {
+  return kind === 'sale' || kind === 'wanted';
+}
+
+/** "Sold" or "Found", for a once-off listing that has been marked done. */
+export function closedLabel(kind: ListingKind): string {
+  return kind === 'wanted' ? 'Found' : 'Sold';
+}
+
+/** At most five photos a listing (listings_photo_paths_shape); the first is its cover. */
+export const MAX_LISTING_PHOTOS = 5;
+
+/**
+ * Mirrors the listings_category_known check constraint, in its order: what
+ * residents make, teach and offer, then things sold once or looked for, then
+ * what outside businesses bring to the gate.
+ */
 export const LISTING_CATEGORIES = [
   'home_food',
   'bakes',
@@ -25,6 +132,18 @@ export const LISTING_CATEGORIES = [
   'festive',
   'home_services',
   'other',
+  'furniture',
+  'electronics',
+  'appliances',
+  'kids',
+  'books',
+  'vehicles',
+  'clothing',
+  'sports',
+  'daily_needs',
+  'laundry',
+  'health',
+  'transport',
 ] as const;
 
 export type ListingCategory = (typeof LISTING_CATEGORIES)[number];
@@ -41,6 +160,18 @@ export const LISTING_CATEGORY_LABEL: Record<ListingCategory, string> = {
   festive: 'Festive & seasonal',
   home_services: 'Home services',
   other: 'Something else',
+  furniture: 'Furniture',
+  electronics: 'Electronics & gadgets',
+  appliances: 'Kitchen & appliances',
+  kids: 'Kids & baby',
+  books: 'Books & study',
+  vehicles: 'Cycles & vehicles',
+  clothing: 'Clothes & accessories',
+  sports: 'Sports & fitness',
+  daily_needs: 'Daily needs',
+  laundry: 'Laundry & ironing',
+  health: 'Health & pharmacy',
+  transport: 'Drivers, movers & travel',
 };
 
 /** A line under each category in the picker, so a seller knows where they fit. */
@@ -56,6 +187,72 @@ export const LISTING_CATEGORY_HINT: Record<ListingCategory, string> = {
   festive: 'Crackers, rakhis, diyas, gifts',
   home_services: 'Repairs, cleaning, cooking help',
   other: 'Anything that fits nowhere else',
+  furniture: 'Sofas, beds, tables, shelves',
+  electronics: 'Phones, laptops, TVs, cameras',
+  appliances: 'Cookers, mixers, fridges, ACs',
+  kids: 'Toys, prams, cots, school things',
+  books: 'Textbooks, novels, exam guides',
+  vehicles: 'Cycles, scooters, cars, helmets',
+  clothing: 'Sarees, kurtas, shoes, bags',
+  sports: 'Bats, rackets, treadmills, yoga mats',
+  daily_needs: 'Milk, vegetables, water cans, newspapers',
+  laundry: 'Ironing, dry-cleaning, washing',
+  health: 'Clinics, pharmacies, physiotherapy',
+  transport: 'Drivers, packers and movers, taxis',
+};
+
+const OFFERED: readonly ListingCategory[] = [
+  'home_food',
+  'bakes',
+  'tuition',
+  'music_dance',
+  'tailoring',
+  'home_decor',
+  'beauty_wellness',
+  'professional',
+  'festive',
+  'home_services',
+  'other',
+];
+
+const THINGS: readonly ListingCategory[] = [
+  'furniture',
+  'electronics',
+  'appliances',
+  'kids',
+  'books',
+  'vehicles',
+  'clothing',
+  'sports',
+  'home_decor',
+  'festive',
+  'other',
+];
+
+/**
+ * The categories each kind's picker offers, so somebody selling a sofa is not
+ * asked whether it is tuition. The database accepts any category on any kind;
+ * this is about a short list, not a rule. Somebody looking for something may
+ * be looking for anything, a tutor as much as a cot.
+ */
+export const KIND_CATEGORIES: Record<ListingKind, readonly ListingCategory[]> = {
+  offer: OFFERED,
+  shop: OFFERED,
+  sale: THINGS,
+  wanted: [...THINGS.filter((category) => !OFFERED.includes(category)), ...OFFERED],
+  business: [
+    'home_services',
+    'daily_needs',
+    'laundry',
+    'health',
+    'transport',
+    'professional',
+    'beauty_wellness',
+    'home_food',
+    'bakes',
+    'tuition',
+    'other',
+  ],
 };
 
 export function isListingCategory(value: unknown): value is ListingCategory {
@@ -84,6 +281,7 @@ const isoDate = z
 
 /** The fields a seller fills in, on the web, in the app and over the API. */
 export const listingSchema = z.object({
+  kind: listingKindSchema.default('offer'),
   category: listingCategorySchema,
   title: z
     .string()
@@ -167,7 +365,10 @@ export function telLink(phone: string): string {
 }
 
 /** What a neighbour's WhatsApp opens with, so the seller knows where they saw it. */
-export function listingEnquiryText(title: string, society: string): string {
+export function listingEnquiryText(title: string, society: string, kind?: ListingKind): string {
+  if (kind === 'wanted') {
+    return `Hi! I saw you are looking for "${title}" on the ${society} marketplace in Compences.`;
+  }
   return `Hi! I saw "${title}" on the ${society} marketplace in Compences.`;
 }
 

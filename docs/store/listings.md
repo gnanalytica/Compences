@@ -133,8 +133,15 @@ information required to access your app" beside them. That field takes 500
 characters, the name 60, and the username and password 100 each:
 
 ```text
-Do not use 'Continue with Google'. On the sign-in screen, tap 'Have a test account? Sign in with a password', enter the email and password above and tap 'Sign in'. You land in Demo Society as a committee member: no invite code or 2-step verification. Reporting and blocking: Me > Marketplace > 'Fresh idly & dosa batter', then 'Report this listing' or 'Block' at its foot; reports arrive under Manage > Reports. Please don't use Me > Delete account: every review shares this account.
+Do not use 'Continue with Google'. On the sign-in screen, tap 'Have a test account? Sign in with a password', enter the email and password above and tap 'Sign in'. You land in Demo Society as a committee member: no invite code or 2-step verification. Reporting and blocking: Market tab > 'Fresh idly & dosa batter', then 'Report this listing' or 'Block' at its foot; reports arrive under Manage > Reports. Please don't use Me (top right) > Delete account: every review shares this account.
 ```
+
+Both sets of notes describe the app from the build that put Market on the tab
+bar and moved Me to the round button at the top right (after Android 12 and
+iOS build 4). In those two builds and earlier, the marketplace is under
+**Me → Marketplace** and Me is the last tab, so the text in either console has
+to match the build under review: change it in the same sitting as submitting
+the new build, not before.
 
 ---
 
@@ -160,7 +167,7 @@ sign-in steps. The reviewer's society needs a listing by somebody other than
 the reviewer, with a review on it, or there is nothing to try it on.
 
 ```text
-Reporting and blocking (Guideline 1.2). Residents post marketplace listings and reviews of them. Open Me > Marketplace and open a listing posted by another resident. At the foot of the listing are "Report this listing" and "Block (name)"; under each review by another resident are "Report this review" and "Block (name)". A report asks for a reason and goes to the society's staff and committee, who are notified, see it under Manage > Reports, and take the listing down or remove the review within 24 hours. Blocking hides that person's listings and reviews immediately and can be undone under Me > Blocked people. The Terms, agreed to at sign-in, prohibit objectionable content and abusive behaviour. Ideas residents suggest are shown to other residents only after the committee approves them.
+Reporting and blocking (Guideline 1.2). Residents post marketplace listings and reviews of them. Open the Market tab and open a listing posted by another resident. At the foot of the listing are "Report this listing" and "Block (name)"; under each review by another resident are "Report this review" and "Block (name)". A report asks for a reason and goes to the society's staff and committee, who are notified, see it under Manage > Reports, and take the listing down or remove the review within 24 hours. Blocking hides that person's listings and reviews immediately and can be undone under Me (the round button at the top right) > Blocked people. The Terms, agreed to at sign-in, prohibit objectionable content and abusive behaviour. Ideas residents suggest are shown to other residents only after the committee approves them.
 ```
 
 ---

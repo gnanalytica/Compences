@@ -90,7 +90,7 @@ describe('money', () => {
 
   it('no longer keeps payments on Me, where nobody looked for them', () => {
     expect(read(...WEB, 'me', 'page.tsx')).not.toContain(".from('contributions')");
-    expect(read('mobile', 'app', '(tabs)', 'me.tsx')).not.toContain(".from('contributions')");
+    expect(read('mobile', 'app', 'me.tsx')).not.toContain(".from('contributions')");
   });
 
   it('sends somebody who just paid to their payments, not to Me', () => {

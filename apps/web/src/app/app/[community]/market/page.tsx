@@ -4,13 +4,19 @@ import { Plus, Search, Store } from 'lucide-react';
 import {
   LISTING_CATEGORIES,
   LISTING_CATEGORY_LABEL,
+  LISTING_KINDS,
+  LISTING_KIND_LABEL,
+  LISTING_KIND_PLURAL,
   can,
+  closedLabel,
   formatDate,
   isListingCategory,
   isListingCurrent,
+  isListingKind,
   listingScore,
   todayIn,
   type ListingCategory,
+  type ListingKind,
 } from '@compences/core';
 import { requireCommunity } from '@/lib/auth';
 import { getListings, type ListingCard } from '@/lib/market';
@@ -21,19 +27,29 @@ import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/field';
 import { SectionLabel } from '@/components/section-label';
-import { CategoryIcon, ListingStatusBadge, ListingTile } from '@/components/listing-bits';
+import {
+  CategoryIcon,
+  ListingStatusBadge,
+  ListingTile,
+  sellerLine,
+} from '@/components/listing-bits';
+import { KindIcon, PostMenu, postableKinds } from './post-menu';
 
 export const metadata = { title: 'Marketplace' };
 
 /**
  * What neighbours make, teach and offer: idly batter, Hindi on Saturday
- * mornings, crackers before Diwali, a CA two floors down.
+ * mornings, crackers before Diwali, a CA two floors down — and since
+ * 1118.0100 the cycle sold once, the cooker somebody wants to borrow, a
+ * resident's shop, and the electrician the committee recommends.
  *
- * The board shows what is on offer today — active, and not past its
- * "available until" — best-rated first, weighed by how many have rated it, and
- * then the newest. Below it the viewer's own listings in whatever state they
- * are, because a seller whose listing was taken down needs to see why
- * somewhere other than a notification they may have swiped away.
+ * Every way of posting is a button under the heading. The board shows what
+ * is on today — active, and not past its "available until" — best-rated
+ * first, weighed by how many have rated it, and then the newest. It filters
+ * by kind first, then by category within it. Below it the viewer's own
+ * listings in whatever state they are, their shop first, because a seller
+ * whose listing was taken down needs to see why somewhere other than a
+ * notification they may have swiped away.
  *
  * Filtering is by query string, so a filtered board is a link somebody can
  * send to the society's WhatsApp group.
@@ -46,9 +62,17 @@ export default async function MarketPage(props: PageProps<'/app/[community]/mark
 
   const base = `/app/${community.slug}/market`;
   const today = todayIn(community.timezone);
-  const canPost = can(role, 'marketplace:post');
   const canModerate = can(role, 'marketplace:moderate');
 
+  const mine = listings
+    .filter((listing) => listing.membershipId === membership.id)
+    // Their shop first: everything else of theirs is in it.
+    .sort((a, b) => Number(b.kind === 'shop') - Number(a.kind === 'shop'));
+  const hasShop = mine.some((listing) => listing.kind === 'shop');
+  const kinds = postableKinds(role, hasShop);
+
+  const kindParam = one(search.kind);
+  const chosenKind: ListingKind | null = isListingKind(kindParam) ? kindParam : null;
   const category = one(search.category);
   const chosen: ListingCategory | null = isListingCategory(category) ? category : null;
   const query = (one(search.q) ?? '').trim();
@@ -60,21 +84,31 @@ export default async function MarketPage(props: PageProps<'/app/[community]/mark
         listingScore(b.averageRating, b.reviewCount) -
           listingScore(a.averageRating, a.reviewCount) || b.createdAt.localeCompare(a.createdAt),
     );
-  const shown = current.filter(
+  const ofKind = current.filter((listing) => !chosenKind || listing.kind === chosenKind);
+  const shown = ofKind.filter(
     (listing) => (!chosen || listing.category === chosen) && matches(listing, query),
   );
-  // Only the kinds somebody is offering, so a chip never leads to nothing.
-  const offered = LISTING_CATEGORIES.filter((c) => current.some((l) => l.category === c));
+  // Only the kinds and categories something is in, so a chip never leads to
+  // nothing; the categories are those within the kind already chosen.
+  const kindsPresent = LISTING_KINDS.filter((k) => current.some((l) => l.kind === k));
+  const offered = LISTING_CATEGORIES.filter((c) => ofKind.some((l) => l.category === c));
 
-  const mine = listings.filter((listing) => listing.membershipId === membership.id);
   const takenDown = canModerate
     ? listings.filter((l) => l.status === 'removed' && l.membershipId !== membership.id)
     : [];
 
-  const hrefFor = (next: { category?: ListingCategory | null; q?: string }) => {
+  const hrefFor = (next: {
+    kind?: ListingKind | null;
+    category?: ListingCategory | null;
+    q?: string;
+  }) => {
     const params = new URLSearchParams();
-    const c = 'category' in next ? next.category : chosen;
+    const k = 'kind' in next ? next.kind : chosenKind;
+    // A category belongs to the kind it was chosen under; changing the kind
+    // starts the category again.
+    const c = 'category' in next ? next.category : 'kind' in next ? null : chosen;
     const q = 'q' in next ? next.q : query;
+    if (k) params.set('kind', k);
     if (c) params.set('category', c);
     if (q) params.set('q', q);
     const text = params.toString();
@@ -87,14 +121,14 @@ export default async function MarketPage(props: PageProps<'/app/[community]/mark
         title="Marketplace"
         description={
           current.length
-            ? `${current.length} ${current.length === 1 ? 'thing' : 'things'} neighbours make, teach and offer.`
-            : 'What neighbours make, teach and offer.'
+            ? `${current.length} ${current.length === 1 ? 'thing' : 'things'} on the board: made, taught, sold and asked for by neighbours.`
+            : 'What neighbours make, teach, sell and ask for.'
         }
         action={
-          canPost ? (
+          kinds.length ? (
             <ButtonLink href={`${base}/new`} size="sm">
               <Plus className="size-4" aria-hidden="true" />
-              Post a listing
+              Post
             </ButtonLink>
           ) : null
         }
@@ -112,9 +146,27 @@ export default async function MarketPage(props: PageProps<'/app/[community]/mark
               You will not see what they post any more. Undo it any time in Settings.
             </p>
           ) : null}
+
+          <PostMenu base={base} kinds={kinds} />
+
           {current.length ? (
             <section aria-label="On offer" className="space-y-4">
+              {kindsPresent.length > 1 ? (
+                <nav aria-label="Kinds of listing" className="-mx-1 flex flex-wrap gap-2 px-1">
+                  <Chip href={hrefFor({ kind: null })} active={!chosenKind}>
+                    All
+                  </Chip>
+                  {kindsPresent.map((k) => (
+                    <Chip key={k} href={hrefFor({ kind: k })} active={chosenKind === k}>
+                      <KindIcon kind={k} className="size-3.5" />
+                      {LISTING_KIND_PLURAL[k]}
+                    </Chip>
+                  ))}
+                </nav>
+              ) : null}
+
               <form action={base} className="flex gap-2" role="search">
+                {chosenKind ? <input type="hidden" name="kind" value={chosenKind} /> : null}
                 {chosen ? <input type="hidden" name="category" value={chosen} /> : null}
                 <label htmlFor="market-q" className="sr-only">
                   Search the marketplace
@@ -124,7 +176,7 @@ export default async function MarketPage(props: PageProps<'/app/[community]/mark
                   name="q"
                   type="search"
                   defaultValue={query}
-                  placeholder="Batter, tuition, mehendi…"
+                  placeholder="Batter, cycle, tuition, electrician…"
                   className="max-w-md"
                 />
                 <Button type="submit" variant="secondary" size="md">
@@ -135,11 +187,13 @@ export default async function MarketPage(props: PageProps<'/app/[community]/mark
 
               {offered.length > 1 ? (
                 <nav aria-label="Categories" className="-mx-1 flex flex-wrap gap-2 px-1">
-                  <Chip href={hrefFor({ category: null })} active={!chosen}>
-                    All
+                  <Chip href={hrefFor({ category: null })} active={!chosen} quiet>
+                    {chosenKind
+                      ? `All ${LISTING_KIND_PLURAL[chosenKind].toLowerCase()}`
+                      : 'Every category'}
                   </Chip>
                   {offered.map((c) => (
-                    <Chip key={c} href={hrefFor({ category: c })} active={chosen === c}>
+                    <Chip key={c} href={hrefFor({ category: c })} active={chosen === c} quiet>
                       <CategoryIcon category={c} className="size-3.5" />
                       {LISTING_CATEGORY_LABEL[c]}
                     </Chip>
@@ -162,8 +216,8 @@ export default async function MarketPage(props: PageProps<'/app/[community]/mark
                     title="Nothing matches that"
                     description={
                       query
-                        ? `No listing mentions “${query}”${chosen ? ` in ${LISTING_CATEGORY_LABEL[chosen]}` : ''}.`
-                        : 'Nobody is offering that right now.'
+                        ? `No listing mentions “${query}”${chosen ? ` in ${LISTING_CATEGORY_LABEL[chosen]}` : chosenKind ? ` in ${LISTING_KIND_PLURAL[chosenKind]}` : ''}.`
+                        : 'Nothing like that on the board right now.'
                     }
                     action={
                       <ButtonLink href={base} size="sm" variant="secondary">
@@ -179,9 +233,9 @@ export default async function MarketPage(props: PageProps<'/app/[community]/mark
               <EmptyState
                 icon={<Store className="size-6" />}
                 title="Nothing on the marketplace yet"
-                description="Idly batter by the kilo, Hindi classes on Saturday mornings, crackers for Diwali: whatever you make, teach or offer, your neighbours are the easiest customers you will find."
+                description="Idly batter by the kilo, Hindi classes on Saturday mornings, last year’s textbooks, a cooker to borrow for the weekend: your neighbours are the easiest customers, and the nearest lenders, you will find."
                 action={
-                  canPost ? (
+                  kinds.length ? (
                     <ButtonLink href={`${base}/new`} size="sm">
                       <Plus className="size-4" aria-hidden="true" />
                       Post the first listing
@@ -256,7 +310,9 @@ function matches(listing: ListingCard, query: string): boolean {
     listing.priceNote,
     listing.sellerName,
     listing.flat,
+    listing.shop?.title,
     LISTING_CATEGORY_LABEL[listing.category],
+    LISTING_KIND_LABEL[listing.kind],
   ]
     .filter(Boolean)
     .join(' ')
@@ -267,7 +323,21 @@ function matches(listing: ListingCard, query: string): boolean {
     .every((word) => haystack.includes(word));
 }
 
-function Chip({ href, active, children }: { href: string; active: boolean; children: ReactNode }) {
+/**
+ * One filter. The kinds are the first choice, in ink; the categories under
+ * them are the second, `quiet`, so the two rows do not read as one list.
+ */
+function Chip({
+  href,
+  active,
+  quiet = false,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  quiet?: boolean;
+  children: ReactNode;
+}) {
   return (
     <Link
       href={href}
@@ -275,7 +345,9 @@ function Chip({ href, active, children }: { href: string; active: boolean; child
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors pointer-coarse:min-h-11',
         active
-          ? 'border-ink bg-ink text-surface'
+          ? quiet
+            ? 'border-ink text-ink bg-surface-sunken'
+            : 'border-ink bg-ink text-surface'
           : 'border-border-base bg-surface-raised text-ink-muted hover:text-ink hover:border-border-strong',
       )}
     >
@@ -297,6 +369,7 @@ function OwnRow({
   showSeller?: boolean;
 }) {
   const expired = listing.status === 'active' && !isListingCurrent(listingLike(listing), today);
+  const closed = Boolean(listing.closedAt) && listing.status !== 'removed';
   return (
     <li>
       <Link
@@ -307,9 +380,12 @@ function OwnRow({
           <p className="text-ink text-sm font-medium">{listing.title}</p>
           <p className="text-ink-subtle mt-0.5 text-xs">
             {[
+              listing.kind === 'offer' ? null : LISTING_KIND_LABEL[listing.kind],
               LISTING_CATEGORY_LABEL[listing.category],
-              showSeller ? [listing.sellerName, listing.flat].filter(Boolean).join(' · ') : null,
-              listing.availableUntil ? `Until ${formatDate(listing.availableUntil)}` : null,
+              showSeller ? sellerLine(listing) : null,
+              listing.availableUntil && !closed
+                ? `Until ${formatDate(listing.availableUntil)}`
+                : null,
             ]
               .filter(Boolean)
               .join(' · ')}
@@ -322,6 +398,10 @@ function OwnRow({
                   ? 'No reason was given.'
                   : 'Ask the committee if you would like it back.'}
             </p>
+          ) : closed ? (
+            <p className="text-ink-muted mt-1 text-xs">
+              {`Marked ${closedLabel(listing.kind).toLowerCase()}, so it is off the board. Open it to put it back.`}
+            </p>
           ) : expired ? (
             <p className="text-warning mt-1 text-xs">
               Its date has passed, so it is off the board. Edit it to offer it again.
@@ -331,7 +411,11 @@ function OwnRow({
         {expired ? (
           <span className="text-ink-muted shrink-0 text-xs font-medium">Ended</span>
         ) : (
-          <ListingStatusBadge status={listing.status} />
+          <ListingStatusBadge
+            status={listing.status}
+            kind={listing.kind}
+            closedAt={listing.closedAt}
+          />
         )}
       </Link>
     </li>

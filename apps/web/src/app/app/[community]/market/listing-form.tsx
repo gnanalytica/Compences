@@ -3,15 +3,19 @@
 import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
-  LISTING_CATEGORIES,
+  KIND_CATEGORIES,
   LISTING_CATEGORY_HINT,
   LISTING_CATEGORY_LABEL,
+  LISTING_KIND_PRICE,
+  LISTING_KIND_TITLE,
+  MAX_LISTING_PHOTOS,
   isListingCategory,
   type ListingCategory,
+  type ListingKind,
 } from '@compences/core';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
-import { FileUpload } from '@/components/file-upload';
+import { PhotoUploads } from '@/components/photo-uploads';
 import { FocusFirstError } from '@/components/focus-first-error';
 import { EMPTY_STATE, type ActionState } from '@/lib/action-state';
 import { saveListing } from './actions';
@@ -24,33 +28,71 @@ export type ListingDraft = {
   priceNote: string | null;
   contactPhone: string;
   onWhatsapp: boolean;
-  photoPath: string | null;
+  /** Its photos, cover first, with a link to show each while editing. */
+  photos: { path: string; url: string | null }[];
   availableUntil: string | null;
   unitId: string | null;
 };
 
-function Submit({ editing, disabled }: { editing: boolean; disabled: boolean }) {
+/** The button that posts one, in words for what it is. */
+const POST_LABEL: Record<ListingKind, string> = {
+  offer: 'Post to the marketplace',
+  sale: 'Put it up for sale',
+  wanted: 'Post what you are looking for',
+  shop: 'Open the shop',
+  business: 'Add the business',
+};
+
+/** What the details box is for, and an example, kind by kind. */
+const DETAILS: Record<ListingKind, { hint: string; placeholder: string }> = {
+  offer: {
+    hint: 'Optional. What it is, when and how to order, any timings.',
+    placeholder: 'Ground fresh every morning. Order by 8 pm for the next day.',
+  },
+  sale: {
+    hint: 'Optional. How old it is, what condition, and when it can be collected.',
+    placeholder: 'Two years old, new tyres. Collect from the basement any evening.',
+  },
+  wanted: {
+    hint: 'Optional. What would do, and for how long if you are borrowing.',
+    placeholder: 'A 5-litre one for a family function on Sunday. Back by Tuesday.',
+  },
+  shop: {
+    hint: 'Optional. What you sell, when you take orders, how people collect.',
+    placeholder: 'Batter, podis and weekday tiffins from our kitchen in A-402.',
+  },
+  business: {
+    hint: 'Optional. What they do, when they come, and anything the committee knows of them.',
+    placeholder: 'Wiring, fans and inverters. Has done the clubhouse for three years.',
+  },
+};
+
+function Submit({ label, disabled }: { label: string; disabled: boolean }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending || disabled}>
-      {pending ? 'Saving…' : editing ? 'Save changes' : 'Post to the marketplace'}
+      {pending ? 'Saving…' : label}
     </Button>
   );
 }
 
 /**
- * What a seller fills in to go on the board, and again to change it.
+ * What a seller fills in to go on the board, and again to change it, worded
+ * for the kind of listing it is: an offer, something for sale once, something
+ * wanted, a shop, or — for staff and the committee — an outside business.
  *
  * The phone starts as the one on the seller's profile, because it usually is
  * the right one — but it is a field they can see and change, never copied
  * silently: 0918.0100 made the profile's number private, and putting it on an
- * ad has to be the seller's own doing.
+ * ad has to be the seller's own doing. A business's number is the business's,
+ * so it starts empty.
  *
  * Nothing here is cleared on success: a new listing goes to its own page and
  * an edited one back to it, so the form is gone either way.
  */
 export function ListingForm({
   slug,
+  kind,
   photoFolder,
   defaultPhone,
   units,
@@ -58,7 +100,8 @@ export function ListingForm({
   cancelHref,
 }: {
   slug: string;
-  /** `{community_id}/{membership_id}`: the only folder the photo may go in. */
+  kind: ListingKind;
+  /** `{community_id}/{membership_id}`: the folder this person's uploads go in. */
   photoFolder: string;
   defaultPhone: string | null;
   /** The seller's own flats, when there is more than one to choose between. */
@@ -70,11 +113,40 @@ export function ListingForm({
   const [category, setCategory] = useState<string>(listing?.category ?? '');
   const [uploading, setUploading] = useState(false);
 
+  // The kind's own short list, plus whatever a listing posted before kinds
+  // already has, so an edit never silently changes its category.
+  const categories: readonly ListingCategory[] =
+    listing && !KIND_CATEGORIES[kind].includes(listing.category)
+      ? [...KIND_CATEGORIES[kind], listing.category]
+      : KIND_CATEGORIES[kind];
+  const title = LISTING_KIND_TITLE[kind];
+  const price = LISTING_KIND_PRICE[kind];
+  const details = DETAILS[kind];
+  const hasLastDay = kind !== 'shop' && kind !== 'business';
+  const business = kind === 'business';
+
   return (
     <form action={action} className="space-y-4">
       <FocusFirstError signal={state} />
       <input type="hidden" name="slug" value={slug} />
-      {listing ? <input type="hidden" name="listing_id" value={listing.id} /> : null}
+      {listing ? (
+        <input type="hidden" name="listing_id" value={listing.id} />
+      ) : (
+        // Chosen once, when it is posted; an edit never sends it.
+        <input type="hidden" name="kind" value={kind} />
+      )}
+
+      <Field label={title.label} htmlFor="listing-title" error={state.fieldErrors?.title} required>
+        {(control) => (
+          <Input
+            {...control}
+            name="title"
+            defaultValue={listing?.title}
+            placeholder={title.placeholder}
+            maxLength={120}
+          />
+        )}
+      </Field>
 
       <Field
         label="What kind of thing"
@@ -93,7 +165,7 @@ export function ListingForm({
             <option value="" disabled>
               Choose one
             </option>
-            {LISTING_CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <option key={c} value={c}>
                 {LISTING_CATEGORY_LABEL[c]}
               </option>
@@ -102,23 +174,11 @@ export function ListingForm({
         )}
       </Field>
 
-      <Field label="Title" htmlFor="listing-title" error={state.fieldErrors?.title} required>
-        {(control) => (
-          <Input
-            {...control}
-            name="title"
-            defaultValue={listing?.title}
-            placeholder="Fresh idly and dosa batter"
-            maxLength={120}
-          />
-        )}
-      </Field>
-
       <Field
         label="Details"
         htmlFor="listing-description"
         error={state.fieldErrors?.description}
-        hint="Optional. What it is, when and how to order, any timings."
+        hint={details.hint}
       >
         {(control) => (
           <Textarea
@@ -127,14 +187,14 @@ export function ListingForm({
             defaultValue={listing?.description ?? ''}
             rows={4}
             maxLength={2000}
-            placeholder="Ground fresh every morning. Order by 8 pm for the next day."
+            placeholder={details.placeholder}
           />
         )}
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
-          label="Price"
+          label={price.label}
           htmlFor="listing-price"
           error={state.fieldErrors?.price_note}
           hint="Optional, in your words."
@@ -144,31 +204,37 @@ export function ListingForm({
               {...control}
               name="price_note"
               defaultValue={listing?.priceNote ?? ''}
-              placeholder="₹80 a kg"
+              placeholder={price.placeholder}
               maxLength={80}
             />
           )}
         </Field>
-        <Field
-          label="Available until"
-          htmlFor="listing-until"
-          error={state.fieldErrors?.available_until}
-          hint="Optional. For something seasonal; it leaves the board after this day."
-        >
-          {(control) => (
-            <Input
-              {...control}
-              name="available_until"
-              type="date"
-              defaultValue={listing?.availableUntil ?? ''}
-            />
-          )}
-        </Field>
+        {hasLastDay ? (
+          <Field
+            label={kind === 'wanted' ? 'Looking until' : 'Available until'}
+            htmlFor="listing-until"
+            error={state.fieldErrors?.available_until}
+            hint={
+              kind === 'wanted'
+                ? 'Optional. It leaves the board after this day if nobody has one.'
+                : 'Optional. For something seasonal; it leaves the board after this day.'
+            }
+          >
+            {(control) => (
+              <Input
+                {...control}
+                name="available_until"
+                type="date"
+                defaultValue={listing?.availableUntil ?? ''}
+              />
+            )}
+          </Field>
+        ) : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
-          label="Phone for enquiries"
+          label={business ? 'The business’s phone' : 'Phone for enquiries'}
           htmlFor="listing-phone"
           error={state.fieldErrors?.contact_phone}
           hint="Shown on the listing to everyone in the society."
@@ -180,13 +246,13 @@ export function ListingForm({
               name="contact_phone"
               type="tel"
               inputMode="tel"
-              autoComplete="tel"
-              defaultValue={listing?.contactPhone ?? defaultPhone ?? ''}
+              autoComplete={business ? 'off' : 'tel'}
+              defaultValue={listing?.contactPhone ?? (business ? '' : (defaultPhone ?? ''))}
               placeholder="98765 43210"
             />
           )}
         </Field>
-        {units.length > 1 ? (
+        {!business && units.length > 1 ? (
           <Field
             label="Your flat"
             htmlFor="listing-unit"
@@ -225,14 +291,14 @@ export function ListingForm({
         </span>
       </label>
 
-      <FileUpload
-        bucket="listing-photos"
+      <PhotoUploads
         folder={photoFolder}
-        name="photo_path"
-        label="Photo"
-        hint="Optional. One picture of what you offer; everyone in the society can see it."
+        name="photo_paths"
+        max={MAX_LISTING_PHOTOS}
+        label="Photos"
+        hint={`Optional. Up to ${MAX_LISTING_PHOTOS}; the first is the cover. Everyone in the society can see them.`}
         maxBytes={5 * 1_048_576}
-        defaultPath={listing?.photoPath}
+        initial={listing?.photos}
         onUploadingChange={setUploading}
       />
 
@@ -243,7 +309,7 @@ export function ListingForm({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Submit editing={Boolean(listing)} disabled={uploading} />
+        <Submit label={listing ? 'Save changes' : POST_LABEL[kind]} disabled={uploading} />
         <ButtonLink href={cancelHref} variant="ghost">
           Cancel
         </ButtonLink>

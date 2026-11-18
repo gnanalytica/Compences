@@ -150,7 +150,9 @@ export default function TermsPage() {
         <p>
           Members of a community can list things they make, teach or offer — home food, classes,
           tailoring, festive goods, professional services — for other members to find, rate and
-          review.
+          review. They can also sell a single item they no longer need, ask for something they are
+          looking to buy or borrow, and gather what they sell under a shop of their own. Staff and
+          the committee can add local businesses from outside the community that they recommend.
         </p>
         <LegalList>
           <li>
@@ -161,7 +163,14 @@ export default function TermsPage() {
           <li>
             Sellers are responsible for what they offer being lawful and safe, and for any licence,
             registration or permission it needs — for example food safety registration for food, or
-            a licence to sell fireworks — and for any tax due on what they earn.
+            a licence to sell fireworks — and for any tax due on what they earn. Something sold
+            second-hand must be yours to sell and described as it is.
+          </li>
+          <li>
+            A local business is listed because your community’s staff or committee recommend it, not{' '}
+            {LEGAL.operator}. Any work it does is between you and the business. Whoever adds one
+            should have the business’s agreement to list its name and number, and removes it if the
+            business asks.
           </li>
           <li>
             A listing shows the phone number you type on it to everyone in your community. Reviews

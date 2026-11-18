@@ -4,10 +4,23 @@ import { describe, expect, it } from 'vitest';
 import { can } from '../src/roles';
 import { notificationAppRoute, notificationWebPath } from '../src/notifications';
 import {
+  KIND_CATEGORIES,
   LISTING_CATEGORIES,
   LISTING_CATEGORY_HINT,
   LISTING_CATEGORY_LABEL,
+  LISTING_KINDS,
+  LISTING_KIND_ACTION,
+  LISTING_KIND_HINT,
+  LISTING_KIND_LABEL,
+  LISTING_KIND_PLURAL,
+  LISTING_KIND_PRICE,
+  LISTING_KIND_TITLE,
+  closedLabel,
   formatRating,
+  isListingKind,
+  isOnceOffKind,
+  isReviewedKind,
+  listingEnquiryText,
   isListingCategory,
   isListingCurrent,
   listingReviewSchema,
@@ -19,9 +32,10 @@ import {
   whatsappLink,
 } from '../src/marketplace';
 
+// The latest migration to redraw the listings constraints.
 const MIGRATION = join(
   __dirname,
-  '../../../supabase/migrations/20261103000100_a_neighbour_can_sell_to_a_neighbour.sql',
+  '../../../supabase/migrations/20261118000100_sell_it_once_ask_for_it_open_a_shop.sql',
 );
 
 describe('marketplace categories', () => {
@@ -40,10 +54,77 @@ describe('marketplace categories', () => {
     expect(inDb).toEqual([...LISTING_CATEGORIES]);
   });
 
+  it('offer each kind only categories that exist, and none twice', () => {
+    for (const kind of LISTING_KINDS) {
+      const offered = KIND_CATEGORIES[kind];
+      expect(offered.length).toBeGreaterThan(3);
+      expect(new Set(offered).size).toBe(offered.length);
+      for (const category of offered) expect(isListingCategory(category)).toBe(true);
+    }
+    expect(KIND_CATEGORIES.sale).toContain('furniture');
+    expect(KIND_CATEGORIES.sale).not.toContain('tuition');
+    expect(KIND_CATEGORIES.wanted).toContain('tuition');
+    expect(KIND_CATEGORIES.business).toContain('laundry');
+  });
+
   it('rejects one it does not know', () => {
     expect(isListingCategory('home_food')).toBe(true);
     expect(isListingCategory('weapons')).toBe(false);
     expect(isListingCategory(undefined)).toBe(false);
+  });
+});
+
+describe('marketplace kinds', () => {
+  it('match the set the database accepts', () => {
+    const sql = readFileSync(MIGRATION, 'utf8');
+    const block = sql.match(/listings_kind_known\s+check \(kind in \(([^)]*)\)/);
+    expect(block).not.toBeNull();
+    const inDb = [...block![1].matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+    expect(inDb).toEqual([...LISTING_KINDS]);
+  });
+
+  it('each say what they are, on a badge, a filter, a button and a form', () => {
+    for (const kind of LISTING_KINDS) {
+      for (const words of [
+        LISTING_KIND_LABEL[kind],
+        LISTING_KIND_PLURAL[kind],
+        LISTING_KIND_ACTION[kind],
+        LISTING_KIND_HINT[kind],
+        LISTING_KIND_TITLE[kind].label,
+        LISTING_KIND_TITLE[kind].placeholder,
+        LISTING_KIND_PRICE[kind].label,
+        LISTING_KIND_PRICE[kind].placeholder,
+      ]) {
+        expect(words).toBeTruthy();
+      }
+    }
+    expect(isListingKind('sale')).toBe(true);
+    expect(isListingKind('auction')).toBe(false);
+  });
+
+  it('review what is offered again and again, and close what is done once', () => {
+    expect(LISTING_KINDS.filter(isReviewedKind)).toEqual(['offer', 'shop', 'business']);
+    expect(LISTING_KINDS.filter(isOnceOffKind)).toEqual(['sale', 'wanted']);
+    expect(closedLabel('sale')).toBe('Sold');
+    expect(closedLabel('wanted')).toBe('Found');
+  });
+
+  it('review the same kinds the database lets neighbours review', () => {
+    const sql = readFileSync(MIGRATION, 'utf8');
+    const kinds = [...sql.matchAll(/l\.kind in \(([^)]*)\)/g)].map((match) =>
+      [...match[1].matchAll(/'([a-z_]+)'/g)].map((m) => m[1]),
+    );
+    expect(kinds.length).toBeGreaterThan(0);
+    for (const set of kinds) expect(set).toEqual(['offer', 'shop', 'business']);
+  });
+
+  it('open a WhatsApp chat that says which post it was about', () => {
+    expect(listingEnquiryText('Kids’ cycle', 'Green Valley', 'sale')).toContain(
+      'saw "Kids’ cycle"',
+    );
+    expect(listingEnquiryText('A cooker', 'Green Valley', 'wanted')).toContain(
+      'you are looking for "A cooker"',
+    );
   });
 });
 
@@ -61,6 +142,7 @@ describe('a listing form', () => {
   it('normalises what a seller types', () => {
     const parsed = listingSchema.parse(base);
     expect(parsed).toEqual({
+      kind: 'offer',
       category: 'home_food',
       title: 'Jonna rotis',
       description: null,
@@ -80,6 +162,11 @@ describe('a listing form', () => {
     expect(listingSchema.parse({ ...base, available_until: '2026-11-12' }).available_until).toBe(
       '2026-11-12',
     );
+  });
+
+  it('takes the kind it is given, and only a known one', () => {
+    expect(listingSchema.parse({ ...base, kind: 'sale', category: 'vehicles' }).kind).toBe('sale');
+    expect(listingSchema.safeParse({ ...base, kind: 'auction' }).success).toBe(false);
   });
 
   it('needs a title, a known category and a phone that works', () => {
@@ -148,6 +235,12 @@ describe('who takes part in the marketplace', () => {
     expect(can('staff', 'marketplace:moderate')).toBe(true);
     expect(can('committee', 'marketplace:moderate')).toBe(true);
     expect(can('resident', 'marketplace:moderate')).toBe(false);
+  });
+
+  it('staff and the committee add outside businesses; residents do not', () => {
+    expect(can('staff', 'marketplace:business')).toBe(true);
+    expect(can('committee', 'marketplace:business')).toBe(true);
+    expect(can('resident', 'marketplace:business')).toBe(false);
   });
 });
 

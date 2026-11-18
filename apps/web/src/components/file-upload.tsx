@@ -9,7 +9,7 @@ import { getBrowserSupabase } from '@/lib/supabase/browser';
  * A listing's picture is a picture: the listing-photos bucket refuses a PDF,
  * so the picker should not offer one only for the upload to fail after it.
  */
-const IMAGE_MIME_TYPES = UPLOAD_MIME_TYPES.filter((type) => type.startsWith('image/'));
+export const IMAGE_MIME_TYPES = UPLOAD_MIME_TYPES.filter((type) => type.startsWith('image/'));
 
 type Status =
   | { kind: 'idle' }
