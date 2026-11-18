@@ -81,7 +81,9 @@ function RootStack() {
         <Stack.Screen name="admin/requests" options={{ title: 'Join requests' }} />
         <Stack.Screen name="people" options={{ title: 'People' }} />
         <Stack.Screen name="ideas" options={{ title: 'Ideas' }} />
-        <Stack.Screen name="market" options={{ title: 'Marketplace' }} />
+        {/* Off the tab bar since the marketplace took its slot; it opens from
+            the round button at the top right of every tab. */}
+        <Stack.Screen name="me" options={{ title: 'Me' }} />
         {/* The listing's title is on the page, under its photo. */}
         <Stack.Screen name="listing/[id]" options={{ title: '' }} />
         <Stack.Screen name="listing/new" options={{ title: 'Post a listing' }} />

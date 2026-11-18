@@ -82,7 +82,14 @@ export async function pickFile(source: PickSource): Promise<PickedFile | { error
     }
   }
 
-  const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.7 };
+  const options: ImagePicker.ImagePickerOptions = {
+    mediaTypes: ['images'],
+    quality: 0.7,
+    // An iPhone keeps its photos as HEIC, which Android phones and most
+    // browsers cannot show. Compatible asks iOS for a JPEG instead.
+    preferredAssetRepresentationMode:
+      ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+  };
   const result =
     source === 'camera'
       ? await ImagePicker.launchCameraAsync(options)
@@ -97,6 +104,39 @@ export async function pickFile(source: PickSource): Promise<PickedFile | { error
     mimeType: asset.mimeType ?? mimeFromName(name),
     size: asset.fileSize ?? null,
   };
+}
+
+/**
+ * Several photos from the library at once, up to `limit`, in the order they
+ * were tapped — a listing's photos, where the first becomes the cover. Null
+ * when the person backs out. iOS 14 and Android both take a limit; iOS 15
+ * numbers each photo as it is picked, so the order is not a surprise.
+ */
+export async function pickImages(limit: number): Promise<PickedFile[] | null> {
+  if (limit < 1) return null;
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    // Lower than a bill needs: a listing photo is looked at, not read, and a
+    // recent iPhone's 24-megapixel photo as a JPEG at 0.7 can pass the
+    // bucket's 5 MB.
+    quality: 0.5,
+    allowsMultipleSelection: limit > 1,
+    selectionLimit: limit,
+    orderedSelection: true,
+    // JPEG rather than HEIC, so neighbours on Android and the website see it.
+    preferredAssetRepresentationMode:
+      ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+  });
+  if (result.canceled) return null;
+  return result.assets.slice(0, limit).map((asset, index) => {
+    const name = asset.fileName ?? `photo-${Date.now()}-${index}.jpg`;
+    return {
+      uri: asset.uri,
+      name,
+      mimeType: asset.mimeType ?? mimeFromName(name),
+      size: asset.fileSize ?? null,
+    };
+  });
 }
 
 /** Uploads a picked file to `path` in `bucket`. Returns the stored path. */

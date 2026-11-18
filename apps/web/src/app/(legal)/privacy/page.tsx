@@ -99,13 +99,15 @@ export default function PrivacyPage() {
           <Strong>What you do in your community.</Strong> Announcements you post or read, comments
           and reactions you leave, votes you cast in polls, event tasks assigned to you, activities
           you sign up to perform in, volunteer roles you take on, and activity ideas you suggest or
-          show interest in. If you post in the marketplace, what you list — its title, description,
-          price, category, photo, the flat it is from and the phone number you give for it — and the
-          ratings and reviews you leave on other members’ listings. If you report a listing, a
-          review or a comment, we keep the report: what it was about, the reason you picked and
-          anything you added. If you block another member, we keep who you blocked. When you sign up
-          for an activity, organisers may ask for details such as the type of performance, age
-          group, experience and any special requirements — share only what they need.
+          show interest in. If you post in the marketplace, what you list — whether you are offering
+          something, selling one item, looking for something or opening a shop; its title,
+          description, price, category, up to five photos, the flat it is from, the phone number you
+          give for it, and when you marked it sold or found — and the ratings and reviews you leave
+          on other members’ listings. If you report a listing, a review or a comment, we keep the
+          report: what it was about, the reason you picked and anything you added. If you block
+          another member, we keep who you blocked. When you sign up for an activity, organisers may
+          ask for details such as the type of performance, age group, experience and any special
+          requirements — share only what they need.
         </p>
         <p>
           <Strong>Money records.</Strong> Contributions to an event fund — the amount, the payment
@@ -203,6 +205,13 @@ export default function PrivacyPage() {
             A marketplace listing — including the phone number you type on it, your name and your
             flat — and the reviews on it are visible to every member of your community, not outside
             it. The phone number on your profile is never shown on a listing.
+          </li>
+          <li>
+            A local business that staff or the committee add to the marketplace — an electrician, a
+            laundry — shows the business’s name, what it does, its photos and the phone number it
+            gives out for work to every member of your community, and to nobody outside it. A
+            business that would rather not be listed can ask the committee, or the Grievance Officer
+            named below, and it is removed.
           </li>
           <li>
             A report you make about a listing, a review or a comment is read by your community’s

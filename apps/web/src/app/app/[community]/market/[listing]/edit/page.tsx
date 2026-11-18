@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { uuid } from '@compences/core';
-import { requireCapability } from '@/lib/auth';
+import { LISTING_KIND_LABEL, can, uuid } from '@compences/core';
+import { requireCommunity } from '@/lib/auth';
 import { getListing, getUnitOptions } from '@/lib/market';
 import { PageBody, PageHeader } from '@/components/page-header';
 import { Card, CardBody } from '@/components/ui/card';
@@ -11,32 +11,43 @@ import { ListingForm } from '../../listing-form';
 export const metadata = { title: 'Edit listing' };
 
 /**
- * The seller's own listing, to change. Anybody else — the committee included,
- * who may take a listing down but not rewrite it — goes to its page instead.
+ * A listing, to change. A resident's is theirs alone: anybody else — the
+ * committee included, who may take a listing down but not rewrite it — goes
+ * to its page instead. An outside business is the committee's entry, so
+ * anyone on staff or the committee may keep it up to date (1118.0100).
  */
 export default async function EditListingPage(
   props: PageProps<'/app/[community]/market/[listing]/edit'>,
 ) {
   const { community: slug, listing: listingId } = await props.params;
-  const { community, membership, profile, unitIds } = await requireCapability(
-    slug,
-    'marketplace:post',
-  );
+  const { community, membership, profile, unitIds, role } = await requireCommunity(slug);
   if (!uuid.safeParse(listingId).success) notFound();
-  const [listing, units] = await Promise.all([
-    getListing(community.id, listingId),
-    getUnitOptions(unitIds),
-  ]);
+  const listing = await getListing(community.id, listingId);
   if (!listing) notFound();
 
   const back = `/app/${slug}/market/${listing.id}`;
+  const business = listing.kind === 'business';
+  const mayEdit = business
+    ? can(role, 'marketplace:business')
+    : listing.membershipId === membership.id && can(role, 'marketplace:post');
   // A listing taken down stays down until staff restore it; editing it would
   // only end in the trigger's refusal, so do not offer the form.
-  if (listing.membershipId !== membership.id || listing.status === 'removed') redirect(back);
+  if (!mayEdit || listing.status === 'removed') redirect(back);
+
+  const units = business ? [] : await getUnitOptions(unitIds);
 
   return (
     <>
-      <PageHeader title="Edit listing" description={listing.title} />
+      <PageHeader
+        title={
+          listing.kind === 'shop' ? 'Edit your shop' : `Edit ${business ? 'business' : 'listing'}`
+        }
+        description={
+          listing.kind === 'offer'
+            ? listing.title
+            : `${LISTING_KIND_LABEL[listing.kind]} · ${listing.title}`
+        }
+      />
       <PageBody>
         <Link
           href={back}
@@ -50,6 +61,7 @@ export default async function EditListingPage(
             <CardBody>
               <ListingForm
                 slug={slug}
+                kind={listing.kind}
                 photoFolder={`${community.id}/${membership.id}`}
                 defaultPhone={profile?.phone ?? null}
                 units={units}
@@ -62,7 +74,9 @@ export default async function EditListingPage(
                   priceNote: listing.priceNote,
                   contactPhone: listing.contactPhone,
                   onWhatsapp: listing.onWhatsapp,
-                  photoPath: listing.photoPath,
+                  // A photo the viewer could not get a link for still keeps
+                  // its place, shown as a numbered square rather than lost.
+                  photos: listing.photos,
                   availableUntil: listing.availableUntil,
                   unitId: listing.unitId,
                 }}

@@ -82,6 +82,7 @@ export type Capability =
   | 'joinrequests:review'
   | 'residents:remove'
   | 'marketplace:moderate'
+  | 'marketplace:business'
   | 'reports:review'
   // Committee only
   | 'expenses:approve'
@@ -114,6 +115,9 @@ const CAPABILITIES: Record<Capability, Rule> = {
   'joinrequests:review': 'staff',
   'residents:remove': 'staff',
   'marketplace:moderate': 'staff',
+  // Outside businesses — the electrician, the dhobi — are the committee's to
+  // recommend, so staff and the committee add them and keep them up to date.
+  'marketplace:business': 'staff',
   // What neighbours have reported: listings, reviews and comments alike.
   'reports:review': 'staff',
 

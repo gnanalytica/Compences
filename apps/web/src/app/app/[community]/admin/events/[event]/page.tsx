@@ -10,6 +10,7 @@ import {
   fundBarSegments,
   inTheFund,
   isListingCurrent,
+  isReviewedKind,
   nextEditionName,
   overLineBy,
   practiceDatesLine,
@@ -215,16 +216,19 @@ export default async function ManageEventPage(
     bill_url: expense.bill_url,
     spent_on: expense.spent_on,
   });
-  // What could be added: on the board today and not already a vendor here.
-  // The insert policy says "active" too; this also leaves out what has run
-  // past its date, which the policy cannot see.
+  // What could be added: on the board today, something that supplies rather
+  // than a one-off sale or a request (1118.0100), and not already a vendor
+  // here. The insert policy says "active" and the kinds too; this also leaves
+  // out what has run past its date, which the policy cannot see.
   const vendorOptions = listings
     .filter(
       (listing) =>
+        isReviewedKind(listing.kind) &&
         isListingCurrent(
           { status: listing.status, available_until: listing.availableUntil },
           today,
-        ) && !vendors.some((vendor) => vendor.listingId === listing.id),
+        ) &&
+        !vendors.some((vendor) => vendor.listingId === listing.id),
     )
     .map((listing) => ({ id: listing.id, label: `${listing.title} · ${sellerLine(listing)}` }))
     .sort((a, b) => a.label.localeCompare(b.label));

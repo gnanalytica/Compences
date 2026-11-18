@@ -54,6 +54,7 @@ function ReportFields({
   subjectId,
   authorName,
   blockNext,
+  allowBlock = true,
 }: {
   slug: string;
   kind: ReportSubject;
@@ -61,6 +62,7 @@ function ReportFields({
   authorName: string;
   /** Where to go if they also block, when this page will have nothing left on it. */
   blockNext?: string;
+  allowBlock?: boolean;
 }) {
   const [state, action] = useActionState<ActionState, FormData>(reportContent, EMPTY_STATE);
   const id = useId();
@@ -126,10 +128,12 @@ function ReportFields({
           </span>
         ) : null}
       </label>
-      <label className="text-ink flex cursor-pointer items-center gap-2 text-sm pointer-coarse:min-h-11">
-        <input type="checkbox" name="block" className="accent-ink size-4" />
-        Also block {firstName(authorName)}, so I stop seeing what they post
-      </label>
+      {allowBlock ? (
+        <label className="text-ink flex cursor-pointer items-center gap-2 text-sm pointer-coarse:min-h-11">
+          <input type="checkbox" name="block" className="accent-ink size-4" />
+          Also block {firstName(authorName)}, so I stop seeing what they post
+        </label>
+      ) : null}
       {state.error ? (
         <p role="alert" className="text-danger text-sm">
           {state.error}
@@ -200,6 +204,7 @@ export function ReportControls({
   authorId,
   authorName,
   blockNext,
+  allowBlock = true,
 }: {
   slug: string;
   kind: ReportSubject;
@@ -208,6 +213,12 @@ export function ReportControls({
   authorId: string;
   authorName: string;
   blockNext?: string;
+  /**
+   * False for an outside business: it is the committee's entry rather than
+   * anybody's post, and blocking whoever typed it in would not hide it
+   * (1118.0100). It can still be reported.
+   */
+  allowBlock?: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-start gap-x-5 gap-y-1">
@@ -223,18 +234,21 @@ export function ReportControls({
             subjectId={subjectId}
             authorName={authorName}
             blockNext={blockNext}
+            allowBlock={allowBlock}
           />
         </div>
       </details>
-      <details className="group max-w-full">
-        <summary className={QUIET_LINK}>
-          <Ban className="size-3.5" aria-hidden="true" />
-          Block {firstName(authorName)}
-        </summary>
-        <div className="border-border-base bg-surface-sunken mt-2 rounded-xl border p-4">
-          <BlockFields slug={slug} memberId={authorId} authorName={authorName} next={blockNext} />
-        </div>
-      </details>
+      {allowBlock ? (
+        <details className="group max-w-full">
+          <summary className={QUIET_LINK}>
+            <Ban className="size-3.5" aria-hidden="true" />
+            Block {firstName(authorName)}
+          </summary>
+          <div className="border-border-base bg-surface-sunken mt-2 rounded-xl border p-4">
+            <BlockFields slug={slug} memberId={authorId} authorName={authorName} next={blockNext} />
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

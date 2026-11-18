@@ -5,8 +5,12 @@ import { useUnreadCount } from '../lib/notifications';
 import { radius, spacing } from '../lib/theme';
 import { useTheme } from '../lib/use-theme';
 
-/** The header bell on Home and Events, with the unread count. */
-export function NotificationBell() {
+/**
+ * The header bell on every tab, with the unread count. `compact` when it
+ * sits beside the Me button, so the two read as a pair rather than as two
+ * things a thumb's width apart.
+ */
+export function NotificationBell({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const { colors } = useTheme();
   const unread = useUnreadCount();
@@ -19,7 +23,7 @@ export function NotificationBell() {
       onPress={() => router.push('/notifications')}
       hitSlop={8}
       style={({ pressed }) => ({
-        paddingHorizontal: spacing.lg,
+        paddingHorizontal: compact ? spacing.sm : spacing.lg,
         paddingVertical: spacing.xs,
         opacity: pressed ? 0.7 : 1,
       })}
@@ -30,7 +34,7 @@ export function NotificationBell() {
           style={{
             position: 'absolute',
             top: 0,
-            right: spacing.sm,
+            right: compact ? 0 : spacing.sm,
             minWidth: 18,
             height: 18,
             paddingHorizontal: 4,

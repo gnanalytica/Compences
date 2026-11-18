@@ -1,27 +1,26 @@
 import { Alert, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ROLE_DESCRIPTION, ROLE_LABEL, can, normalizeRole } from '@compences/core';
-import { useAuth } from '../../src/lib/auth';
-import { supabase } from '../../src/lib/supabase';
-import { useCommunityData } from '../../src/lib/use-community-data';
-import {
-  Body,
-  Button,
-  Caption,
-  Card,
-  Heading,
-  Loading,
-  Screen,
-  Title,
-} from '../../src/components/ui';
-import { LinkRow } from '../../src/components/admin-ui';
-import { ViewSwitchCard } from '../../src/components/view-switch';
-import { AppearanceCard } from '../../src/components/appearance-card';
-import { LegalLinks } from '../../src/components/legal-links';
-import { useUnreadCount } from '../../src/lib/notifications';
-import { minTapTarget, spacing } from '../../src/lib/theme';
+import { useAuth } from '../src/lib/auth';
+import { supabase } from '../src/lib/supabase';
+import { useCommunityData } from '../src/lib/use-community-data';
+import { Body, Button, Caption, Card, Heading, Loading, Screen, Title } from '../src/components/ui';
+import { LinkRow } from '../src/components/admin-ui';
+import { ViewSwitchCard } from '../src/components/view-switch';
+import { AppearanceCard } from '../src/components/appearance-card';
+import { LegalLinks } from '../src/components/legal-links';
+import { useUnreadCount } from '../src/lib/notifications';
+import { minTapTarget, spacing } from '../src/lib/theme';
 
-/** Profile, registrations, notifications, societies, sign out. Receipts are under Money. */
+/**
+ * Profile, registrations, notifications, societies, sign out, and deleting
+ * the account. Receipts are under Money.
+ *
+ * Not a tab since the marketplace took its place on the bar (1118.0100): it
+ * opens from the round button with your initial at the top right of every
+ * tab, and from the navigation drawer, and it is still /me — so links, the
+ * old More tab, and "under Me, in Blocked people" all still lead here.
+ */
 export default function Me() {
   const router = useRouter();
   const {
@@ -107,13 +106,13 @@ export default function Me() {
             onPress={() => router.push('/ideas')}
           />
           <LinkRow
-            label="Marketplace"
+            label="Your listings and shop"
             detail={
               can(viewRole, 'marketplace:post')
-                ? 'Sell to neighbours, and your listings'
-                : 'What residents make, teach and offer'
+                ? 'What you sell, offer or are looking for, on the Market tab'
+                : 'The Market tab: what residents sell, offer and recommend'
             }
-            onPress={() => router.push('/market')}
+            onPress={() => router.navigate('/market')}
           />
           {/* Where a block is undone. Always here, blocked anybody or not, so
               the Block button elsewhere can say where to find it. */}
@@ -215,7 +214,7 @@ export default function Me() {
         <View style={{ alignItems: 'center', paddingTop: spacing.md }}>
           <Caption>Compences · A Gnanalytica product</Caption>
         </View>
-        {/* Clears the tab bar so the last row is never half-hidden behind it. */}
+        {/* Room below the last row, clear of the home indicator. */}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </Screen>

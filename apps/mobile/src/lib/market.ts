@@ -2,9 +2,11 @@ import type { QueryClient } from '@tanstack/react-query';
 import {
   isListingCategory,
   isListingCurrent,
+  isListingKind,
   listingScore,
   unitLabel,
   type ListingCategory,
+  type ListingKind,
   type ListingStatus,
 } from '@compences/core';
 import { today } from '../components/date-field';
@@ -14,6 +16,11 @@ import { supabase } from './supabase';
 /**
  * Marketplace reads for the mobile app: the board, one listing with its
  * reviews, and the listings chosen to supply an event.
+ *
+ * Since 1118.0100 a listing has a kind — an offer, one thing for sale,
+ * something wanted, a resident's shop, or an outside business — and up to
+ * five photos, of which the first is the cover. The board signs only the
+ * covers, which is all a card shows; one listing's page signs all of them.
  *
  * Row-level security decides what each person gets back. A resident sees
  * what is on the board plus their own listings in any state; staff and the
@@ -28,7 +35,7 @@ import { supabase } from './supabase';
 // foreign keys run from listings to memberships (the seller, and whoever took
 // it down), so the seller's is named.
 const LISTING_FIELDS =
-  'id, community_id, membership_id, unit_id, category, title, description, price_note, contact_phone, on_whatsapp, photo_path, available_until, status, removed_reason, created_at, updated_at, seller:memberships!listings_membership_id_fkey(profiles(full_name)), units(block, number)';
+  'id, community_id, membership_id, unit_id, kind, category, title, description, price_note, contact_phone, on_whatsapp, photo_path, photo_paths, available_until, status, closed_at, removed_reason, created_at, updated_at, seller:memberships!listings_membership_id_fkey(profiles(full_name)), units(block, number)';
 
 /** A listing as every marketplace screen reads it. */
 export type Listing = {
@@ -36,17 +43,29 @@ export type Listing = {
   communityId: string;
   membershipId: string;
   unitId: string | null;
+  kind: ListingKind;
   category: ListingCategory;
   title: string;
   description: string | null;
   priceNote: string | null;
   contactPhone: string;
   onWhatsapp: boolean;
+  /** The cover: the first of photoPaths. */
   photoPath: string | null;
-  /** A signed link to the photo, when there is one the viewer may see. */
+  /** A signed link to the cover, when there is one the viewer may see. */
   photoUrl: string | null;
+  /** Every photo, in order, the cover first. */
+  photoPaths: string[];
+  /**
+   * A signed link for each of photoPaths, in the same order, or null where
+   * there is none. The board signs only the cover; one listing's page signs
+   * all of them.
+   */
+  photoUrls: (string | null)[];
   availableUntil: string | null;
   status: ListingStatus;
+  /** When a sale was marked sold, or a wanted notice found. It is paused then too. */
+  closedAt: string | null;
   removedReason: string | null;
   createdAt: string;
   sellerName: string;
@@ -61,6 +80,7 @@ type ListingRow = {
   community_id: string;
   membership_id: string;
   unit_id: string | null;
+  kind: string;
   category: string;
   title: string;
   description: string | null;
@@ -68,8 +88,10 @@ type ListingRow = {
   contact_phone: string;
   on_whatsapp: boolean;
   photo_path: string | null;
+  photo_paths: string[] | null;
   available_until: string | null;
   status: string;
+  closed_at: string | null;
   removed_reason: string | null;
   created_at: string;
   seller: { profiles: { full_name: string | null } | null } | null;
@@ -78,8 +100,20 @@ type ListingRow = {
 
 type Rating = { count: number; average: number | null };
 
+/**
+ * A row's photos, cover first. A listing an older app last saved may have
+ * only photo_path; the database keeps the two in step, but reading both
+ * costs nothing.
+ */
+function photoPathsOf(row: Pick<ListingRow, 'photo_path' | 'photo_paths'>): string[] {
+  const paths = (row.photo_paths ?? []).filter(Boolean);
+  if (paths.length) return paths;
+  return row.photo_path ? [row.photo_path] : [];
+}
+
 function toListing(row: ListingRow, ratings: Map<string, Rating>, urls: Map<string, string>) {
   const rating = ratings.get(row.id);
+  const photos = photoPathsOf(row);
   const status: ListingStatus =
     row.status === 'paused' || row.status === 'removed' ? row.status : 'active';
   return {
@@ -87,6 +121,9 @@ function toListing(row: ListingRow, ratings: Map<string, Rating>, urls: Map<stri
     communityId: row.community_id,
     membershipId: row.membership_id,
     unitId: row.unit_id,
+    // As for categories: a kind added to the database after this build was
+    // made reads as the plainest one there is.
+    kind: isListingKind(row.kind) ? row.kind : 'offer',
     // The database's check constraint keeps this to the known list; the
     // fallback is for a category added there before this app knew of it.
     category: isListingCategory(row.category) ? row.category : 'other',
@@ -95,10 +132,13 @@ function toListing(row: ListingRow, ratings: Map<string, Rating>, urls: Map<stri
     priceNote: row.price_note,
     contactPhone: row.contact_phone,
     onWhatsapp: row.on_whatsapp,
-    photoPath: row.photo_path,
-    photoUrl: row.photo_path ? (urls.get(row.photo_path) ?? null) : null,
+    photoPath: photos[0] ?? null,
+    photoUrl: photos[0] ? (urls.get(photos[0]) ?? null) : null,
+    photoPaths: photos,
+    photoUrls: photos.map((path) => urls.get(path) ?? null),
     availableUntil: row.available_until,
     status,
+    closedAt: row.closed_at,
     removedReason: row.removed_reason,
     createdAt: row.created_at,
     sellerName: row.seller?.profiles?.full_name?.trim() || 'A neighbour',
@@ -148,12 +188,36 @@ export async function fetchBoard(communityId: string): Promise<Listing[]> {
       rows.map((row) => row.id),
       communityId,
     ),
+    // The covers only: a card shows one picture.
     storedFileUrls(
       'listing-photos',
-      rows.flatMap((row) => (row.photo_path ? [row.photo_path] : [])),
+      rows.flatMap((row) => photoPathsOf(row).slice(0, 1)),
     ),
   ]);
   return rows.map((row) => toListing(row, ratings, urls));
+}
+
+/**
+ * Each seller's shop that is on the board, by membership, so a card can say
+ * "Lakshmi's Kitchen" rather than "Lakshmi" for everything she sells.
+ */
+export function shopsBySeller(listings: Listing[]): Map<string, Listing> {
+  const shops = new Map<string, Listing>();
+  for (const listing of listings) {
+    if (listing.kind === 'shop' && onTheBoard(listing)) shops.set(listing.membershipId, listing);
+  }
+  return shops;
+}
+
+/**
+ * Who a listing is from, in one line. An outside business is the committee's
+ * recommendation, not any one person's post; a resident with a shop sells
+ * under its name; anybody else is their name and flat.
+ */
+export function sellerLine(listing: Listing, shops?: Map<string, Listing>): string {
+  if (listing.kind === 'business') return 'Recommended by the committee';
+  const shop = listing.kind === 'shop' ? null : shops?.get(listing.membershipId);
+  return [shop ? shop.title : listing.sellerName, listing.flat].filter(Boolean).join(' · ');
 }
 
 /** Whether a listing belongs on the board today, by this phone's calendar. */
@@ -209,9 +273,9 @@ export async function fetchListing(communityId: string, listingId: string) {
   if (!data) return null;
   const row = data as ListingRow;
 
-  const [ratings, urls, reviews, vendors] = await Promise.all([
+  const [ratings, urls, reviews, vendors, sellers] = await Promise.all([
     fetchRatings([row.id]),
-    storedFileUrls('listing-photos', row.photo_path ? [row.photo_path] : []),
+    storedFileUrls('listing-photos', photoPathsOf(row)),
     supabase
       .from('listing_reviews')
       .select(
@@ -225,10 +289,42 @@ export async function fetchListing(communityId: string, listingId: string) {
       .select('id, note, events(slug, name, emoji, starts_on)')
       .eq('listing_id', row.id)
       .limit(50),
+    // The seller's other listings on the board, for a shop's page ("More
+    // from") and for a link from anything else they sell to their shop. An
+    // outside business has no seller in that sense.
+    row.kind === 'business'
+      ? Promise.resolve({ data: [] as ListingRow[] })
+      : supabase
+          .from('listings')
+          .select(LISTING_FIELDS)
+          .eq('community_id', communityId)
+          .eq('membership_id', row.membership_id)
+          .eq('status', 'active')
+          .neq('id', row.id)
+          .order('created_at', { ascending: false })
+          .limit(50),
   ]);
+
+  const sellerRows = (sellers.data ?? []) as ListingRow[];
+  const [sellerRatings, sellerUrls] = sellerRows.length
+    ? await Promise.all([
+        fetchRatings(sellerRows.map((seller) => seller.id)),
+        storedFileUrls(
+          'listing-photos',
+          sellerRows.flatMap((seller) => photoPathsOf(seller).slice(0, 1)),
+        ),
+      ])
+    : [new Map<string, Rating>(), new Map<string, string>()];
+  const fromSeller = sellerRows
+    .map((seller) => toListing(seller, sellerRatings, sellerUrls))
+    .filter(onTheBoard);
 
   return {
     listing: toListing(row, ratings, urls),
+    /** The seller's shop, when this is something else they sell and they have one. */
+    shop: row.kind === 'shop' ? null : (fromSeller.find((other) => other.kind === 'shop') ?? null),
+    /** Everything else the seller has on the board, for a shop's page. */
+    moreFromSeller: fromSeller.filter((other) => other.kind !== 'shop'),
     reviews: (reviews.data ?? []).map((review): ListingReview => ({
       id: review.id,
       membershipId: review.membership_id,
